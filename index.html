@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flappy Bird</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="game">
+      <header class="game__header">
+        <h1>Flappy Bird</h1>
+        <p>Press space or click/tap to flap. Avoid the pipes!</p>
+      </header>
+      <section class="game__panel">
+        <canvas id="gameCanvas" width="360" height="640" aria-label="Flappy Bird game"></canvas>
+        <div class="game__hud">
+          <div class="hud__score">
+            <span>Score</span>
+            <strong id="score">0</strong>
+          </div>
+          <div class="hud__score">
+            <span>Best</span>
+            <strong id="bestScore">0</strong>
+          </div>
+          <button id="restartButton" class="hud__button" type="button">Restart</button>
+        </div>
+      </section>
+      <footer class="game__footer">
+        <p>Tip: keep a steady rhythm to stay in the gap.</p>
+      </footer>
+    </main>
+    <script src="script.js"></script>
+  </body>
+</html>
