@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flappy Bird HP Mode</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="game-shell">
+    <h1>Flappy Bird: HP + Powerups</h1>
+    <section class="hud">
+      <div>HP: <span id="hp">3</span> / 5</div>
+      <div>Score: <span id="score">0</span></div>
+      <div>Power: <span id="powerup">None</span></div>
+    </section>
+    <canvas id="game" width="420" height="620" aria-label="Flappy bird game canvas"></canvas>
+    <p class="help">Press <strong>Space</strong> or click to flap. Hit pipes to lose HP instead of dying immediately. Collisions cost HP, can drop emergency hearts, and stars grant random powerups.</p>
+    <button id="restart" hidden>Restart</button>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
