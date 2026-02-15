@@ -73,8 +73,42 @@ const drawBackground = () => {
   context.fillStyle = "rgba(255, 255, 255, 0.2)";
   context.fillRect(0, canvas.height - 90, canvas.width, 90);
 
+  const cloudOffset = gameState.isRunning
+    ? (gameState.lastTime * 0.02) % canvas.width
+    : 0;
+  context.fillStyle = "rgba(255, 255, 255, 0.85)";
+  for (let index = -1; index < 3; index += 1) {
+    const cloudX = index * 170 + 80 - cloudOffset;
+    const cloudY = 70 + (index % 2 === 0 ? 20 : 0);
+    context.beginPath();
+    context.arc(cloudX, cloudY, 18, 0, Math.PI * 2);
+    context.arc(cloudX + 20, cloudY - 8, 14, 0, Math.PI * 2);
+    context.arc(cloudX + 38, cloudY, 17, 0, Math.PI * 2);
+    context.fill();
+  }
+
+  context.fillStyle = "#84b8d6";
+  context.beginPath();
+  context.moveTo(0, canvas.height - 90);
+  context.lineTo(65, canvas.height - 150);
+  context.lineTo(125, canvas.height - 90);
+  context.lineTo(190, canvas.height - 145);
+  context.lineTo(250, canvas.height - 90);
+  context.lineTo(canvas.width, canvas.height - 90);
+  context.closePath();
+  context.fill();
+
   context.fillStyle = "#fefefe";
   context.fillRect(0, canvas.height - 35, canvas.width, 35);
+
+  context.fillStyle = "#76cc7e";
+  for (let bladeX = 0; bladeX < canvas.width; bladeX += 16) {
+    context.beginPath();
+    context.moveTo(bladeX, canvas.height - 35);
+    context.lineTo(bladeX + 4, canvas.height - 43);
+    context.lineTo(bladeX + 8, canvas.height - 35);
+    context.fill();
+  }
 };
 
 const drawBird = () => {
@@ -91,6 +125,32 @@ const drawBird = () => {
   context.fillStyle = "#1b2a36";
   context.beginPath();
   context.arc(bird.x - 5, bird.y - 4, 2.5, 0, Math.PI * 2);
+  context.fill();
+
+  context.fillStyle = "#fff4d6";
+  context.beginPath();
+  context.ellipse(
+    bird.x - 4,
+    bird.y + 2,
+    bird.radius / 2.8,
+    bird.radius / 2,
+    Math.PI / 8,
+    0,
+    Math.PI * 2
+  );
+  context.fill();
+
+  context.fillStyle = "#e8a81c";
+  context.beginPath();
+  context.ellipse(
+    bird.x - 1,
+    bird.y + 3,
+    bird.radius / 2.2,
+    bird.radius / 3,
+    -Math.PI / 6,
+    0,
+    Math.PI * 2
+  );
   context.fill();
 };
 
@@ -110,6 +170,14 @@ const drawPipes = () => {
     context.fillStyle = "rgba(0, 0, 0, 0.15)";
     context.fillRect(pipe.x + 6, 0, 10, pipe.top);
     context.fillRect(pipe.x + 6, bottomY, 10, canvas.height - bottomY);
+
+    context.fillStyle = "#48b880";
+    context.fillRect(pipe.x - 4, pipe.top - 16, gameState.pipeWidth + 8, 16);
+    context.fillRect(pipe.x - 4, bottomY, gameState.pipeWidth + 8, 16);
+
+    context.fillStyle = "rgba(255, 255, 255, 0.2)";
+    context.fillRect(pipe.x + 20, 0, 6, pipe.top);
+    context.fillRect(pipe.x + 20, bottomY, 6, canvas.height - bottomY);
   });
 };
 
