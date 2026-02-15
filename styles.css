@@ -63,21 +63,21 @@ body {
   pointer-events: none;
 }
 
-h1 {
+.hud-panel h1 {
   margin: 0 0 0.5rem;
   font-size: clamp(1.4rem, 1.8vw, 1.9rem);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
-p {
+.hud-panel p {
   margin: 0 0 0.95rem;
   color: var(--text-secondary);
   line-height: 1.5;
   font-size: 0.96rem;
 }
 
-strong {
+.hud-panel strong {
   color: #f3f9ff;
 }
 
@@ -108,7 +108,7 @@ strong {
   letter-spacing: 0.02em;
 }
 
-button {
+.restart-btn {
   margin-top: 1rem;
   width: 100%;
   padding: 0.72rem;
@@ -123,21 +123,21 @@ button {
   transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
 }
 
-button:hover {
+.restart-btn:hover {
   filter: brightness(1.08);
   box-shadow: 0 8px 18px rgba(30, 139, 242, 0.35);
 }
 
-button:active {
+.restart-btn:active {
   transform: translateY(1px) scale(0.996);
 }
 
-button:focus-visible {
+.restart-btn:focus-visible {
   outline: 2px solid rgba(181, 248, 255, 0.9);
   outline-offset: 2px;
 }
 
-canvas {
+.game-canvas {
   width: min(100%, 1100px);
   border-radius: 14px;
   border: 1px solid rgba(132, 218, 255, 0.27);
@@ -153,13 +153,13 @@ canvas {
     grid-template-columns: 1fr;
   }
 
-  canvas {
+  .game-canvas {
     width: 100%;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  button {
+  .restart-btn {
     transition: none;
   }
 }
