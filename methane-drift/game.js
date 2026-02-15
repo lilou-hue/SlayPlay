@@ -338,7 +338,15 @@ window.addEventListener('keydown', (event) => {
   }
 });
 
-canvas.addEventListener('pointerdown', pulse);
+canvas.addEventListener('pointerdown', (event) => {
+  event.preventDefault();
+  pulse();
+});
+
+canvas.addEventListener('dblclick', (event) => {
+  event.preventDefault();
+});
+
 restartBtn.addEventListener('click', resetGame);
 
 resetGame();
