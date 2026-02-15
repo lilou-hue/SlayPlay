@@ -1207,7 +1207,32 @@ function drawText(dt) {
     ctx.fillText('Paused', world.width / 2, world.height / 2 - 10);
     ctx.fillStyle = 'rgba(180, 210, 255, 0.7)';
     ctx.font = '500 17px Inter, sans-serif';
-    ctx.fillText('Press Escape to resume', world.width / 2, world.height / 2 + 24);
+    ctx.fillText('Press Escape or tap X to resume', world.width / 2, world.height / 2 + 24);
+
+    /* X close button — top right */
+    const xBtnX = world.width - 56;
+    const xBtnY = 16;
+    const xBtnSize = 40;
+    ctx.beginPath();
+    ctx.roundRect(xBtnX, xBtnY, xBtnSize, xBtnSize, 10);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(200, 220, 255, 0.3)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(220, 240, 255, 0.8)';
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    const cx = xBtnX + xBtnSize / 2;
+    const cy = xBtnY + xBtnSize / 2;
+    ctx.beginPath();
+    ctx.moveTo(cx - 8, cy - 8);
+    ctx.lineTo(cx + 8, cy + 8);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx + 8, cy - 8);
+    ctx.lineTo(cx - 8, cy + 8);
+    ctx.stroke();
   }
 
   if (world.state === STATE.GAMEOVER) {
@@ -1261,6 +1286,33 @@ function drawCanvasHUD() {
   ctx.font = '500 14px Inter, sans-serif';
   ctx.fillStyle = densityColor;
   ctx.fillText(world.densityLabel, 20, 56);
+
+  /* Symbiosis button — bottom left */
+  const btnX = 20;
+  const btnY = world.height - 58;
+  const btnW = 110;
+  const btnH = 38;
+  const ready = glider.symbiosisCharge >= 1 && glider.symbiosisTimer <= 0;
+  const phasing = glider.symbiosisTimer > 0;
+
+  ctx.beginPath();
+  ctx.roundRect(btnX, btnY, btnW, btnH, 10);
+  if (phasing) {
+    ctx.fillStyle = 'rgba(130, 255, 240, 0.25)';
+  } else if (ready) {
+    ctx.fillStyle = 'rgba(130, 255, 200, 0.2)';
+  } else {
+    ctx.fillStyle = 'rgba(80, 100, 140, 0.15)';
+  }
+  ctx.fill();
+  ctx.strokeStyle = ready ? 'rgba(130, 255, 200, 0.5)' : phasing ? 'rgba(130, 255, 240, 0.4)' : 'rgba(120, 150, 200, 0.2)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.textAlign = 'center';
+  ctx.font = '600 14px Inter, sans-serif';
+  ctx.fillStyle = phasing ? 'rgba(130, 255, 240, 0.9)' : ready ? 'rgba(130, 255, 200, 0.85)' : 'rgba(160, 180, 210, 0.4)';
+  ctx.fillText(phasing ? 'Phasing' : ready ? 'Symbiosis' : 'Charging', btnX + btnW / 2, btnY + btnH / 2 + 5);
 
   /* Symbiosis status — top right */
   ctx.textAlign = 'right';
@@ -1373,8 +1425,44 @@ window.addEventListener('keydown', (event) => {
   }
 });
 
+/* Convert pointer event to canvas game coordinates */
+function canvasCoords(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left) / rect.width * world.width,
+    y: (event.clientY - rect.top) / rect.height * world.height,
+  };
+}
+
 canvas.addEventListener('pointerdown', (event) => {
   event.preventDefault();
+  const pos = canvasCoords(event);
+
+  /* Pause X button hit test */
+  if (world.state === STATE.PAUSED) {
+    const xBtnX = world.width - 56;
+    const xBtnY = 16;
+    const xBtnSize = 40;
+    if (pos.x >= xBtnX && pos.x <= xBtnX + xBtnSize && pos.y >= xBtnY && pos.y <= xBtnY + xBtnSize) {
+      world.state = STATE.PLAYING;
+      lastTime = 0;
+      Audio.startDrone();
+      return;
+    }
+  }
+
+  /* Symbiosis button hit test during gameplay */
+  if (world.state === STATE.PLAYING) {
+    const btnX = 20;
+    const btnY = world.height - 58;
+    const btnW = 110;
+    const btnH = 38;
+    if (pos.x >= btnX && pos.x <= btnX + btnW && pos.y >= btnY && pos.y <= btnY + btnH) {
+      activateSymbiosis();
+      return;
+    }
+  }
+
   pulse();
 });
 
