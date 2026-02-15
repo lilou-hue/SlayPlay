@@ -33,25 +33,31 @@
     PLAYER_R: 13,
 
     // Descent
-    BASE_DESCENT: 75,
-    MAX_DESCENT: 270,
-    DESCENT_SCALE: 0.7,
+    BASE_DESCENT: 80,
+    MAX_DESCENT: 310,
+    DESCENT_SCALE: 0.85,
 
     // Lighting
     LIGHT_MAX: 175,
     LIGHT_MIN: 48,
-    LIGHT_DRAIN: 2.8,
-    LIGHT_RESTORE: 28,
+    LIGHT_DRAIN: 3.2,
+    LIGHT_DRAIN_SCALE: 0.018,
+    LIGHT_RESTORE: 25,
 
     // Cave
-    CAVE_BASE_W: 370,
-    CAVE_MIN_W: 210,
-    CAVE_NARROW: 0.35,
+    CAVE_BASE_W: 360,
+    CAVE_MIN_W: 175,
+    CAVE_NARROW: 0.5,
 
     // Spawning
-    SHARD_INTERVAL: 115,
-    SPIKE_INTERVAL: 190,
-    SHADOW_INTERVAL: 420,
+    SHARD_INTERVAL: 120,
+    SHARD_SPREAD_SCALE: 0.4,
+    SPIKE_INTERVAL: 170,
+    SPIKE_TIGHTEN_SCALE: 0.6,
+    SHADOW_INTERVAL: 380,
+    SHADOW_TIGHTEN_SCALE: 1.2,
+    STALACTITE_INTERVAL: 600,
+    STALACTITE_START_SCORE: 15,
 
     // Zones
     ZONE_LEN: 40,
@@ -159,6 +165,11 @@
     playTone(400, 0.35, "sawtooth", 0.1, 80);
   }
 
+  function sfxStalactite() {
+    playTone(200, 0.15, "square", 0.08, 100);
+    playNoise(0.08, 0.06);
+  }
+
   function sfxZone() {
     const base = 400;
     for (let i = 0; i < 5; i++) {
@@ -238,7 +249,7 @@
   let player, lightRadius, pulseCooldown, pulseAnim;
   let descentSpeed, cameraY;
   let caveSeed;
-  let shards, spikes, shadows;
+  let shards, spikes, shadows, stalactites;
   let particles;
   let shakeX, shakeY, shakeTimer;
   let dyingTimer, chromAb;
@@ -249,8 +260,23 @@
   let prevZone;
   let timeDilation;
 
+  // ── Touch / Mobile State ───────────────────────────────────
+  let touchMoveDir = 0;       // -1 left, 0 none, 1 right
+  let touchActive = false;
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchStartTime = 0;
+  let isMobile = false;
+
   // Parallax layers
   let bgCrystals;
+
+  // Detect mobile/touch devices
+  function detectMobile() {
+    isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.innerWidth <= 768;
+  }
+  detectMobile();
+  window.addEventListener("resize", detectMobile);
 
   function loadBest() {
     try { return parseInt(localStorage.getItem("luminaBest")) || 0; } catch { return 0; }
@@ -352,7 +378,12 @@
     shards = [];
     spikes = [];
     shadows = [];
+    stalactites = [];
     particles = [];
+    lastShardY = 0;
+    lastSpikeY = 0;
+    lastShadowY = 0;
+    lastStalactiteY = 0;
     shakeX = 0; shakeY = 0; shakeTimer = 0;
     dyingTimer = 0;
     chromAb = 0;
@@ -383,7 +414,7 @@
   }
 
   // ── Procedural Generation ─────────────────────────────────
-  let lastShardY = 0, lastSpikeY = 0, lastShadowY = 0;
+  let lastShardY = 0, lastSpikeY = 0, lastShadowY = 0, lastStalactiteY = 0;
 
   function caveWalls(worldY) {
     const caveWidth = Math.max(CFG.CAVE_MIN_W, CFG.CAVE_BASE_W - score * CFG.CAVE_NARROW);
@@ -398,41 +429,72 @@
 
   function generateAhead(generateToY) {
     const worldBottom = cameraY + generateToY;
+    const difficultyMult = Math.min(score / 80, 1); // 0-1 over 80 score
 
-    // Shards
+    // Shards (spread further apart at higher scores)
     while (lastShardY < worldBottom) {
-      lastShardY += CFG.SHARD_INTERVAL + rand(-20, 20);
+      const shardSpacing = CFG.SHARD_INTERVAL + score * CFG.SHARD_SPREAD_SCALE;
+      lastShardY += shardSpacing + rand(-20, 20);
       const walls = caveWalls(lastShardY);
       const sx = rand(walls.left + 30, walls.right - 30);
       shards.push({ x: sx, y: lastShardY, collected: false, bobPhase: rand(0, Math.PI * 2), rot: 0 });
     }
 
-    // Spikes
+    // Spikes (spawn closer together, some oscillate at higher scores)
     while (lastSpikeY < worldBottom) {
-      lastSpikeY += CFG.SPIKE_INTERVAL + rand(-40, 40);
+      const spikeSpacing = Math.max(80, CFG.SPIKE_INTERVAL - score * CFG.SPIKE_TIGHTEN_SCALE);
+      lastSpikeY += spikeSpacing + rand(-30, 30);
       const walls = caveWalls(lastSpikeY);
       const side = Math.random() < 0.5 ? "left" : "right";
       const baseX = side === "left" ? walls.left : walls.right;
-      const len = rand(25, 55);
+      const len = rand(25, 55 + difficultyMult * 20);
       const ang = side === "left" ? rand(-0.3, 0.5) : rand(Math.PI - 0.5, Math.PI + 0.3);
+      // Some spikes oscillate at higher difficulty
+      const oscillates = difficultyMult > 0.3 && Math.random() < difficultyMult * 0.4;
       spikes.push({
         x: baseX, y: lastSpikeY, length: len, angle: ang, side,
         tipX: baseX + Math.cos(ang) * len,
         tipY: lastSpikeY + Math.sin(ang) * len,
+        oscillates,
+        oscPhase: rand(0, Math.PI * 2),
+        oscSpeed: rand(1.5, 3.0),
+        oscAmp: rand(0.3, 0.6),
+        baseAngle: ang,
       });
     }
 
-    // Shadow creatures
+    // Shadow creatures (spawn more frequently, faster at higher scores)
     while (lastShadowY < worldBottom) {
-      lastShadowY += CFG.SHADOW_INTERVAL + rand(-60, 60);
+      const shadowSpacing = Math.max(200, CFG.SHADOW_INTERVAL - score * CFG.SHADOW_TIGHTEN_SCALE);
+      lastShadowY += shadowSpacing + rand(-60, 60);
       const walls = caveWalls(lastShadowY);
+      const speedBonus = difficultyMult * 40;
       shadows.push({
         x: rand(walls.left + 40, walls.right - 40),
         y: lastShadowY,
-        vx: rand(20, 50) * (Math.random() < 0.5 ? -1 : 1),
-        r: rand(16, 24),
+        vx: rand(20 + speedBonus, 50 + speedBonus) * (Math.random() < 0.5 ? -1 : 1),
+        r: rand(16, 24 + difficultyMult * 6),
         eyePhase: rand(0, Math.PI * 2),
       });
+    }
+
+    // Stalactites (falling rocks, start after score threshold)
+    if (score >= CFG.STALACTITE_START_SCORE) {
+      while (lastStalactiteY < worldBottom) {
+        const stalSpacing = Math.max(300, CFG.STALACTITE_INTERVAL - score * 2);
+        lastStalactiteY += stalSpacing + rand(-80, 80);
+        const walls = caveWalls(lastStalactiteY);
+        stalactites.push({
+          x: rand(walls.left + 30, walls.right - 30),
+          y: lastStalactiteY,
+          vy: 0,
+          falling: false,
+          shaking: false,
+          shakeTimer: 0,
+          size: rand(12, 22),
+          fallen: false,
+        });
+      }
     }
   }
 
@@ -441,6 +503,7 @@
     shards = shards.filter(s => s.y > cullY);
     spikes = spikes.filter(s => s.y > cullY);
     shadows = shadows.filter(s => s.y > cullY);
+    stalactites = stalactites.filter(s => s.y > cullY && !s.fallen);
   }
 
   // ── Input Handling ────────────────────────────────────────
@@ -462,16 +525,93 @@
     keys[e.code] = false;
   });
 
+  // ── Mobile Touch Controls ──────────────────────────────────
+  // Touch left third = move left, right third = move right, center = pulse
+  // Hold for movement, quick tap for pulse
+
+  function getTouchZone(clientX) {
+    const rect = canvas.getBoundingClientRect();
+    const relX = (clientX - rect.left) / rect.width;
+    if (relX < 0.33) return "left";
+    if (relX > 0.67) return "right";
+    return "center";
+  }
+
+  canvas.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    initAudio();
+    resumeAudio();
+
+    if (state === STATE.MENU || state === STATE.GAMEOVER) {
+      handleAction();
+      return;
+    }
+
+    const touch = e.touches[0];
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+    touchStartTime = performance.now();
+    touchActive = true;
+
+    const zone = getTouchZone(touch.clientX);
+    if (zone === "left") {
+      touchMoveDir = -1;
+    } else if (zone === "right") {
+      touchMoveDir = 1;
+    } else {
+      touchMoveDir = 0;
+    }
+  }, { passive: false });
+
+  canvas.addEventListener("touchmove", (e) => {
+    e.preventDefault();
+    if (!touchActive || state !== STATE.PLAYING) return;
+
+    const touch = e.touches[0];
+    const zone = getTouchZone(touch.clientX);
+    if (zone === "left") {
+      touchMoveDir = -1;
+    } else if (zone === "right") {
+      touchMoveDir = 1;
+    } else {
+      touchMoveDir = 0;
+    }
+  }, { passive: false });
+
+  canvas.addEventListener("touchend", (e) => {
+    e.preventDefault();
+    const elapsed = performance.now() - touchStartTime;
+
+    // Quick tap in center zone = pulse
+    if (elapsed < 250 && state === STATE.PLAYING) {
+      const zone = getTouchZone(touchStartX);
+      if (zone === "center") {
+        doPulse();
+      }
+    }
+
+    touchMoveDir = 0;
+    touchActive = false;
+
+    // If there are remaining touches, update direction
+    if (e.touches.length > 0) {
+      touchActive = true;
+      const touch = e.touches[0];
+      const zone = getTouchZone(touch.clientX);
+      if (zone === "left") touchMoveDir = -1;
+      else if (zone === "right") touchMoveDir = 1;
+      else touchMoveDir = 0;
+    }
+  }, { passive: false });
+
+  // Non-touch pointer for desktop
   canvas.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "touch") return; // Handled by touch events
     e.preventDefault();
     initAudio();
     resumeAudio();
     handleAction();
   });
-
-  canvas.addEventListener("touchstart", (e) => {
-    e.preventDefault();
-  }, { passive: false });
 
   restartBtn.addEventListener("click", () => {
     initAudio();
@@ -579,6 +719,8 @@
     let moveX = 0;
     if (keys["ArrowLeft"] || keys["KeyA"]) moveX = -1;
     if (keys["ArrowRight"] || keys["KeyD"]) moveX = 1;
+    // Touch overrides keyboard if active
+    if (touchActive && touchMoveDir !== 0) moveX = touchMoveDir;
 
     player.vx = moveX * CFG.PLAYER_SPEED;
     player.vy += CFG.GRAVITY * adt;
@@ -619,7 +761,7 @@
     pulseAnim = Math.max(0, pulseAnim - dt * 4);
 
     // ─ Light drain ─
-    const drainRate = CFG.LIGHT_DRAIN + score * 0.008;
+    const drainRate = CFG.LIGHT_DRAIN + score * CFG.LIGHT_DRAIN_SCALE;
     lightRadius = Math.max(CFG.LIGHT_MIN, lightRadius - drainRate * adt);
 
     // ─ Zone check ─
@@ -677,19 +819,31 @@
     }
 
     // ─ Shadow creature update & collision ─
+    const aggroBoost = Math.min(score / 60, 1); // 0-1 over 60 score
     for (const sh of shadows) {
       const screenSY = sh.y - cameraY;
       if (screenSY < -100 || screenSY > CFG.H + 100) continue;
 
       const dToPlayer = dist(player.x, player.y, sh.x, sh.y);
 
-      // AI: flee from strong light, approach in dim light
-      if (lightRadius > 110 && dToPlayer < lightRadius * 1.2) {
+      // AI: flee from strong light, approach in dim light (more aggressive over time)
+      const fleeThreshold = 110 - aggroBoost * 25;    // harder to scare
+      const chaseThreshold = 80 + aggroBoost * 20;     // chases earlier
+      const chaseSpeed = 60 + aggroBoost * 50;
+      const fleeSpeed = 80 - aggroBoost * 15;
+
+      if (lightRadius > fleeThreshold && dToPlayer < lightRadius * 1.2) {
         const flee = (player.x < sh.x) ? 1 : -1;
-        sh.vx = lerp(sh.vx, flee * 80, adt * 2);
-      } else if (lightRadius < 80) {
+        sh.vx = lerp(sh.vx, flee * fleeSpeed, adt * 2);
+      } else if (lightRadius < chaseThreshold) {
         const chase = (player.x < sh.x) ? -1 : 1;
-        sh.vx = lerp(sh.vx, chase * 60, adt * 1.5);
+        sh.vx = lerp(sh.vx, chase * chaseSpeed, adt * (1.5 + aggroBoost));
+      }
+
+      // Vertical chase at high difficulty
+      if (aggroBoost > 0.4 && lightRadius < chaseThreshold && dToPlayer < 200) {
+        const chaseY = (player.y < sh.y) ? -1 : 1;
+        sh.y += chaseY * chaseSpeed * 0.3 * adt;
       }
 
       sh.x += sh.vx * adt;
@@ -709,6 +863,57 @@
 
       // Collision
       if (dToPlayer < CFG.PLAYER_R + sh.r) {
+        startDeath();
+        return;
+      }
+    }
+
+    // ─ Update oscillating spikes ─
+    for (const sp of spikes) {
+      if (!sp.oscillates) continue;
+      sp.oscPhase += sp.oscSpeed * adt;
+      const newAngle = sp.baseAngle + Math.sin(sp.oscPhase) * sp.oscAmp;
+      sp.angle = newAngle;
+      sp.tipX = sp.x + Math.cos(newAngle) * sp.length;
+      sp.tipY = sp.y + Math.sin(newAngle) * sp.length;
+    }
+
+    // ─ Stalactite update & collision ─
+    for (const st of stalactites) {
+      const screenSY = st.y - cameraY;
+      if (screenSY < -100 || screenSY > CFG.H + 150) continue;
+
+      const dToPlayer = dist(player.x, player.y, st.x, st.y);
+
+      // Start shaking when player is close horizontally
+      if (!st.falling && !st.shaking && Math.abs(player.x - st.x) < 50 && player.y > st.y - 100 && player.y < st.y + 200) {
+        st.shaking = true;
+        st.shakeTimer = 0.6;
+        sfxStalactite();
+      }
+
+      // Shake countdown then fall
+      if (st.shaking && !st.falling) {
+        st.shakeTimer -= dt;
+        if (st.shakeTimer <= 0) {
+          st.falling = true;
+          st.shaking = false;
+          st.vy = 0;
+        }
+      }
+
+      // Falling physics
+      if (st.falling) {
+        st.vy += 350 * dt;
+        st.y += st.vy * dt;
+        if (st.y > cameraY + CFG.H + 100) {
+          st.fallen = true;
+          continue;
+        }
+      }
+
+      // Collision
+      if (dToPlayer < CFG.PLAYER_R + st.size * 0.5) {
         startDeath();
         return;
       }
@@ -834,6 +1039,9 @@
     // ─ Shadow creatures ─
     drawShadows(sctx, pal);
 
+    // ─ Stalactites ─
+    drawStalactites(sctx, pal);
+
     // ─ Player ─
     if (state !== STATE.DYING || dyingTimer > 0.2) {
       drawPlayer(sctx, pal);
@@ -940,6 +1148,7 @@
     if (state === STATE.GAMEOVER) drawGameOver(ctx, pal);
     if (state === STATE.PLAYING && zoneAnnounceTmr > 0) drawZoneAnnounce(ctx, pal);
     if (state === STATE.PLAYING) drawLightMeter(ctx, pal);
+    if (state === STATE.PLAYING && isMobile) drawTouchGuide(ctx, pal);
   }
 
   // ── Sub-Renderers ─────────────────────────────────────────
@@ -1214,6 +1423,49 @@
     }
   }
 
+  function drawStalactites(c, pal) {
+    const topY = cameraY;
+    for (const st of stalactites) {
+      const sy = st.y - topY;
+      if (sy < -60 || sy > CFG.H + 60) continue;
+
+      const shakeOff = st.shaking ? rand(-2, 2) : 0;
+      const sz = st.size;
+
+      c.save();
+      c.translate(st.x + shakeOff, sy);
+
+      // Stalactite body (inverted triangle)
+      c.beginPath();
+      c.moveTo(-sz * 0.5, -sz * 0.3);
+      c.lineTo(0, sz);
+      c.lineTo(sz * 0.5, -sz * 0.3);
+      c.closePath();
+
+      const sg = c.createLinearGradient(0, -sz * 0.3, 0, sz);
+      sg.addColorStop(0, rgb(pal.wall, 0.9));
+      sg.addColorStop(0.7, rgb(pal.crystal, 0.5));
+      sg.addColorStop(1, rgb([255, 255, 255], 0.7));
+      c.fillStyle = sg;
+      c.fill();
+
+      c.strokeStyle = rgb(pal.crystal, 0.3);
+      c.lineWidth = 1;
+      c.stroke();
+
+      // Warning glow when shaking
+      if (st.shaking) {
+        const wg = c.createRadialGradient(0, sz * 0.3, 0, 0, sz * 0.3, sz * 1.5);
+        wg.addColorStop(0, "rgba(255,100,50,0.3)");
+        wg.addColorStop(1, "rgba(255,100,50,0)");
+        c.fillStyle = wg;
+        c.fillRect(-sz * 1.5, -sz, sz * 3, sz * 3);
+      }
+
+      c.restore();
+    }
+  }
+
   function drawPlayer(c, pal) {
     const screenY = player.y - cameraY;
     const t = performance.now() / 1000;
@@ -1407,12 +1659,16 @@
     const promptAlpha = 0.4 + Math.sin(t * 3) * 0.3;
     c.font = "15px 'Trebuchet MS', sans-serif";
     c.fillStyle = rgb([200, 210, 250], promptAlpha);
-    c.fillText("Press Space or Tap to Begin", CFG.W / 2, CFG.H * 0.55);
+    c.fillText(isMobile ? "Tap to Begin" : "Press Space or Tap to Begin", CFG.W / 2, CFG.H * 0.55);
 
     // Controls info
     c.font = "13px 'Trebuchet MS', sans-serif";
     c.fillStyle = rgb([160, 170, 210], 0.5);
-    c.fillText("\u2190 \u2192  Move     Space  Pulse Light", CFG.W / 2, CFG.H * 0.65);
+    if (isMobile) {
+      c.fillText("Touch Left/Right to Move \u2022 Tap Center to Pulse", CFG.W / 2, CFG.H * 0.65);
+    } else {
+      c.fillText("\u2190 \u2192  Move     Space  Pulse Light", CFG.W / 2, CFG.H * 0.65);
+    }
 
     // Animated player preview
     const previewY = CFG.H * 0.46;
@@ -1504,7 +1760,7 @@
     const promptAlpha = 0.35 + Math.sin(t * 3) * 0.25;
     c.font = "14px 'Trebuchet MS', sans-serif";
     c.fillStyle = rgb([200, 210, 250], promptAlpha);
-    c.fillText("Press Space or Tap to Restart", CFG.W / 2, CFG.H * 0.63);
+    c.fillText(isMobile ? "Tap to Restart" : "Press Space or Tap to Restart", CFG.W / 2, CFG.H * 0.63);
   }
 
   function drawZoneAnnounce(c, pal) {
@@ -1520,6 +1776,41 @@
     c.fillStyle = rgb(pal.crystal, 0.9);
     c.fillText(zoneAnnounceName, CFG.W / 2, CFG.H * 0.15);
     c.shadowBlur = 0;
+
+    c.globalAlpha = 1;
+    c.restore();
+  }
+
+  function drawTouchGuide(c, pal) {
+    // Subtle touch zone hints at bottom of screen
+    const guideAlpha = touchActive ? 0.15 : 0.06;
+    const y = CFG.H - 60;
+
+    c.save();
+    c.globalAlpha = guideAlpha;
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    c.font = "22px 'Trebuchet MS', sans-serif";
+    c.fillStyle = rgb([200, 210, 250], 1);
+
+    // Left arrow
+    c.fillText("\u25C0", CFG.W * 0.15, y);
+    // Right arrow
+    c.fillText("\u25B6", CFG.W * 0.85, y);
+    // Center pulse icon
+    c.font = "14px 'Trebuchet MS', sans-serif";
+    c.fillText("PULSE", CFG.W * 0.5, y);
+
+    // Active zone highlight
+    if (touchActive && touchMoveDir !== 0) {
+      c.globalAlpha = 0.06;
+      c.fillStyle = rgb(pal.crystal, 1);
+      if (touchMoveDir === -1) {
+        c.fillRect(0, 0, CFG.W * 0.33, CFG.H);
+      } else {
+        c.fillRect(CFG.W * 0.67, 0, CFG.W * 0.33, CFG.H);
+      }
+    }
 
     c.globalAlpha = 1;
     c.restore();
