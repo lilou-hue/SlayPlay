@@ -202,6 +202,9 @@ function onFullscreenChange() {
     lastTime = 0;
     Audio.stopDrone();
   }
+  /* Update button label */
+  const fsBtn = document.getElementById('fullscreenBtn');
+  if (fsBtn) fsBtn.textContent = isFullscreen ? 'Exit Fullscreen' : 'Fullscreen';
   /* Invalidate cached gradient since canvas size may change */
   cachedBgZone = -1;
 }
@@ -442,19 +445,25 @@ function spawnCorridor() {
 }
 
 /* --- Collision --- */
+/* effectiveY accounts for the visual wobble so hitbox matches what the player sees */
+function obstacleVisualY(obstacle) {
+  return obstacle.y + Math.sin(obstacle.pulse) * 4;
+}
+
 function checkCollision(obstacle) {
   const gx = glider.x;
   const gy = glider.y;
+  const oy = obstacleVisualY(obstacle);
   const dx = Math.abs(gx - obstacle.x);
-  const dy = Math.abs(gy - obstacle.y);
+  const dy = Math.abs(gy - oy);
   if (obstacle.type === 'spire') {
     /* Crystal narrows toward the tip — use tapered hitbox */
-    const t = (gy - (obstacle.y - 130)) / 260; /* 0=top, 1=bottom */
+    const t = (gy - (oy - 130)) / 260; /* 0=top, 1=bottom */
     const halfW = 4 + Math.max(0, Math.min(1, t)) * 18; /* 4px at tip, 22px at base */
     return dx < halfW + 12 && dy < 120;
   }
   if (obstacle.type === 'school') return dx < 30 && dy < 28;
-  if (obstacle.type === 'geyser') return dx < 18 && gy > obstacle.y - 115;
+  if (obstacle.type === 'geyser') return dx < 18 && gy > oy - 115 && gy < oy + 115;
   /* Storm: circle collision */
   const stormR = 52 + Math.sin(obstacle.pulse) * 8;
   return dx * dx + dy * dy < (stormR + 8) * (stormR + 8);
@@ -463,8 +472,9 @@ function checkCollision(obstacle) {
 function nearMissDistance(obstacle) {
   const gx = glider.x;
   const gy = glider.y;
+  const oy = obstacleVisualY(obstacle);
   const dx = Math.abs(gx - obstacle.x);
-  const dy = Math.abs(gy - obstacle.y);
+  const dy = Math.abs(gy - oy);
   if (obstacle.type === 'spire') return dx < 40 ? Math.max(0, 120 - dy) : 0;
   if (obstacle.type === 'school') return Math.max(0, 38 - dy);
   if (obstacle.type === 'geyser') return dx < 35 ? Math.max(0, 18 - dx) : 100;
@@ -1374,6 +1384,18 @@ if (muteBtn) {
   muteBtn.addEventListener('click', () => {
     const muted = Audio.toggle();
     muteBtn.textContent = muted ? 'Sound: OFF' : 'Sound: ON';
+  });
+}
+
+/* Fullscreen toggle button */
+const fullscreenBtn = document.getElementById('fullscreenBtn');
+if (fullscreenBtn) {
+  fullscreenBtn.addEventListener('click', () => {
+    if (isFullscreen) {
+      exitFullscreen();
+    } else {
+      enterFullscreen();
+    }
   });
 }
 
