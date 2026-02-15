@@ -236,13 +236,14 @@ window.addEventListener("keydown", (event) => {
   }
 });
 
-canvas.addEventListener("pointerdown", (event) => {
+canvas.addEventListener("touchstart", (event) => {
   event.preventDefault();
   flap();
-});
+}, { passive: false });
 
-canvas.addEventListener("dblclick", (event) => {
+canvas.addEventListener("mousedown", (event) => {
   event.preventDefault();
+  flap();
 });
 
 restartButton.addEventListener("click", () => {

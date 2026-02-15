@@ -161,7 +161,7 @@ body {
     inset 0 -20px 70px rgba(97, 119, 255, 0.08),
     0 22px 50px rgba(0, 0, 0, 0.4);
   background: #050716;
-  touch-action: manipulation;
+  touch-action: none;
   user-select: none;
   -webkit-user-select: none;
 }

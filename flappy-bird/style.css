@@ -68,7 +68,7 @@ canvas {
   background: linear-gradient(180deg, #7bd0ff, #d7f3ff 65%, #7be495 100%);
   border-radius: 12px;
   border: 3px solid #1c4966;
-  touch-action: manipulation;
+  touch-action: none;
   user-select: none;
   -webkit-user-select: none;
 }
