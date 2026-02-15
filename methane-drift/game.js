@@ -172,6 +172,39 @@ const hazardTypes = ['spire', 'school', 'geyser', 'storm'];
 let lastTime = 0;
 let tutorialDone = false;
 let tutorialStep = 0;
+let isFullscreen = false;
+
+/* --- Fullscreen --- */
+function enterFullscreen() {
+  if (isFullscreen) return;
+  const el = canvas;
+  try {
+    if (el.requestFullscreen) el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+  } catch (e) { /* fullscreen not supported */ }
+}
+
+function exitFullscreen() {
+  try {
+    if (document.exitFullscreen) document.exitFullscreen();
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+  } catch (e) { /* */ }
+}
+
+document.addEventListener('fullscreenchange', onFullscreenChange);
+document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+
+function onFullscreenChange() {
+  const wasFullscreen = isFullscreen;
+  isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  if (wasFullscreen && !isFullscreen && world.state === STATE.PLAYING) {
+    world.state = STATE.PAUSED;
+    lastTime = 0;
+    Audio.stopDrone();
+  }
+  /* Invalidate cached gradient since canvas size may change */
+  cachedBgZone = -1;
+}
 
 /* --- Difficulty Helper --- */
 function getDifficulty(param) {
@@ -296,6 +329,7 @@ function pulse() {
   if (world.state === STATE.GAMEOVER) {
     resetGame();
     world.state = STATE.PLAYING;
+    enterFullscreen();
     Audio.startDrone();
     return;
   }
@@ -310,6 +344,7 @@ function pulse() {
       }
     }
     world.state = STATE.PLAYING;
+    enterFullscreen();
     Audio.startDrone();
     return;
   }
@@ -1187,6 +1222,41 @@ function drawText(dt) {
   }
 }
 
+function drawCanvasHUD() {
+  if (world.state !== STATE.PLAYING && world.state !== STATE.CRASHING) return;
+  ctx.save();
+  ctx.textAlign = 'left';
+
+  /* Score */
+  ctx.font = '600 28px Inter, sans-serif';
+  ctx.fillStyle = 'rgba(220, 240, 255, 0.85)';
+  ctx.fillText(String(world.score), 20, 36);
+
+  /* Atmosphere label */
+  const densityColor = world.densityLabel === 'Buoyant' ? 'rgba(130, 230, 200, 0.7)' :
+                       world.densityLabel === 'Dense' ? 'rgba(180, 180, 255, 0.7)' : 'rgba(255, 140, 140, 0.7)';
+  ctx.font = '500 14px Inter, sans-serif';
+  ctx.fillStyle = densityColor;
+  ctx.fillText(world.densityLabel, 20, 56);
+
+  /* Symbiosis status — top right */
+  ctx.textAlign = 'right';
+  const symLabel = glider.symbiosisTimer > 0 ? 'Phasing' : glider.symbiosisCharge >= 1 ? 'Symbiosis Ready' : 'Charging';
+  const symColor = glider.symbiosisTimer > 0 ? 'rgba(130, 255, 240, 0.8)' :
+                   glider.symbiosisCharge >= 1 ? 'rgba(130, 255, 200, 0.7)' : 'rgba(180, 200, 230, 0.4)';
+  ctx.fillStyle = symColor;
+  ctx.fillText(symLabel, world.width - 20, 36);
+
+  /* Combo */
+  if (world.combo > 0) {
+    ctx.fillStyle = 'rgba(180, 255, 230, 0.8)';
+    ctx.font = '600 16px Inter, sans-serif';
+    ctx.fillText(`Combo x${world.combo}`, world.width - 20, 56);
+  }
+
+  ctx.restore();
+}
+
 function drawWhiteFlash() {
   if (world.flashWhite > 0) {
     ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(0.5, world.flashWhite)})`;
@@ -1247,6 +1317,7 @@ function gameLoop(timestamp) {
   drawParticles();
   drawGlider();
   drawScorePop();
+  drawCanvasHUD();
   drawWhiteFlash();
   drawAnnouncements(dt);
   drawText(dt);
