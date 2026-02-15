@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lumina</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="game">
+      <header class="game__header">
+        <a href="/" class="back-link">&larr; Back to Games</a>
+        <h1>Lumina</h1>
+        <p>Arrow keys to move. Space to pulse light. Descend into the depths.</p>
+      </header>
+      <section class="game__panel">
+        <canvas id="gameCanvas" width="480" height="720" aria-label="Lumina game"></canvas>
+        <div class="game__hud">
+          <div class="hud__score">
+            <span>Depth</span>
+            <strong id="score">0</strong>
+          </div>
+          <div class="hud__score">
+            <span>Best</span>
+            <strong id="bestScore">0</strong>
+          </div>
+          <button id="muteButton" class="hud__mute" type="button" aria-label="Toggle sound">&#x1F50A;</button>
+          <button id="restartButton" class="hud__button" type="button">Restart</button>
+        </div>
+      </section>
+      <footer class="game__footer">
+        <p>Tip: Collect shards to keep your light alive &mdash; the darkness hungers.</p>
+      </footer>
+    </main>
+    <script src="game.js"></script>
+  </body>
+</html>
