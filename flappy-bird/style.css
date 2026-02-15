@@ -89,7 +89,7 @@ canvas {
 .game__hud {
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1fr 1fr auto auto;
   align-items: center;
   gap: 12px;
 }
@@ -133,6 +133,12 @@ canvas {
 .hud__button:active {
   transform: translateY(0);
   box-shadow: 0 2px 6px rgba(255, 183, 3, 0.2);
+}
+
+.hud__mute {
+  padding: 10px 12px;
+  font-size: 1.1rem;
+  line-height: 1;
 }
 
 .game__footer p {
