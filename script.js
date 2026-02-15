@@ -3,6 +3,30 @@ const context = canvas.getContext("2d");
 const scoreLabel = document.getElementById("score");
 const bestScoreLabel = document.getElementById("bestScore");
 const restartButton = document.getElementById("restartButton");
+const characterSelect = document.getElementById("characterSelect");
+
+const characterThemes = {
+  classic: {
+    body: "#ffcc4d",
+    beak: "#ff7b54",
+    eye: "#1b2a36",
+  },
+  ruby: {
+    body: "#ff6b6b",
+    beak: "#ffd166",
+    eye: "#2d132c",
+  },
+  mint: {
+    body: "#7ae582",
+    beak: "#ff9f1c",
+    eye: "#15324b",
+  },
+  violet: {
+    body: "#b392f0",
+    beak: "#ffb3c1",
+    eye: "#2b2d42",
+  },
+};
 
 const gameState = {
   gravity: 1800,
@@ -17,6 +41,7 @@ const gameState = {
   isRunning: false,
   isGameOver: false,
   lastTime: 0,
+  character: "classic",
 };
 
 const bird = {
@@ -34,6 +59,14 @@ const loadBestScore = () => {
     gameState.best = storedBest;
     bestScoreLabel.textContent = gameState.best;
   }
+};
+
+const loadCharacter = () => {
+  const storedCharacter = window.localStorage.getItem("flappyCharacter");
+  if (storedCharacter && characterThemes[storedCharacter]) {
+    gameState.character = storedCharacter;
+  }
+  characterSelect.value = gameState.character;
 };
 
 const saveBestScore = () => {
@@ -112,17 +145,19 @@ const drawBackground = () => {
 };
 
 const drawBird = () => {
-  context.fillStyle = "#ffcc4d";
+  const palette = characterThemes[gameState.character] || characterThemes.classic;
+
+  context.fillStyle = palette.body;
   context.beginPath();
   context.arc(bird.x, bird.y, bird.radius, 0, Math.PI * 2);
   context.fill();
 
-  context.fillStyle = "#ff7b54";
+  context.fillStyle = palette.beak;
   context.beginPath();
   context.arc(bird.x + 8, bird.y, bird.radius / 3, 0, Math.PI * 2);
   context.fill();
 
-  context.fillStyle = "#1b2a36";
+  context.fillStyle = palette.eye;
   context.beginPath();
   context.arc(bird.x - 5, bird.y - 4, 2.5, 0, Math.PI * 2);
   context.fill();
@@ -312,6 +347,16 @@ restartButton.addEventListener("click", () => {
   resetGame();
 });
 
+characterSelect.addEventListener("change", (event) => {
+  const selectedCharacter = event.target.value;
+  if (characterThemes[selectedCharacter]) {
+    gameState.character = selectedCharacter;
+    window.localStorage.setItem("flappyCharacter", selectedCharacter);
+    draw();
+  }
+});
+
 loadBestScore();
+loadCharacter();
 resetGame();
 requestAnimationFrame(loop);
