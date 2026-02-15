@@ -11,6 +11,7 @@ const Audio = (() => {
   let droneGain = null;
   let noiseOsc = null;
   let noiseGain = null;
+  let droneStopId = 0; /* generation counter to prevent stale timeout races */
 
   function init() {
     try {
@@ -153,6 +154,16 @@ const Audio = (() => {
 
   function startDrone() {
     if (!ctx) return;
+    /* Increment generation so any pending stopDrone timeout becomes stale */
+    droneStopId++;
+    /* Clean up any existing drone nodes before creating new ones */
+    try {
+      if (droneOsc) { droneOsc.stop(); droneOsc = null; }
+      if (noiseOsc) { noiseOsc.stop(); noiseOsc = null; }
+    } catch (e) { /* already stopped */ }
+    droneGain = null;
+    noiseGain = null;
+    droneFilter = null;
     try {
       droneOsc = ctx.createOscillator();
       droneOsc.type = 'sawtooth';
@@ -208,19 +219,32 @@ const Audio = (() => {
   function stopDrone() {
     try {
       if (droneGain && ctx) {
+        droneGain.gain.setValueAtTime(droneGain.gain.value, ctx.currentTime);
         droneGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
       }
       if (noiseGain && ctx) {
+        noiseGain.gain.setValueAtTime(noiseGain.gain.value, ctx.currentTime);
         noiseGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
       }
+      /* Capture the current generation; only clean up if no new drone was started */
+      const myId = droneStopId;
+      const oldDrone = droneOsc;
+      const oldNoise = noiseOsc;
+      const oldDroneGain = droneGain;
+      const oldNoiseGain = noiseGain;
+      const oldFilter = droneFilter;
       setTimeout(() => {
+        /* If startDrone was called in the meantime, myId !== droneStopId, so skip */
+        if (myId !== droneStopId) return;
         try {
-          if (droneOsc) { droneOsc.stop(); droneOsc = null; }
-          if (noiseOsc) { noiseOsc.stop(); noiseOsc = null; }
-        } catch (e) { /* */ }
-        droneGain = null;
-        noiseGain = null;
-        droneFilter = null;
+          if (oldDrone) { oldDrone.stop(); }
+          if (oldNoise) { oldNoise.stop(); }
+        } catch (e) { /* already stopped */ }
+        if (droneOsc === oldDrone) droneOsc = null;
+        if (noiseOsc === oldNoise) noiseOsc = null;
+        if (droneGain === oldDroneGain) droneGain = null;
+        if (noiseGain === oldNoiseGain) noiseGain = null;
+        if (droneFilter === oldFilter) droneFilter = null;
       }, 600);
     } catch (e) { /* */ }
   }
