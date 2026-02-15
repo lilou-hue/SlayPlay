@@ -118,7 +118,7 @@ const world = {
   score: 0,
   best: 0,
   atmosphereTimer: 0,
-  density: 0.85,
+  density: 0.72,
   densityLabel: 'Buoyant',
   obstacles: [],
   ambientFlash: 0,
@@ -287,7 +287,7 @@ function resetGame() {
   world.score = 0;
   world.state = STATE.MENU;
   world.atmosphereTimer = 0;
-  world.density = 0.85;
+  world.density = 0.72;
   world.densityLabel = 'Buoyant';
   world.obstacles = [];
   world.ambientFlash = 0;
@@ -475,7 +475,7 @@ function nearMissDistance(obstacle) {
   const oy = obstacleVisualY(obstacle);
   const dx = Math.abs(gx - obstacle.x);
   const dy = Math.abs(gy - oy);
-  if (obstacle.type === 'spire') return dx < 40 ? Math.max(0, 120 - dy) : 0;
+  if (obstacle.type === 'spire') return dx < 60 ? Math.max(0, 120 - dy) : 0;
   if (obstacle.type === 'school') return Math.max(0, 38 - dy);
   if (obstacle.type === 'geyser') return dx < 35 && gy > oy - 130 && gy < oy + 130 ? Math.max(0, 35 - dx) : 0;
   const stormR = 52 + Math.sin(obstacle.pulse) * 8;
@@ -518,6 +518,7 @@ function finishCrash() {
   if (!world.runStats.usedSymbiosis && world.score > (progress.noSymbiosisRecord || 0)) {
     progress.noSymbiosisRecord = world.score;
   }
+  if (world.combo > (progress.longestStreak || 0)) progress.longestStreak = world.combo;
   progress.crushingPhasesThisRun = world.runStats.crushingPhases;
   progress.nearMissesThisRun = world.runStats.nearMisses;
 
@@ -699,7 +700,7 @@ function update(dt, rawDt) {
     if (obstacle.y < 40) { obstacle.y = 40; obstacle.drift = Math.abs(obstacle.drift); }
     if (obstacle.y > world.height - 40) { obstacle.y = world.height - 40; obstacle.drift = -Math.abs(obstacle.drift); }
 
-    if (!obstacle.scored && obstacle.x + 40 < glider.x) {
+    if (!obstacle.scored && obstacle.x + 40 < glider.x && world.state === STATE.PLAYING) {
       obstacle.scored = true;
       world.score += 1;
       world.scorePop = 1.0;
