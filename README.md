@@ -4,13 +4,12 @@ A lightweight browser Flappy Bird clone where collisions no longer cause immedia
 
 ## Gameplay changes
 
-- The bird has HP (3 starting HP, 5 max). You only lose when HP reaches zero.
+- The bird has HP (3 max). You only lose when HP reaches zero.
 - Pipe, ceiling, or ground collisions remove 1 HP and trigger brief invulnerability.
 - Hearts restore 1 HP and there is an emergency chance to spawn a heart after taking damage.
 - Star pickups grant a random powerup:
   - **Shield**: temporary invulnerability.
   - **Slow Time**: pipes and pickups move slower.
-  - **Light Bird**: reduced gravity and bonus score per pipe.
 
 ## Run locally
 

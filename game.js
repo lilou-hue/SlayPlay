@@ -11,7 +11,7 @@ const flapForce = -6.9;
 const pipeWidth = 70;
 const pipeGap = 170;
 const basePipeSpeed = 2.35;
-const maxHp = 5;
+const maxHp = 3;
 
 const player = {
   x: 90,
@@ -39,7 +39,7 @@ function now() {
 function reset() {
   player.y = canvas.height / 2;
   player.velocity = 0;
-  player.hp = 3;
+  player.hp = maxHp;
   player.invulnUntil = 0;
   player.powerup = null;
   player.powerupUntil = 0;
@@ -94,8 +94,8 @@ function spawnPipe() {
 
   // Dynamic pickup chance: healing appears more often when player is hurt.
   const hpMissing = maxHp - player.hp;
-  const healChance = 0.08 + hpMissing * 0.06;
-  const powerChance = 0.12;
+  const healChance = Math.min(0.35, 0.08 + hpMissing * 0.1);
+  const powerChance = 0.14;
   const roll = Math.random();
 
   if (roll < healChance) {
@@ -114,7 +114,7 @@ function spawnPipe() {
 }
 
 function activatePowerup() {
-  const powers = ['Shield', 'Slow Time', 'Light Bird'];
+  const powers = ['Shield', 'Slow Time'];
   const selected = powers[Math.floor(Math.random() * powers.length)];
   player.powerup = selected;
   player.powerupUntil = now() + 7000;
@@ -133,7 +133,7 @@ function activePipeSpeed() {
 }
 
 function activeGravity() {
-  return hasActivePowerup('Light Bird') ? gravity * 0.72 : gravity;
+  return gravity;
 }
 
 function circleVsRect(circle, rect) {
@@ -215,7 +215,7 @@ function update() {
 
     if (!pipe.passed && pipe.x + pipeWidth < player.x) {
       pipe.passed = true;
-      score += hasActivePowerup('Light Bird') ? 2 : 1;
+      score += 1;
     }
   });
 
