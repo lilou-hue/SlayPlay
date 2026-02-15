@@ -3,33 +3,170 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Flappy Bird</title>
-    <link rel="stylesheet" href="style.css" />
+    <title>Game Arcade</title>
+    <style>
+      :root {
+        font-family: "Segoe UI", "Trebuchet MS", system-ui, sans-serif;
+        color-scheme: dark;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+        color: #f0f0f0;
+        padding: 2rem 1rem;
+      }
+
+      h1 {
+        font-size: 2.6rem;
+        margin-bottom: 0.3rem;
+        letter-spacing: 0.04em;
+        background: linear-gradient(90deg, #ffcc4d, #ff7b54, #ff4da6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .subtitle {
+        color: #aaa;
+        margin-bottom: 2.5rem;
+        font-size: 1.1rem;
+      }
+
+      .games-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        max-width: 760px;
+        width: 100%;
+      }
+
+      .game-card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        border-radius: 16px;
+        overflow: hidden;
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.22s ease, box-shadow 0.22s ease;
+      }
+
+      .game-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+      }
+
+      .game-card:active {
+        transform: translateY(0);
+      }
+
+      .card-preview {
+        height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 4rem;
+      }
+
+      .card-body {
+        padding: 1.2rem 1.4rem 1.4rem;
+        background: rgba(255, 255, 255, 0.06);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-top: none;
+        border-radius: 0 0 16px 16px;
+        flex: 1;
+      }
+
+      .card-body h2 {
+        font-size: 1.3rem;
+        margin-bottom: 0.4rem;
+      }
+
+      .card-body p {
+        color: #bbb;
+        font-size: 0.95rem;
+        line-height: 1.5;
+      }
+
+      .card-tag {
+        display: inline-block;
+        margin-top: 0.7rem;
+        padding: 0.25rem 0.7rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+      }
+
+      .flappy-preview {
+        background: linear-gradient(180deg, #7bd0ff, #d7f3ff 65%, #7be495 100%);
+      }
+
+      .flappy-tag {
+        background: rgba(61, 153, 112, 0.3);
+        color: #7be495;
+        border: 1px solid rgba(123, 228, 149, 0.3);
+      }
+
+      .methane-preview {
+        background: linear-gradient(180deg, #182550, #11153d, #040612);
+      }
+
+      .methane-tag {
+        background: rgba(23, 205, 211, 0.15);
+        color: #17cdd3;
+        border: 1px solid rgba(23, 205, 211, 0.3);
+      }
+
+      @media (max-width: 680px) {
+        .games-grid {
+          grid-template-columns: 1fr;
+        }
+
+        h1 {
+          font-size: 2rem;
+        }
+      }
+    </style>
   </head>
   <body>
-    <main class="game">
-      <header class="game__header">
-        <h1>Flappy Bird</h1>
-        <p>Press space or click/tap to flap. Avoid the pipes!</p>
-      </header>
-      <section class="game__panel">
-        <canvas id="gameCanvas" width="360" height="640" aria-label="Flappy Bird game"></canvas>
-        <div class="game__hud">
-          <div class="hud__score">
-            <span>Score</span>
-            <strong id="score">0</strong>
-          </div>
-          <div class="hud__score">
-            <span>Best</span>
-            <strong id="bestScore">0</strong>
-          </div>
-          <button id="restartButton" class="hud__button" type="button">Restart</button>
+    <h1>Game Arcade</h1>
+    <p class="subtitle">Pick a game and start playing</p>
+
+    <div class="games-grid">
+      <a href="/flappy-bird/" class="game-card">
+        <div class="card-preview flappy-preview">
+          <span>🐤</span>
         </div>
-      </section>
-      <footer class="game__footer">
-        <p>Tip: keep a steady rhythm to stay in the gap.</p>
-      </footer>
-    </main>
-    <script src="script.js"></script>
+        <div class="card-body">
+          <h2>Flappy Bird</h2>
+          <p>Tap to flap and navigate through the pipes. Classic arcade action!</p>
+          <span class="card-tag flappy-tag">Casual</span>
+        </div>
+      </a>
+
+      <a href="/methane-drift/" class="game-card">
+        <div class="card-preview methane-preview">
+          <span>🛸</span>
+        </div>
+        <div class="card-body">
+          <h2>Methane Drift</h2>
+          <p>Drift through an alien methane sky. Dodge hazards and activate symbiosis to survive.</p>
+          <span class="card-tag methane-tag">Sci-Fi</span>
+        </div>
+      </a>
+    </div>
   </body>
 </html>

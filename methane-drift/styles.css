@@ -63,6 +63,21 @@ body {
   pointer-events: none;
 }
 
+.back-link {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.back-link:hover {
+  opacity: 1;
+}
+
 .hud-panel h1 {
   margin: 0 0 0.5rem;
   font-size: clamp(1.4rem, 1.8vw, 1.9rem);

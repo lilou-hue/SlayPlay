@@ -31,6 +31,21 @@ body {
   text-align: center;
 }
 
+.back-link {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: #15324b;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.back-link:hover {
+  opacity: 1;
+}
+
 .game__header h1 {
   font-size: 2.1rem;
   margin-bottom: 4px;
