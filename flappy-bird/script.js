@@ -4,6 +4,77 @@ const scoreLabel = document.getElementById("score");
 const bestScoreLabel = document.getElementById("bestScore");
 const restartButton = document.getElementById("restartButton");
 
+/* --- Sound system (Web Audio API, procedural) --- */
+const SFX = (() => {
+  let ctx = null;
+
+  const getCtx = () => {
+    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === "suspended") ctx.resume();
+    return ctx;
+  };
+
+  const flap = () => {
+    const ac = getCtx();
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(420, ac.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(600, ac.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.25, ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.12);
+    osc.connect(gain).connect(ac.destination);
+    osc.start(ac.currentTime);
+    osc.stop(ac.currentTime + 0.12);
+  };
+
+  const score = () => {
+    const ac = getCtx();
+    /* Two-tone "ding" */
+    [660, 880].forEach((freq, i) => {
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.2, ac.currentTime + i * 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + i * 0.08 + 0.18);
+      osc.connect(gain).connect(ac.destination);
+      osc.start(ac.currentTime + i * 0.08);
+      osc.stop(ac.currentTime + i * 0.08 + 0.18);
+    });
+  };
+
+  const hit = () => {
+    const ac = getCtx();
+    /* Low thud */
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.type = "square";
+    osc.frequency.setValueAtTime(150, ac.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(40, ac.currentTime + 0.25);
+    gain.gain.setValueAtTime(0.3, ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.3);
+    osc.connect(gain).connect(ac.destination);
+    osc.start(ac.currentTime);
+    osc.stop(ac.currentTime + 0.3);
+
+    /* Noise burst */
+    const bufLen = ac.sampleRate * 0.12;
+    const buf = ac.createBuffer(1, bufLen, ac.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufLen; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufLen);
+    const noise = ac.createBufferSource();
+    const nGain = ac.createGain();
+    noise.buffer = buf;
+    nGain.gain.setValueAtTime(0.2, ac.currentTime);
+    nGain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.15);
+    noise.connect(nGain).connect(ac.destination);
+    noise.start(ac.currentTime);
+  };
+
+  return { flap, score, hit };
+})();
+
 const gameState = {
   gravity: 1800,
   lift: -520,
@@ -348,6 +419,7 @@ const updateScore = () => {
       gameState.score += 1;
       scoreLabel.textContent = gameState.score;
       gameState.scorePop = 1;
+      SFX.score();
     }
   });
 };
@@ -379,6 +451,7 @@ const update = (deltaSeconds) => {
     gameState.isGameOver = true;
     gameState.shakeTimer = 12;
     gameState.shakeIntensity = 6;
+    SFX.hit();
   }
 
   pipes.forEach((pipe) => {
@@ -391,6 +464,7 @@ const update = (deltaSeconds) => {
     gameState.isGameOver = true;
     gameState.shakeTimer = 12;
     gameState.shakeIntensity = 6;
+    SFX.hit();
   }
 
   if (gameState.isGameOver) {
@@ -477,6 +551,7 @@ const flap = () => {
   }
 
   bird.velocity = gameState.lift;
+  SFX.flap();
 };
 
 window.addEventListener("keydown", (event) => {
