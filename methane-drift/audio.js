@@ -205,14 +205,14 @@ const Audio = (() => {
 
   function updateDrone(density) {
     if (!droneOsc || !ctx) return;
-    const targetFreq = 40 + (1.2 - density) * 40;
-    droneOsc.frequency.linearRampToValueAtTime(
-      Math.max(30, targetFreq), ctx.currentTime + 0.5
-    );
+    const now = ctx.currentTime;
+    const targetFreq = Math.max(30, 40 + (1.2 - density) * 40);
+    droneOsc.frequency.setValueAtTime(droneOsc.frequency.value, now);
+    droneOsc.frequency.linearRampToValueAtTime(targetFreq, now + 0.5);
     if (droneFilter) {
-      droneFilter.frequency.linearRampToValueAtTime(
-        120 + (1.2 - density) * 80, ctx.currentTime + 0.5
-      );
+      const targetFilter = 120 + (1.2 - density) * 80;
+      droneFilter.frequency.setValueAtTime(droneFilter.frequency.value, now);
+      droneFilter.frequency.linearRampToValueAtTime(targetFilter, now + 0.5);
     }
   }
 
