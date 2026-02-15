@@ -17,6 +17,10 @@ const gameState = {
   isRunning: false,
   isGameOver: false,
   lastTime: 0,
+  shakeTimer: 0,
+  shakeIntensity: 0,
+  scorePop: 0,
+  lastScore: 0,
 };
 
 const bird = {
@@ -24,9 +28,28 @@ const bird = {
   y: canvas.height / 2,
   radius: 14,
   velocity: 0,
+  trail: [],
+  wingAngle: 0,
 };
 
 let pipes = [];
+let clouds = [];
+let windParticles = [];
+
+/* --- Parallax clouds --- */
+function initClouds() {
+  clouds = [];
+  for (let i = 0; i < 8; i += 1) {
+    clouds.push({
+      x: Math.random() * canvas.width,
+      y: 30 + Math.random() * (canvas.height * 0.5),
+      width: 40 + Math.random() * 60,
+      height: 16 + Math.random() * 20,
+      speed: 0.15 + Math.random() * 0.35,
+      alpha: 0.15 + Math.random() * 0.2,
+    });
+  }
+}
 
 const loadBestScore = () => {
   const storedBest = Number(window.localStorage.getItem("flappyBest"));
@@ -47,12 +70,20 @@ const saveBestScore = () => {
 const resetGame = () => {
   bird.y = canvas.height / 2;
   bird.velocity = 0;
+  bird.trail = [];
+  bird.wingAngle = 0;
   pipes = [];
+  windParticles = [];
   gameState.spawnTimer = 0;
   gameState.score = 0;
   gameState.isGameOver = false;
   gameState.isRunning = false;
+  gameState.shakeTimer = 0;
+  gameState.shakeIntensity = 0;
+  gameState.scorePop = 0;
+  gameState.lastScore = 0;
   scoreLabel.textContent = gameState.score;
+  initClouds();
   draw();
 };
 
@@ -69,59 +100,230 @@ const spawnPipe = () => {
   });
 };
 
+/* --- Wind particles for speed feel --- */
+const spawnWindParticle = () => {
+  windParticles.push({
+    x: canvas.width + 5,
+    y: Math.random() * canvas.height,
+    length: 8 + Math.random() * 18,
+    speed: 280 + Math.random() * 180,
+    alpha: 0.08 + Math.random() * 0.12,
+  });
+};
+
 const drawBackground = () => {
-  context.fillStyle = "rgba(255, 255, 255, 0.2)";
+  /* Sky gradient */
+  const skyGrad = context.createLinearGradient(0, 0, 0, canvas.height);
+  skyGrad.addColorStop(0, "#5cb8ff");
+  skyGrad.addColorStop(0.55, "#a8e0ff");
+  skyGrad.addColorStop(0.85, "#d4f0d4");
+  skyGrad.addColorStop(1, "#7be495");
+  context.fillStyle = skyGrad;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  /* Parallax clouds */
+  for (const cloud of clouds) {
+    context.fillStyle = `rgba(255, 255, 255, ${cloud.alpha})`;
+    context.beginPath();
+    context.ellipse(cloud.x, cloud.y, cloud.width / 2, cloud.height / 2, 0, 0, Math.PI * 2);
+    context.fill();
+    context.beginPath();
+    context.ellipse(cloud.x - cloud.width * 0.25, cloud.y + 4, cloud.width * 0.35, cloud.height * 0.4, 0, 0, Math.PI * 2);
+    context.fill();
+    context.beginPath();
+    context.ellipse(cloud.x + cloud.width * 0.25, cloud.y + 3, cloud.width * 0.3, cloud.height * 0.35, 0, 0, Math.PI * 2);
+    context.fill();
+  }
+
+  /* Ground layers */
+  context.fillStyle = "rgba(123, 228, 149, 0.5)";
   context.fillRect(0, canvas.height - 90, canvas.width, 90);
 
-  context.fillStyle = "#fefefe";
+  const groundGrad = context.createLinearGradient(0, canvas.height - 35, 0, canvas.height);
+  groundGrad.addColorStop(0, "#6cd47e");
+  groundGrad.addColorStop(1, "#4fb866");
+  context.fillStyle = groundGrad;
   context.fillRect(0, canvas.height - 35, canvas.width, 35);
 };
 
+/* --- Wind streaks for speed --- */
+const drawWind = () => {
+  for (const w of windParticles) {
+    context.strokeStyle = `rgba(255, 255, 255, ${w.alpha})`;
+    context.lineWidth = 1;
+    context.beginPath();
+    context.moveTo(w.x, w.y);
+    context.lineTo(w.x + w.length, w.y);
+    context.stroke();
+  }
+};
+
 const drawBird = () => {
-  context.fillStyle = "#ffcc4d";
+  context.save();
+  context.translate(bird.x, bird.y);
+
+  /* Tilt based on velocity: nose up when flapping, nose down when falling */
+  const tilt = Math.max(-0.5, Math.min(0.65, bird.velocity * 0.0012));
+  context.rotate(tilt);
+
+  /* Speed trail behind the bird */
+  for (let i = 0; i < bird.trail.length; i += 1) {
+    const t = bird.trail[i];
+    const age = 1 - i / bird.trail.length;
+    const alpha = age * 0.2;
+    const r = bird.radius * age * 0.7;
+    context.fillStyle = `rgba(255, 210, 80, ${alpha})`;
+    context.beginPath();
+    context.arc(t.x - bird.x, t.y - bird.y, r, 0, Math.PI * 2);
+    context.fill();
+  }
+
+  /* Body shadow */
+  context.fillStyle = "rgba(200, 140, 0, 0.25)";
   context.beginPath();
-  context.arc(bird.x, bird.y, bird.radius, 0, Math.PI * 2);
+  context.arc(1, 2, bird.radius + 1, 0, Math.PI * 2);
   context.fill();
 
+  /* Body */
+  const bodyGrad = context.createRadialGradient(-3, -3, 2, 0, 0, bird.radius);
+  bodyGrad.addColorStop(0, "#ffe066");
+  bodyGrad.addColorStop(0.7, "#ffcc4d");
+  bodyGrad.addColorStop(1, "#f0a030");
+  context.fillStyle = bodyGrad;
+  context.beginPath();
+  context.arc(0, 0, bird.radius, 0, Math.PI * 2);
+  context.fill();
+
+  /* Wing with flap animation */
+  bird.wingAngle += (bird.velocity < -100 ? 0.35 : -0.15);
+  bird.wingAngle = Math.max(-0.4, Math.min(0.5, bird.wingAngle));
+  const wingY = Math.sin(bird.wingAngle * 4) * 5;
+  context.fillStyle = "#f0a030";
+  context.beginPath();
+  context.ellipse(-6, wingY + 2, 8, 4, -0.3 + bird.wingAngle * 0.5, 0, Math.PI * 2);
+  context.fill();
+
+  /* Beak */
   context.fillStyle = "#ff7b54";
   context.beginPath();
-  context.arc(bird.x + 8, bird.y, bird.radius / 3, 0, Math.PI * 2);
+  context.moveTo(bird.radius - 2, -3);
+  context.lineTo(bird.radius + 8, 0);
+  context.lineTo(bird.radius - 2, 3);
+  context.closePath();
   context.fill();
 
+  /* Eye */
+  context.fillStyle = "#ffffff";
+  context.beginPath();
+  context.arc(-2, -5, 4, 0, Math.PI * 2);
+  context.fill();
   context.fillStyle = "#1b2a36";
   context.beginPath();
-  context.arc(bird.x - 5, bird.y - 4, 2.5, 0, Math.PI * 2);
+  context.arc(-1, -5, 2.2, 0, Math.PI * 2);
   context.fill();
+
+  /* Eye highlight */
+  context.fillStyle = "rgba(255, 255, 255, 0.8)";
+  context.beginPath();
+  context.arc(-3, -6.5, 1.2, 0, Math.PI * 2);
+  context.fill();
+
+  context.restore();
 };
 
 const drawPipes = () => {
   pipes.forEach((pipe) => {
-    context.fillStyle = "#3d9970";
-    context.fillRect(pipe.x, 0, gameState.pipeWidth, pipe.top);
+    /* Pipe cap dimensions */
+    const capW = gameState.pipeWidth + 10;
+    const capH = 18;
+    const capX = pipe.x - 5;
+
+    /* Top pipe body */
+    const topGrad = context.createLinearGradient(pipe.x, 0, pipe.x + gameState.pipeWidth, 0);
+    topGrad.addColorStop(0, "#2d8a5e");
+    topGrad.addColorStop(0.3, "#3da870");
+    topGrad.addColorStop(0.7, "#35966a");
+    topGrad.addColorStop(1, "#28774e");
+    context.fillStyle = topGrad;
+    context.fillRect(pipe.x, 0, gameState.pipeWidth, pipe.top - capH);
+
+    /* Top cap */
+    const capGrad = context.createLinearGradient(capX, 0, capX + capW, 0);
+    capGrad.addColorStop(0, "#2d8a5e");
+    capGrad.addColorStop(0.3, "#45b87a");
+    capGrad.addColorStop(0.7, "#3da870");
+    capGrad.addColorStop(1, "#28774e");
+    context.fillStyle = capGrad;
+    context.beginPath();
+    context.roundRect(capX, pipe.top - capH, capW, capH, [4, 4, 0, 0]);
+    context.fill();
+
+    /* Highlight stripe on top pipe */
+    context.fillStyle = "rgba(255, 255, 255, 0.12)";
+    context.fillRect(pipe.x + 8, 0, 6, pipe.top - capH);
 
     const bottomY = pipe.top + gameState.gap;
-    context.fillRect(
-      pipe.x,
-      bottomY,
-      gameState.pipeWidth,
-      canvas.height - bottomY
-    );
 
-    context.fillStyle = "rgba(0, 0, 0, 0.15)";
-    context.fillRect(pipe.x + 6, 0, 10, pipe.top);
-    context.fillRect(pipe.x + 6, bottomY, 10, canvas.height - bottomY);
+    /* Bottom pipe body */
+    context.fillStyle = topGrad;
+    context.fillRect(pipe.x, bottomY + capH, gameState.pipeWidth, canvas.height - bottomY - capH);
+
+    /* Bottom cap */
+    context.fillStyle = capGrad;
+    context.beginPath();
+    context.roundRect(capX, bottomY, capW, capH, [0, 0, 4, 4]);
+    context.fill();
+
+    /* Highlight stripe on bottom pipe */
+    context.fillStyle = "rgba(255, 255, 255, 0.12)";
+    context.fillRect(pipe.x + 8, bottomY + capH, 6, canvas.height - bottomY - capH);
+
+    /* Pipe shadow (inner edge) */
+    context.fillStyle = "rgba(0, 0, 0, 0.1)";
+    context.fillRect(pipe.x + gameState.pipeWidth - 8, 0, 8, pipe.top - capH);
+    context.fillRect(pipe.x + gameState.pipeWidth - 8, bottomY + capH, 8, canvas.height - bottomY - capH);
   });
 };
 
+/* --- Score pop animation --- */
+const drawScorePop = () => {
+  if (gameState.scorePop > 0) {
+    const scale = 1 + gameState.scorePop * 0.6;
+    const alpha = gameState.scorePop;
+    context.save();
+    context.translate(canvas.width / 2, canvas.height * 0.15);
+    context.scale(scale, scale);
+    context.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+    context.font = "bold 28px 'Trebuchet MS'";
+    context.textAlign = "center";
+    context.fillText(`+1`, 0, 0);
+    context.restore();
+    gameState.scorePop *= 0.88;
+    if (gameState.scorePop < 0.02) gameState.scorePop = 0;
+  }
+};
+
 const drawOverlay = (title, subtitle) => {
-  context.fillStyle = "rgba(0, 0, 0, 0.4)";
+  /* Soft vignette instead of flat overlay */
+  const vg = context.createRadialGradient(
+    canvas.width / 2, canvas.height / 2, canvas.height * 0.1,
+    canvas.width / 2, canvas.height / 2, canvas.height * 0.7
+  );
+  vg.addColorStop(0, "rgba(0, 0, 0, 0.25)");
+  vg.addColorStop(1, "rgba(0, 0, 0, 0.55)");
+  context.fillStyle = vg;
   context.fillRect(0, 0, canvas.width, canvas.height);
 
-  context.fillStyle = "#ffffff";
-  context.font = "bold 32px 'Trebuchet MS'";
+  /* Title with subtle shadow */
+  context.fillStyle = "rgba(0, 0, 0, 0.3)";
+  context.font = "bold 34px 'Trebuchet MS'";
   context.textAlign = "center";
+  context.fillText(title, canvas.width / 2 + 1, canvas.height / 2 - 15);
+
+  context.fillStyle = "#ffffff";
   context.fillText(title, canvas.width / 2, canvas.height / 2 - 16);
 
+  context.fillStyle = "rgba(255, 255, 255, 0.7)";
   context.font = "16px 'Trebuchet MS'";
   context.fillText(subtitle, canvas.width / 2, canvas.height / 2 + 18);
 };
@@ -145,6 +347,7 @@ const updateScore = () => {
       pipe.passed = true;
       gameState.score += 1;
       scoreLabel.textContent = gameState.score;
+      gameState.scorePop = 1;
     }
   });
 };
@@ -160,11 +363,22 @@ const update = (deltaSeconds) => {
     spawnPipe();
   }
 
+  /* Spawn wind particles periodically */
+  if (Math.random() < 0.3) {
+    spawnWindParticle();
+  }
+
   bird.velocity += gameState.gravity * deltaSeconds;
   bird.y += bird.velocity * deltaSeconds;
 
+  /* Record trail positions */
+  bird.trail.push({ x: bird.x, y: bird.y });
+  if (bird.trail.length > 8) bird.trail.shift();
+
   if (bird.y + bird.radius >= canvas.height || bird.y - bird.radius <= 0) {
     gameState.isGameOver = true;
+    gameState.shakeTimer = 12;
+    gameState.shakeIntensity = 6;
   }
 
   pipes.forEach((pipe) => {
@@ -175,6 +389,8 @@ const update = (deltaSeconds) => {
 
   if (pipes.some(detectCollision)) {
     gameState.isGameOver = true;
+    gameState.shakeTimer = 12;
+    gameState.shakeIntensity = 6;
   }
 
   if (gameState.isGameOver) {
@@ -182,13 +398,45 @@ const update = (deltaSeconds) => {
   }
 
   updateScore();
+
+  /* Update clouds */
+  for (const cloud of clouds) {
+    cloud.x -= cloud.speed * deltaSeconds * 60;
+    if (cloud.x < -cloud.width) {
+      cloud.x = canvas.width + cloud.width;
+      cloud.y = 30 + Math.random() * (canvas.height * 0.5);
+    }
+  }
+
+  /* Update wind particles */
+  windParticles.forEach((w) => {
+    w.x -= w.speed * deltaSeconds;
+  });
+  windParticles = windParticles.filter((w) => w.x + w.length > 0);
+
+  /* Decay screen shake */
+  if (gameState.shakeTimer > 0) {
+    gameState.shakeTimer -= 1;
+    gameState.shakeIntensity *= 0.82;
+  }
 };
 
 const draw = () => {
-  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.save();
+
+  /* Apply screen shake */
+  if (gameState.shakeTimer > 0) {
+    const sx = (Math.random() - 0.5) * gameState.shakeIntensity;
+    const sy = (Math.random() - 0.5) * gameState.shakeIntensity;
+    context.translate(sx, sy);
+  }
+
+  context.clearRect(-10, -10, canvas.width + 20, canvas.height + 20);
   drawBackground();
+  drawWind();
   drawPipes();
   drawBird();
+  drawScorePop();
 
   if (!gameState.isRunning && !gameState.isGameOver) {
     drawOverlay("Tap to start", "Keep the bird in the gaps.");
@@ -197,6 +445,8 @@ const draw = () => {
   if (gameState.isGameOver) {
     drawOverlay("Game Over", "Tap or press space to try again.");
   }
+
+  context.restore();
 };
 
 const loop = (timestamp) => {
