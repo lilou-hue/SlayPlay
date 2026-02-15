@@ -130,6 +130,16 @@
         border: 1px solid rgba(23, 205, 211, 0.3);
       }
 
+      .snake-preview {
+        background: linear-gradient(180deg, #0a2e1a, #051a0d, #020a05);
+      }
+
+      .snake-tag {
+        background: rgba(57, 255, 20, 0.15);
+        color: #39ff14;
+        border: 1px solid rgba(57, 255, 20, 0.3);
+      }
+
       @media (max-width: 680px) {
         .games-grid {
           grid-template-columns: 1fr;
@@ -165,6 +175,17 @@
           <h2>Methane Drift</h2>
           <p>Drift through an alien methane sky. Dodge hazards and activate symbiosis to survive.</p>
           <span class="card-tag methane-tag">Sci-Fi</span>
+        </div>
+      </a>
+
+      <a href="/snake/" class="game-card">
+        <div class="card-preview snake-preview">
+          <span>&#x1F40D;</span>
+        </div>
+        <div class="card-body">
+          <h2>Snake</h2>
+          <p>Guide the snake, eat to grow, and survive as the walls close in. Turn up the volume!</p>
+          <span class="card-tag snake-tag">Classic</span>
         </div>
       </a>
     </div>
