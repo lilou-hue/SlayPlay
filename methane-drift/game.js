@@ -5,20 +5,20 @@
 /* --- Configuration (all physics in per-second units) --- */
 const CONFIG = {
   gravity: 504,
-  pulseForce: -252,
-  scrollSpeed: 150,
+  pulseForce: -280,
+  scrollSpeed: 195,
   dampingPerSecond: 0.488,
-  atmosphereCycle: 7.0,
+  atmosphereCycle: 6.0,
   symbiosisDuration: 2.33,
-  baseSpawnRate: 1.08,
+  baseSpawnRate: 1.35,
   maxDt: 0.033,
   width: 960,
   height: 540,
   difficulty: {
-    scrollSpeed:     { start: 150, cap: 270, scaleScore: 100 },
-    spawnRate:       { start: 1.08, cap: 1.92, scaleScore: 100 },
-    obstacleDrift:   { start: 18, cap: 60, scaleScore: 100 },
-    atmosphereCycle: { start: 7.0, cap: 3.33, scaleScore: 100 },
+    scrollSpeed:     { start: 195, cap: 340, scaleScore: 100 },
+    spawnRate:       { start: 1.35, cap: 2.4, scaleScore: 100 },
+    obstacleDrift:   { start: 22, cap: 70, scaleScore: 100 },
+    atmosphereCycle: { start: 6.0, cap: 2.8, scaleScore: 100 },
   },
   zoneColors: [
     { bg1: '#1a2248', bg2: '#111540', bg3: '#0a0d2e', bg4: '#030410', hue: 220, name: 'Upper Atmosphere' },
@@ -445,19 +445,32 @@ function spawnCorridor() {
 function checkCollision(obstacle) {
   const gx = glider.x;
   const gy = glider.y;
-  if (obstacle.type === 'spire') return Math.abs(gx - obstacle.x) < 34 && Math.abs(gy - obstacle.y) < 110;
-  if (obstacle.type === 'school') return Math.abs(gx - obstacle.x) < 44 && Math.abs(gy - obstacle.y) < 42;
-  if (obstacle.type === 'geyser') return Math.abs(gx - obstacle.x) < 28 && gy > obstacle.y - 120;
-  return Math.abs(gx - obstacle.x) < 48 && Math.abs(gy - obstacle.y) < 72;
+  const dx = Math.abs(gx - obstacle.x);
+  const dy = Math.abs(gy - obstacle.y);
+  if (obstacle.type === 'spire') {
+    /* Crystal narrows toward the tip — use tapered hitbox */
+    const t = (gy - (obstacle.y - 130)) / 260; /* 0=top, 1=bottom */
+    const halfW = 4 + Math.max(0, Math.min(1, t)) * 18; /* 4px at tip, 22px at base */
+    return dx < halfW + 12 && dy < 120;
+  }
+  if (obstacle.type === 'school') return dx < 30 && dy < 28;
+  if (obstacle.type === 'geyser') return dx < 18 && gy > obstacle.y - 115;
+  /* Storm: circle collision */
+  const stormR = 52 + Math.sin(obstacle.pulse) * 8;
+  return dx * dx + dy * dy < (stormR + 8) * (stormR + 8);
 }
 
 function nearMissDistance(obstacle) {
   const gx = glider.x;
   const gy = glider.y;
-  if (obstacle.type === 'spire') return Math.max(0, Math.min(Math.abs(gx - obstacle.x) - 34, 0) + Math.max(0, 110 - Math.abs(gy - obstacle.y)));
-  if (obstacle.type === 'school') return Math.max(0, 42 - Math.abs(gy - obstacle.y));
-  if (obstacle.type === 'geyser') return Math.abs(gx - obstacle.x) < 50 ? Math.max(0, 28 - Math.abs(gx - obstacle.x)) : 100;
-  return Math.max(0, 72 - Math.abs(gy - obstacle.y));
+  const dx = Math.abs(gx - obstacle.x);
+  const dy = Math.abs(gy - obstacle.y);
+  if (obstacle.type === 'spire') return dx < 40 ? Math.max(0, 120 - dy) : 0;
+  if (obstacle.type === 'school') return Math.max(0, 38 - dy);
+  if (obstacle.type === 'geyser') return dx < 35 ? Math.max(0, 18 - dx) : 100;
+  const stormR = 52 + Math.sin(obstacle.pulse) * 8;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  return Math.max(0, (stormR + 20) - dist);
 }
 
 /* --- Crash --- */

@@ -35,6 +35,12 @@ const Audio = (() => {
 
   function isMuted() { return muted; }
 
+  function haptic(pattern) {
+    try {
+      if (navigator.vibrate) navigator.vibrate(pattern);
+    } catch (e) { /* haptic not available */ }
+  }
+
   function playTone(freq, duration, type, volume) {
     if (!ctx || muted) return;
     const osc = ctx.createOscillator();
@@ -76,16 +82,19 @@ const Audio = (() => {
   function pulse() {
     playTone(380, 0.08, 'sine', 0.10);
     setTimeout(() => playTone(480, 0.06, 'sine', 0.07), 20);
+    haptic(15);
   }
 
   function score() {
     playTone(660, 0.10, 'sine', 0.12);
     setTimeout(() => playTone(880, 0.12, 'sine', 0.09), 60);
+    haptic(10);
   }
 
   function crash() {
     playNoise(0.35, 0.25, 350);
     playTone(80, 0.4, 'sawtooth', 0.12);
+    haptic([40, 30, 80]);
   }
 
   function atmosphereShift(label) {
@@ -93,11 +102,14 @@ const Audio = (() => {
     if (label === 'Buoyant') {
       playTone(330, 0.25, 'sine', 0.08);
       setTimeout(() => playTone(440, 0.2, 'sine', 0.06), 100);
+      haptic(20);
     } else if (label === 'Dense') {
       playTone(180, 0.3, 'sine', 0.10);
+      haptic([20, 10, 20]);
     } else {
       playTone(90, 0.4, 'sawtooth', 0.12);
       setTimeout(() => playTone(65, 0.35, 'sine', 0.08), 50);
+      haptic([30, 15, 50]);
     }
   }
 
@@ -107,14 +119,17 @@ const Audio = (() => {
     playTone(520, 0.3, 'sine', 0.08);
     setTimeout(() => playTone(660, 0.25, 'sine', 0.06), 80);
     setTimeout(() => playTone(780, 0.2, 'sine', 0.05), 160);
+    haptic([15, 10, 15, 10, 25]);
   }
 
   function symbiosisEnd() {
     playNoise(0.2, 0.05, 800);
+    haptic(12);
   }
 
   function nearMiss() {
     playTone(1200, 0.04, 'square', 0.05);
+    haptic([8, 5, 8]);
   }
 
   function newHighScore() {
@@ -123,6 +138,7 @@ const Audio = (() => {
     setTimeout(() => playTone(659, 0.15, 'sine', 0.10), 120);
     setTimeout(() => playTone(784, 0.15, 'sine', 0.10), 240);
     setTimeout(() => playTone(1047, 0.25, 'sine', 0.12), 360);
+    haptic([20, 15, 20, 15, 40]);
   }
 
   function zoneChange() {
@@ -130,6 +146,7 @@ const Audio = (() => {
     playTone(220, 0.3, 'triangle', 0.08);
     setTimeout(() => playTone(330, 0.25, 'triangle', 0.07), 100);
     setTimeout(() => playTone(440, 0.3, 'triangle', 0.09), 200);
+    haptic([15, 10, 15, 10, 30]);
   }
 
   /* --- Ambient Drone --- */
