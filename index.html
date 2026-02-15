@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Methane Drift</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <section class="hud-panel">
+        <h1>Methane Drift</h1>
+        <p>
+          Drift through an alien methane sky. Tap <strong>Space / Click</strong> to pulse upward.
+          Press <strong>Shift</strong> to trigger a single Symbiosis phase when charged.
+        </p>
+        <div class="stats">
+          <div><span>Distance</span><strong id="score">0</strong></div>
+          <div><span>Atmosphere</span><strong id="density">Buoyant</strong></div>
+          <div><span>Symbiosis</span><strong id="symbiosis">Ready</strong></div>
+        </div>
+        <button id="restartBtn" class="restart-btn" hidden>Restart Drift</button>
+      </section>
+      <canvas id="game" class="game-canvas" width="960" height="540" aria-label="Methane Drift game"></canvas>
+    </main>
+    <script src="game.js"></script>
+  </body>
+</html>
