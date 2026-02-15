@@ -1,7 +1,7 @@
 :root {
   color-scheme: light;
   font-family: "Trebuchet MS", "Segoe UI", sans-serif;
-  background: #e6f7ff;
+  background: #daf1ff;
   color: #15324b;
 }
 
@@ -16,7 +16,7 @@ body {
   justify-content: center;
   min-height: 100vh;
   padding: 32px 16px;
-  background: linear-gradient(180deg, #b3ecff, #f7fcff 60%, #e6ffed 100%);
+  background: linear-gradient(170deg, #8ad4ff 0%, #c8eaff 30%, #f0fcff 60%, #d6ffe4 100%);
 }
 
 .game {
@@ -36,26 +36,36 @@ body {
   margin-bottom: 8px;
   color: #15324b;
   text-decoration: none;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.95rem;
-  opacity: 0.7;
-  transition: opacity 0.2s;
+  opacity: 0.6;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .back-link:hover {
   opacity: 1;
+  transform: translateX(-2px);
 }
 
 .game__header h1 {
-  font-size: 2.1rem;
+  font-size: 2.2rem;
   margin-bottom: 4px;
+  letter-spacing: 0.02em;
+  color: #1a4060;
+}
+
+.game__header p {
+  color: #3d6a8a;
+  font-size: 0.95rem;
 }
 
 .game__panel {
   background: #ffffff;
-  border-radius: 16px;
+  border-radius: 18px;
   padding: 16px;
-  box-shadow: 0 20px 40px rgba(21, 50, 75, 0.15);
+  box-shadow:
+    0 20px 50px rgba(21, 50, 75, 0.12),
+    0 4px 12px rgba(21, 50, 75, 0.08);
   display: grid;
   gap: 12px;
   justify-items: center;
@@ -65,9 +75,12 @@ canvas {
   width: min(100%, 360px);
   height: auto;
   aspect-ratio: 9 / 16;
-  background: linear-gradient(180deg, #7bd0ff, #d7f3ff 65%, #7be495 100%);
-  border-radius: 12px;
-  border: 3px solid #1c4966;
+  background: linear-gradient(180deg, #5cb8ff, #a8e0ff 55%, #d4f0d4 85%, #7be495 100%);
+  border-radius: 14px;
+  border: 3px solid #1a5070;
+  box-shadow:
+    inset 0 2px 8px rgba(0, 0, 0, 0.08),
+    0 8px 24px rgba(21, 50, 75, 0.12);
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -85,36 +98,47 @@ canvas {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
-  font-size: 0.9rem;
+  gap: 3px;
+  font-size: 0.85rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
+  color: #5a7a90;
 }
 
 .hud__score strong {
-  font-size: 1.6rem;
+  font-size: 1.7rem;
+  color: #1a4060;
+  letter-spacing: 0.02em;
 }
 
 .hud__button {
   border: none;
   border-radius: 999px;
-  padding: 10px 18px;
-  background: #ffb703;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #ffca28, #ffb703);
   color: #1b2a36;
   font-weight: 700;
+  font-size: 0.9rem;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
   justify-self: end;
+  box-shadow: 0 4px 10px rgba(255, 183, 3, 0.3);
 }
 
 .hud__button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 183, 3, 0.4);
 }
 
 .hud__button:active {
   transform: translateY(0);
-  box-shadow: none;
+  box-shadow: 0 2px 6px rgba(255, 183, 3, 0.2);
+}
+
+.game__footer p {
+  color: #6a8fa8;
+  font-size: 0.88rem;
+  font-style: italic;
 }
 
 @media (min-width: 768px) and (max-width: 1194px) {
@@ -136,6 +160,6 @@ canvas {
   }
 
   .game__header h1 {
-    font-size: 2.4rem;
+    font-size: 2.5rem;
   }
 }
