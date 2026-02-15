@@ -221,8 +221,34 @@ body {
   outline-offset: 2px;
 }
 
+.fullscreen-btn {
+  margin-top: 0.5rem;
+  width: 100%;
+  padding: 0.55rem;
+  border-radius: 10px;
+  border: 1px solid rgba(160, 210, 245, 0.2);
+  color: var(--text-secondary);
+  background: rgba(3, 8, 20, 0.5);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: border-color 0.3s ease, color 0.3s ease;
+}
+
+.fullscreen-btn:hover {
+  border-color: rgba(160, 210, 245, 0.4);
+  color: var(--text-primary);
+}
+
+.fullscreen-btn:focus-visible {
+  outline: 2px solid rgba(160, 240, 255, 0.8);
+  outline-offset: 2px;
+}
+
 .game-canvas {
-  width: min(100%, 1100px);
+  width: 100%;
+  height: calc(100vh - 2.5rem);
   border-radius: 16px;
   border: 1px solid rgba(120, 200, 240, 0.20);
   box-shadow:
@@ -231,6 +257,7 @@ body {
     0 24px 60px rgba(0, 0, 0, 0.4),
     0 0 50px -15px rgba(100, 200, 255, 0.08);
   background: #040614;
+  object-fit: contain;
 }
 
 .game-canvas:fullscreen,

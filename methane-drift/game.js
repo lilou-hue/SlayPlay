@@ -5,20 +5,20 @@
 /* --- Configuration (all physics in per-second units) --- */
 const CONFIG = {
   gravity: 504,
-  pulseForce: -252,
-  scrollSpeed: 150,
+  pulseForce: -280,
+  scrollSpeed: 195,
   dampingPerSecond: 0.488,
-  atmosphereCycle: 7.0,
+  atmosphereCycle: 6.0,
   symbiosisDuration: 2.33,
-  baseSpawnRate: 1.08,
+  baseSpawnRate: 1.35,
   maxDt: 0.033,
   width: 960,
   height: 540,
   difficulty: {
-    scrollSpeed:     { start: 150, cap: 270, scaleScore: 100 },
-    spawnRate:       { start: 1.08, cap: 1.92, scaleScore: 100 },
-    obstacleDrift:   { start: 18, cap: 60, scaleScore: 100 },
-    atmosphereCycle: { start: 7.0, cap: 3.33, scaleScore: 100 },
+    scrollSpeed:     { start: 195, cap: 340, scaleScore: 100 },
+    spawnRate:       { start: 1.35, cap: 2.4, scaleScore: 100 },
+    obstacleDrift:   { start: 22, cap: 70, scaleScore: 100 },
+    atmosphereCycle: { start: 6.0, cap: 2.8, scaleScore: 100 },
   },
   zoneColors: [
     { bg1: '#1a2248', bg2: '#111540', bg3: '#0a0d2e', bg4: '#030410', hue: 220, name: 'Upper Atmosphere' },
@@ -202,6 +202,9 @@ function onFullscreenChange() {
     lastTime = 0;
     Audio.stopDrone();
   }
+  /* Update button label */
+  const fsBtn = document.getElementById('fullscreenBtn');
+  if (fsBtn) fsBtn.textContent = isFullscreen ? 'Exit Fullscreen' : 'Fullscreen';
   /* Invalidate cached gradient since canvas size may change */
   cachedBgZone = -1;
 }
@@ -442,22 +445,42 @@ function spawnCorridor() {
 }
 
 /* --- Collision --- */
+/* effectiveY accounts for the visual wobble so hitbox matches what the player sees */
+function obstacleVisualY(obstacle) {
+  return obstacle.y + Math.sin(obstacle.pulse) * 4;
+}
+
 function checkCollision(obstacle) {
   const gx = glider.x;
   const gy = glider.y;
-  if (obstacle.type === 'spire') return Math.abs(gx - obstacle.x) < 34 && Math.abs(gy - obstacle.y) < 110;
-  if (obstacle.type === 'school') return Math.abs(gx - obstacle.x) < 44 && Math.abs(gy - obstacle.y) < 42;
-  if (obstacle.type === 'geyser') return Math.abs(gx - obstacle.x) < 28 && gy > obstacle.y - 120;
-  return Math.abs(gx - obstacle.x) < 48 && Math.abs(gy - obstacle.y) < 72;
+  const oy = obstacleVisualY(obstacle);
+  const dx = Math.abs(gx - obstacle.x);
+  const dy = Math.abs(gy - oy);
+  if (obstacle.type === 'spire') {
+    /* Crystal narrows toward the tip — use tapered hitbox */
+    const t = (gy - (oy - 130)) / 260; /* 0=top, 1=bottom */
+    const halfW = 4 + Math.max(0, Math.min(1, t)) * 18; /* 4px at tip, 22px at base */
+    return dx < halfW + 12 && dy < 120;
+  }
+  if (obstacle.type === 'school') return dx < 30 && dy < 28;
+  if (obstacle.type === 'geyser') return dx < 18 && gy > oy - 115 && gy < oy + 115;
+  /* Storm: circle collision */
+  const stormR = 52 + Math.sin(obstacle.pulse) * 8;
+  return dx * dx + dy * dy < (stormR + 8) * (stormR + 8);
 }
 
 function nearMissDistance(obstacle) {
   const gx = glider.x;
   const gy = glider.y;
-  if (obstacle.type === 'spire') return Math.max(0, Math.min(Math.abs(gx - obstacle.x) - 34, 0) + Math.max(0, 110 - Math.abs(gy - obstacle.y)));
-  if (obstacle.type === 'school') return Math.max(0, 42 - Math.abs(gy - obstacle.y));
-  if (obstacle.type === 'geyser') return Math.abs(gx - obstacle.x) < 50 ? Math.max(0, 28 - Math.abs(gx - obstacle.x)) : 100;
-  return Math.max(0, 72 - Math.abs(gy - obstacle.y));
+  const oy = obstacleVisualY(obstacle);
+  const dx = Math.abs(gx - obstacle.x);
+  const dy = Math.abs(gy - oy);
+  if (obstacle.type === 'spire') return dx < 40 ? Math.max(0, 120 - dy) : 0;
+  if (obstacle.type === 'school') return Math.max(0, 38 - dy);
+  if (obstacle.type === 'geyser') return dx < 35 ? Math.max(0, 18 - dx) : 100;
+  const stormR = 52 + Math.sin(obstacle.pulse) * 8;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  return Math.max(0, (stormR + 20) - dist);
 }
 
 /* --- Crash --- */
@@ -1184,7 +1207,32 @@ function drawText(dt) {
     ctx.fillText('Paused', world.width / 2, world.height / 2 - 10);
     ctx.fillStyle = 'rgba(180, 210, 255, 0.7)';
     ctx.font = '500 17px Inter, sans-serif';
-    ctx.fillText('Press Escape to resume', world.width / 2, world.height / 2 + 24);
+    ctx.fillText('Press Escape or tap X to resume', world.width / 2, world.height / 2 + 24);
+
+    /* X close button — top right */
+    const xBtnX = world.width - 56;
+    const xBtnY = 16;
+    const xBtnSize = 40;
+    ctx.beginPath();
+    ctx.roundRect(xBtnX, xBtnY, xBtnSize, xBtnSize, 10);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(200, 220, 255, 0.3)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(220, 240, 255, 0.8)';
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    const cx = xBtnX + xBtnSize / 2;
+    const cy = xBtnY + xBtnSize / 2;
+    ctx.beginPath();
+    ctx.moveTo(cx - 8, cy - 8);
+    ctx.lineTo(cx + 8, cy + 8);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx + 8, cy - 8);
+    ctx.lineTo(cx - 8, cy + 8);
+    ctx.stroke();
   }
 
   if (world.state === STATE.GAMEOVER) {
@@ -1238,6 +1286,33 @@ function drawCanvasHUD() {
   ctx.font = '500 14px Inter, sans-serif';
   ctx.fillStyle = densityColor;
   ctx.fillText(world.densityLabel, 20, 56);
+
+  /* Symbiosis button — bottom left */
+  const btnX = 20;
+  const btnY = world.height - 58;
+  const btnW = 110;
+  const btnH = 38;
+  const ready = glider.symbiosisCharge >= 1 && glider.symbiosisTimer <= 0;
+  const phasing = glider.symbiosisTimer > 0;
+
+  ctx.beginPath();
+  ctx.roundRect(btnX, btnY, btnW, btnH, 10);
+  if (phasing) {
+    ctx.fillStyle = 'rgba(130, 255, 240, 0.25)';
+  } else if (ready) {
+    ctx.fillStyle = 'rgba(130, 255, 200, 0.2)';
+  } else {
+    ctx.fillStyle = 'rgba(80, 100, 140, 0.15)';
+  }
+  ctx.fill();
+  ctx.strokeStyle = ready ? 'rgba(130, 255, 200, 0.5)' : phasing ? 'rgba(130, 255, 240, 0.4)' : 'rgba(120, 150, 200, 0.2)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.textAlign = 'center';
+  ctx.font = '600 14px Inter, sans-serif';
+  ctx.fillStyle = phasing ? 'rgba(130, 255, 240, 0.9)' : ready ? 'rgba(130, 255, 200, 0.85)' : 'rgba(160, 180, 210, 0.4)';
+  ctx.fillText(phasing ? 'Phasing' : ready ? 'Symbiosis' : 'Charging', btnX + btnW / 2, btnY + btnH / 2 + 5);
 
   /* Symbiosis status — top right */
   ctx.textAlign = 'right';
@@ -1350,8 +1425,44 @@ window.addEventListener('keydown', (event) => {
   }
 });
 
+/* Convert pointer event to canvas game coordinates */
+function canvasCoords(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left) / rect.width * world.width,
+    y: (event.clientY - rect.top) / rect.height * world.height,
+  };
+}
+
 canvas.addEventListener('pointerdown', (event) => {
   event.preventDefault();
+  const pos = canvasCoords(event);
+
+  /* Pause X button hit test */
+  if (world.state === STATE.PAUSED) {
+    const xBtnX = world.width - 56;
+    const xBtnY = 16;
+    const xBtnSize = 40;
+    if (pos.x >= xBtnX && pos.x <= xBtnX + xBtnSize && pos.y >= xBtnY && pos.y <= xBtnY + xBtnSize) {
+      world.state = STATE.PLAYING;
+      lastTime = 0;
+      Audio.startDrone();
+      return;
+    }
+  }
+
+  /* Symbiosis button hit test during gameplay */
+  if (world.state === STATE.PLAYING) {
+    const btnX = 20;
+    const btnY = world.height - 58;
+    const btnW = 110;
+    const btnH = 38;
+    if (pos.x >= btnX && pos.x <= btnX + btnW && pos.y >= btnY && pos.y <= btnY + btnH) {
+      activateSymbiosis();
+      return;
+    }
+  }
+
   pulse();
 });
 
@@ -1361,6 +1472,18 @@ if (muteBtn) {
   muteBtn.addEventListener('click', () => {
     const muted = Audio.toggle();
     muteBtn.textContent = muted ? 'Sound: OFF' : 'Sound: ON';
+  });
+}
+
+/* Fullscreen toggle button */
+const fullscreenBtn = document.getElementById('fullscreenBtn');
+if (fullscreenBtn) {
+  fullscreenBtn.addEventListener('click', () => {
+    if (isFullscreen) {
+      exitFullscreen();
+    } else {
+      enterFullscreen();
+    }
   });
 }
 
