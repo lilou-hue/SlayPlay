@@ -10,6 +10,7 @@ const CONFIG = {
   dampingPerSecond: 0.488,
   atmosphereCycle: 6.0,
   symbiosisDuration: 2.33,
+  symbiosisCooldown: 6.0,
   baseSpawnRate: 1.35,
   maxDt: 0.033,
   width: 960,
@@ -164,6 +165,7 @@ const glider = {
   crashed: false,
   symbiosisCharge: 1,
   symbiosisTimer: 0,
+  symbiosisCooldown: 0,
   pulsePop: 0,
 };
 
@@ -316,6 +318,7 @@ function resetGame() {
   glider.crashed = false;
   glider.symbiosisCharge = 1;
   glider.symbiosisTimer = 0;
+  glider.symbiosisCooldown = 0;
   glider.pulsePop = 0;
 
   for (let i = 0; i < PARTICLE_POOL_SIZE; i++) particlePool[i].active = false;
@@ -360,7 +363,7 @@ function pulse() {
 
 function activateSymbiosis() {
   if (world.state !== STATE.PLAYING) return;
-  if (glider.symbiosisCharge < 1 || glider.symbiosisTimer > 0) return;
+  if (glider.symbiosisCharge < 1 || glider.symbiosisTimer > 0 || glider.symbiosisCooldown > 0) return;
   glider.symbiosisTimer = CONFIG.symbiosisDuration;
   glider.symbiosisCharge = 0;
   world.timeScale = 0.7;
@@ -418,11 +421,80 @@ function spawnSymbiosisParticles() {
 }
 
 /* --- Obstacle Spawning --- */
+
+/* Hitbox radii per type — used for spacing checks */
+const OBSTACLE_RADIUS = { spire: 130, school: 30, geyser: 120, storm: 65 };
+
+/* Minimum vertical gap the glider needs to pass through */
+const MIN_PASSABLE_GAP = 70;
+
+/* Minimum horizontal spacing between obstacles to prevent walls */
+const MIN_HORIZONTAL_SPACING = 100;
+
+/* Check if a new obstacle at (x, y) would create an impossible wall with existing nearby obstacles */
+function isPassable(newX, newY, newType, exclude) {
+  const newR = OBSTACLE_RADIUS[newType] || 60;
+  /* Gather nearby obstacles within horizontal range */
+  const nearby = [];
+  for (const obs of world.obstacles) {
+    if (obs === exclude) continue;
+    if (Math.abs(obs.x - newX) < MIN_HORIZONTAL_SPACING + 60) {
+      nearby.push(obs);
+    }
+  }
+  if (nearby.length === 0) return true;
+
+  /* Build a list of blocked vertical ranges at this x position */
+  const blocked = [];
+  blocked.push({ lo: newY - newR, hi: newY + newR });
+  for (const obs of nearby) {
+    const r = OBSTACLE_RADIUS[obs.type] || 60;
+    blocked.push({ lo: obs.y - r, hi: obs.y + r });
+  }
+  blocked.sort((a, b) => a.lo - b.lo);
+
+  /* Merge overlapping ranges and check for passable gaps */
+  const merged = [blocked[0]];
+  for (let i = 1; i < blocked.length; i++) {
+    const top = merged[merged.length - 1];
+    if (blocked[i].lo <= top.hi + MIN_PASSABLE_GAP) {
+      top.hi = Math.max(top.hi, blocked[i].hi);
+    } else {
+      merged.push(blocked[i]);
+    }
+  }
+
+  /* Check if there's a passable gap: above all obstacles, below all, or between merged ranges */
+  const topGap = merged[0].lo - 0;
+  const bottomGap = world.height - merged[merged.length - 1].hi;
+  if (topGap >= MIN_PASSABLE_GAP || bottomGap >= MIN_PASSABLE_GAP) return true;
+  for (let i = 1; i < merged.length; i++) {
+    if (merged[i].lo - merged[i - 1].hi >= MIN_PASSABLE_GAP) return true;
+  }
+  return false;
+}
+
 function spawnObstacle() {
   const type = hazardTypes[Math.floor(Math.random() * hazardTypes.length)];
-  const gapY = 80 + Math.random() * (world.height - 160);
   const maxDrift = getDifficulty('obstacleDrift');
-  const drift = (Math.random() - 0.5) * maxDrift * 2;
+
+  /* Try up to 8 positions to find one that keeps the stage passable */
+  let gapY, drift;
+  let passable = false;
+  for (let attempt = 0; attempt < 8; attempt++) {
+    gapY = 80 + Math.random() * (world.height - 160);
+    drift = (Math.random() - 0.5) * maxDrift * 2;
+    if (isPassable(world.width + 120, gapY, type, null)) {
+      passable = true;
+      break;
+    }
+  }
+  /* If no passable position found, place in the most open area */
+  if (!passable) {
+    gapY = findMostOpenY(world.width + 120);
+    drift = (Math.random() - 0.5) * maxDrift;
+  }
+
   const oscillate = type === 'geyser' && world.score >= 50 && Math.random() < 0.4;
 
   world.obstacles.push({
@@ -431,9 +503,50 @@ function spawnObstacle() {
   });
 }
 
+/* Find the y position with the most open space among nearby obstacles */
+function findMostOpenY(atX) {
+  const nearby = world.obstacles.filter(o => Math.abs(o.x - atX) < MIN_HORIZONTAL_SPACING + 60);
+  if (nearby.length === 0) return world.height * 0.5;
+
+  /* Collect blocked center positions and find the largest gap */
+  const positions = nearby.map(o => o.y).sort((a, b) => a - b);
+  let bestY = world.height * 0.5;
+  let bestGap = 0;
+
+  /* Check gap above topmost obstacle */
+  const topGap = positions[0];
+  if (topGap > bestGap) { bestGap = topGap; bestY = topGap / 2; }
+
+  /* Check gaps between obstacles */
+  for (let i = 1; i < positions.length; i++) {
+    const gap = positions[i] - positions[i - 1];
+    if (gap > bestGap) { bestGap = gap; bestY = (positions[i] + positions[i - 1]) / 2; }
+  }
+
+  /* Check gap below bottommost obstacle */
+  const bottomGap = world.height - positions[positions.length - 1];
+  if (bottomGap > bestGap) { bestY = (positions[positions.length - 1] + world.height) / 2; }
+
+  /* Clamp to safe area */
+  return Math.max(80, Math.min(world.height - 80, bestY));
+}
+
 function spawnCorridor() {
-  const gapCenter = 100 + Math.random() * (world.height - 200);
-  const gapSize = 120;
+  /* Ensure corridor gap is wide enough and doesn't overlap existing obstacles */
+  const gapSize = 130;
+  let gapCenter = 100 + Math.random() * (world.height - 200);
+
+  /* Verify the corridor is navigable with nearby obstacles */
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const topSpire = gapCenter - gapSize / 2 - 80;
+    const botSpire = gapCenter + gapSize / 2 + 80;
+    if (isPassable(world.width + 120, topSpire, 'spire', null) ||
+        isPassable(world.width + 120, botSpire, 'spire', null)) {
+      break;
+    }
+    gapCenter = 100 + Math.random() * (world.height - 200);
+  }
+
   world.obstacles.push({
     type: 'spire', x: world.width + 120, y: gapCenter - gapSize / 2 - 80,
     drift: 0, age: 0, scored: false, pulse: Math.random() * Math.PI * 2, oscillate: false, oscPhase: 0,
@@ -635,13 +748,22 @@ function update(dt, rawDt) {
     /* Pair spawn after score 15 */
     if (world.score >= 15 && Math.random() < 0.3) {
       const paired = world.obstacles[world.obstacles.length - 1];
-      spawnObstacle();
-      world.obstacles[world.obstacles.length - 1].x = paired.x + 80;
+      const pairX = paired.x + 100;
+      /* Only spawn pair if it won't create an impassable wall */
+      const testY = 80 + Math.random() * (world.height - 160);
+      const pairType = hazardTypes[Math.floor(Math.random() * hazardTypes.length)];
+      if (isPassable(pairX, testY, pairType, null)) {
+        spawnObstacle();
+        world.obstacles[world.obstacles.length - 1].x = pairX;
+      }
     }
   }
-  /* Corridor after score 30 */
+  /* Corridor after score 30 — skip if too many nearby obstacles */
   if (world.score >= 30 && Math.random() < 0.002 * dt * 60) {
-    spawnCorridor();
+    const nearbyCount = world.obstacles.filter(o => o.x > world.width - 60).length;
+    if (nearbyCount < 2) {
+      spawnCorridor();
+    }
   }
 
   /* Glider physics */
@@ -658,8 +780,17 @@ function update(dt, rawDt) {
     glider.symbiosisTimer -= rawDt;
     if (glider.symbiosisTimer <= 0) {
       glider.symbiosisTimer = 0;
-      glider.symbiosisCharge = Math.min(1, glider.symbiosisCharge + 1);
+      glider.symbiosisCooldown = CONFIG.symbiosisCooldown;
       Audio.symbiosisEnd();
+    }
+  }
+
+  /* Symbiosis cooldown */
+  if (glider.symbiosisCooldown > 0) {
+    glider.symbiosisCooldown -= rawDt;
+    if (glider.symbiosisCooldown <= 0) {
+      glider.symbiosisCooldown = 0;
+      glider.symbiosisCharge = Math.min(1, glider.symbiosisCharge + 1);
     }
   }
 
@@ -722,7 +853,7 @@ function update(dt, rawDt) {
         Audio.nearMiss();
       }
 
-      if (world.score % 8 === 0) glider.symbiosisCharge = 1;
+      if (world.score % 8 === 0) { glider.symbiosisCharge = 1; glider.symbiosisCooldown = 0; }
     }
 
     if (checkCollision(obstacle) && glider.symbiosisTimer <= 0) crash();
@@ -743,7 +874,29 @@ function update(dt, rawDt) {
   /* HUD */
   scoreNode.textContent = String(world.score);
   densityNode.textContent = world.densityLabel;
-  symbiosisNode.textContent = glider.symbiosisTimer > 0 ? 'Phasing' : glider.symbiosisCharge >= 1 ? 'Ready' : 'Charging';
+  symbiosisNode.textContent = glider.symbiosisTimer > 0
+    ? `Phasing ${glider.symbiosisTimer.toFixed(1)}s`
+    : glider.symbiosisCooldown > 0
+    ? `Cooldown ${glider.symbiosisCooldown.toFixed(1)}s`
+    : glider.symbiosisCharge >= 1 ? 'Ready' : 'Charging';
+
+  /* Update HTML symbiosis button label */
+  const symBtn = document.getElementById('symbiosisBtn');
+  if (symBtn) {
+    if (glider.symbiosisTimer > 0) {
+      symBtn.textContent = `Phasing ${glider.symbiosisTimer.toFixed(1)}s`;
+      symBtn.disabled = true;
+    } else if (glider.symbiosisCooldown > 0) {
+      symBtn.textContent = `Cooldown ${Math.ceil(glider.symbiosisCooldown)}s`;
+      symBtn.disabled = true;
+    } else if (glider.symbiosisCharge >= 1) {
+      symBtn.textContent = 'Symbiosis';
+      symBtn.disabled = false;
+    } else {
+      symBtn.textContent = 'Charging...';
+      symBtn.disabled = true;
+    }
+  }
 }
 
 function updateParticles(dt) {
@@ -1768,37 +1921,89 @@ function drawCanvasHUD() {
   ctx.fillStyle = densityColor;
   ctx.fillText(world.densityLabel, 20, 56);
 
-  /* Symbiosis button — bottom left */
-  const btnX = 20;
-  const btnY = world.height - 58;
-  const btnW = 110;
-  const btnH = 38;
-  const ready = glider.symbiosisCharge >= 1 && glider.symbiosisTimer <= 0;
+  /* Symbiosis button — bottom left (enlarged for easier clicking) */
+  const btnX = 16;
+  const btnY = world.height - 78;
+  const btnW = 160;
+  const btnH = 58;
+  const ready = glider.symbiosisCharge >= 1 && glider.symbiosisTimer <= 0 && glider.symbiosisCooldown <= 0;
   const phasing = glider.symbiosisTimer > 0;
+  const cooling = glider.symbiosisCooldown > 0;
 
   ctx.beginPath();
-  ctx.roundRect(btnX, btnY, btnW, btnH, 10);
+  ctx.roundRect(btnX, btnY, btnW, btnH, 14);
   if (phasing) {
-    ctx.fillStyle = 'rgba(130, 255, 240, 0.25)';
+    ctx.fillStyle = 'rgba(130, 255, 240, 0.28)';
   } else if (ready) {
-    ctx.fillStyle = 'rgba(130, 255, 200, 0.2)';
+    ctx.fillStyle = 'rgba(130, 255, 200, 0.22)';
   } else {
-    ctx.fillStyle = 'rgba(80, 100, 140, 0.15)';
+    ctx.fillStyle = 'rgba(80, 100, 140, 0.18)';
   }
   ctx.fill();
-  ctx.strokeStyle = ready ? 'rgba(130, 255, 200, 0.5)' : phasing ? 'rgba(130, 255, 240, 0.4)' : 'rgba(120, 150, 200, 0.2)';
-  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = ready ? 'rgba(130, 255, 200, 0.6)' : phasing ? 'rgba(130, 255, 240, 0.5)' : 'rgba(120, 150, 200, 0.25)';
+  ctx.lineWidth = 2;
   ctx.stroke();
 
+  /* Cooldown progress bar inside button */
+  if (cooling) {
+    const coolFrac = glider.symbiosisCooldown / CONFIG.symbiosisCooldown;
+    const barPad = 6;
+    const barH = 4;
+    const barY = btnY + btnH - barPad - barH;
+    const barW = btnW - barPad * 2;
+    ctx.fillStyle = 'rgba(80, 120, 180, 0.25)';
+    ctx.beginPath();
+    ctx.roundRect(btnX + barPad, barY, barW, barH, 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(130, 200, 255, 0.6)';
+    ctx.beginPath();
+    ctx.roundRect(btnX + barPad, barY, barW * (1 - coolFrac), barH, 2);
+    ctx.fill();
+  }
+
+  /* Phasing duration bar inside button */
+  if (phasing) {
+    const phaseFrac = glider.symbiosisTimer / CONFIG.symbiosisDuration;
+    const barPad = 6;
+    const barH = 4;
+    const barY = btnY + btnH - barPad - barH;
+    const barW = btnW - barPad * 2;
+    ctx.fillStyle = 'rgba(80, 180, 160, 0.25)';
+    ctx.beginPath();
+    ctx.roundRect(btnX + barPad, barY, barW, barH, 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(130, 255, 240, 0.7)';
+    ctx.beginPath();
+    ctx.roundRect(btnX + barPad, barY, barW * phaseFrac, barH, 2);
+    ctx.fill();
+  }
+
+  /* Button label */
   ctx.textAlign = 'center';
-  ctx.font = '600 14px Inter, sans-serif';
-  ctx.fillStyle = phasing ? 'rgba(130, 255, 240, 0.9)' : ready ? 'rgba(130, 255, 200, 0.85)' : 'rgba(160, 180, 210, 0.4)';
-  ctx.fillText(phasing ? 'Phasing' : ready ? 'Symbiosis' : 'Charging', btnX + btnW / 2, btnY + btnH / 2 + 5);
+  ctx.font = '700 17px Inter, sans-serif';
+  const labelY = (phasing || cooling) ? btnY + btnH / 2 + 1 : btnY + btnH / 2 + 6;
+  if (phasing) {
+    ctx.fillStyle = 'rgba(130, 255, 240, 0.95)';
+    ctx.fillText(`Phasing ${glider.symbiosisTimer.toFixed(1)}s`, btnX + btnW / 2, labelY);
+  } else if (cooling) {
+    ctx.fillStyle = 'rgba(160, 200, 230, 0.6)';
+    ctx.fillText(`Cooldown ${Math.ceil(glider.symbiosisCooldown)}s`, btnX + btnW / 2, labelY);
+  } else if (ready) {
+    ctx.fillStyle = 'rgba(130, 255, 200, 0.9)';
+    ctx.fillText('Symbiosis', btnX + btnW / 2, labelY);
+  } else {
+    ctx.fillStyle = 'rgba(160, 180, 210, 0.4)';
+    ctx.fillText('Charging', btnX + btnW / 2, labelY);
+  }
 
   /* Symbiosis status — top right */
   ctx.textAlign = 'right';
-  const symLabel = glider.symbiosisTimer > 0 ? 'Phasing' : glider.symbiosisCharge >= 1 ? 'Symbiosis Ready' : 'Charging';
-  const symColor = glider.symbiosisTimer > 0 ? 'rgba(130, 255, 240, 0.8)' :
+  ctx.font = '600 14px Inter, sans-serif';
+  const symLabel = phasing ? `Phasing ${glider.symbiosisTimer.toFixed(1)}s`
+    : cooling ? `Cooldown ${Math.ceil(glider.symbiosisCooldown)}s`
+    : glider.symbiosisCharge >= 1 ? 'Symbiosis Ready' : 'Charging';
+  const symColor = phasing ? 'rgba(130, 255, 240, 0.8)' :
+                   cooling ? 'rgba(160, 200, 230, 0.5)' :
                    glider.symbiosisCharge >= 1 ? 'rgba(130, 255, 200, 0.7)' : 'rgba(180, 200, 230, 0.4)';
   ctx.fillStyle = symColor;
   ctx.fillText(symLabel, world.width - 20, 36);
@@ -1941,13 +2146,15 @@ canvas.addEventListener('pointerdown', (event) => {
     }
   }
 
-  /* Symbiosis button hit test during gameplay */
+  /* Symbiosis button hit test during gameplay (enlarged touch target) */
   if (world.state === STATE.PLAYING) {
-    const btnX = 20;
-    const btnY = world.height - 58;
-    const btnW = 110;
-    const btnH = 38;
-    if (pos.x >= btnX && pos.x <= btnX + btnW && pos.y >= btnY && pos.y <= btnY + btnH) {
+    const btnX = 16;
+    const btnY = world.height - 78;
+    const btnW = 160;
+    const btnH = 58;
+    /* Extra touch padding for easier tapping */
+    const pad = 10;
+    if (pos.x >= btnX - pad && pos.x <= btnX + btnW + pad && pos.y >= btnY - pad && pos.y <= btnY + btnH + pad) {
       activateSymbiosis();
       return;
     }
@@ -1986,16 +2193,14 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-/* Mobile symbiosis button */
+/* Symbiosis button — always visible during gameplay for easier access */
 const symbiosisBtn = document.getElementById('symbiosisBtn');
 if (symbiosisBtn) {
-  if ('ontouchstart' in window) {
-    symbiosisBtn.hidden = false;
-    symbiosisBtn.addEventListener('pointerdown', (e) => {
-      e.stopPropagation();
-      activateSymbiosis();
-    });
-  }
+  symbiosisBtn.hidden = false;
+  symbiosisBtn.addEventListener('pointerdown', (e) => {
+    e.stopPropagation();
+    activateSymbiosis();
+  });
 }
 
 /* ========== INIT ========== */
