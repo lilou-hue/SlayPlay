@@ -4,7 +4,7 @@
 
 /* --- Configuration (all physics in per-second units) --- */
 const CONFIG = {
-  gravity: 8.4,
+  gravity: 504,
   pulseForce: -252,
   scrollSpeed: 150,
   dampingPerSecond: 0.488,
