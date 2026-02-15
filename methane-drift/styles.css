@@ -233,6 +233,17 @@ body {
   background: #040614;
 }
 
+.game-canvas:fullscreen,
+.game-canvas:-webkit-full-screen {
+  width: 100vw;
+  height: 100vh;
+  object-fit: contain;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: #000;
+}
+
 @media (max-width: 980px) {
   .layout {
     grid-template-columns: 1fr;
