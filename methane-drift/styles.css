@@ -136,8 +136,33 @@ body {
   letter-spacing: 0.02em;
 }
 
+.mute-btn {
+  margin-top: 0.75rem;
+  width: 100%;
+  padding: 0.55rem;
+  border-radius: 10px;
+  border: 1px solid rgba(160, 210, 245, 0.2);
+  color: var(--text-secondary);
+  background: rgba(3, 8, 20, 0.5);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: border-color 0.3s ease, color 0.3s ease;
+}
+
+.mute-btn:hover {
+  border-color: rgba(160, 210, 245, 0.4);
+  color: var(--text-primary);
+}
+
+.mute-btn:focus-visible {
+  outline: 2px solid rgba(160, 240, 255, 0.8);
+  outline-offset: 2px;
+}
+
 .restart-btn {
-  margin-top: 1rem;
+  margin-top: 0.6rem;
   width: 100%;
   padding: 0.72rem;
   border-radius: 10px;
@@ -167,6 +192,35 @@ body {
   outline-offset: 2px;
 }
 
+.symbiosis-action-btn {
+  margin-top: 0.6rem;
+  width: 100%;
+  padding: 0.65rem;
+  border-radius: 10px;
+  border: 1px solid rgba(130, 255, 240, 0.3);
+  color: #d0fff5;
+  background: linear-gradient(120deg, rgba(20, 184, 190, 0.4), rgba(46, 125, 232, 0.3));
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: transform 150ms ease, filter 150ms ease, box-shadow 200ms ease;
+}
+
+.symbiosis-action-btn:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 4px 16px rgba(20, 184, 190, 0.25);
+}
+
+.symbiosis-action-btn:active {
+  transform: translateY(1px) scale(0.996);
+}
+
+.symbiosis-action-btn:focus-visible {
+  outline: 2px solid rgba(130, 255, 240, 0.8);
+  outline-offset: 2px;
+}
+
 .game-canvas {
   width: min(100%, 1100px);
   border-radius: 16px;
@@ -190,7 +244,9 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .restart-btn {
+  .restart-btn,
+  .mute-btn,
+  .symbiosis-action-btn {
     transition: none;
   }
 }
