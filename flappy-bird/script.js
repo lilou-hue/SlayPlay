@@ -298,8 +298,6 @@ const drawScorePop = () => {
     context.textAlign = "center";
     context.fillText(`+1`, 0, 0);
     context.restore();
-    gameState.scorePop *= 0.88;
-    if (gameState.scorePop < 0.02) gameState.scorePop = 0;
   }
 };
 
@@ -364,7 +362,7 @@ const update = (deltaSeconds) => {
   }
 
   /* Spawn wind particles periodically */
-  if (Math.random() < 0.3) {
+  if (Math.random() < 18 * deltaSeconds) {
     spawnWindParticle();
   }
 
@@ -377,7 +375,7 @@ const update = (deltaSeconds) => {
 
   if (bird.y + bird.radius >= canvas.height || bird.y - bird.radius <= 0) {
     gameState.isGameOver = true;
-    gameState.shakeTimer = 12;
+    gameState.shakeTimer = 0.2;
     gameState.shakeIntensity = 6;
   }
 
@@ -389,7 +387,7 @@ const update = (deltaSeconds) => {
 
   if (pipes.some(detectCollision)) {
     gameState.isGameOver = true;
-    gameState.shakeTimer = 12;
+    gameState.shakeTimer = 0.2;
     gameState.shakeIntensity = 6;
   }
 
@@ -398,6 +396,12 @@ const update = (deltaSeconds) => {
   }
 
   updateScore();
+
+  /* Decay score pop */
+  if (gameState.scorePop > 0) {
+    gameState.scorePop *= Math.pow(0.88, deltaSeconds * 60);
+    if (gameState.scorePop < 0.02) gameState.scorePop = 0;
+  }
 
   /* Update clouds */
   for (const cloud of clouds) {
@@ -416,8 +420,8 @@ const update = (deltaSeconds) => {
 
   /* Decay screen shake */
   if (gameState.shakeTimer > 0) {
-    gameState.shakeTimer -= 1;
-    gameState.shakeIntensity *= 0.82;
+    gameState.shakeTimer -= deltaSeconds;
+    gameState.shakeIntensity *= Math.pow(0.82, deltaSeconds * 60);
   }
 };
 

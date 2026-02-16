@@ -806,7 +806,6 @@ function drawBackground() {
     fg.addColorStop(1, `rgba(80, 120, 200, ${world.ambientFlash * 0.15})`);
     ctx.fillStyle = fg;
     ctx.fillRect(0, 0, world.width, world.height);
-    world.ambientFlash *= Math.pow(0.002, 1 / 60);
   }
 }
 
@@ -1277,6 +1276,14 @@ function decayZoneTransition(dt) {
   }
 }
 
+/* --- Ambient flash decay --- */
+function decayAmbientFlash(dt) {
+  if (world.ambientFlash > 0) {
+    world.ambientFlash *= Math.pow(0.002, dt);
+    if (world.ambientFlash < 0.001) world.ambientFlash = 0;
+  }
+}
+
 /* --- White flash decay --- */
 function decayWhiteFlash(dt) {
   if (world.flashWhite > 0) {
@@ -1301,6 +1308,7 @@ function gameLoop(timestamp) {
   update(dt, rawDt);
   decayTrails(dt);
   decayZoneTransition(dt);
+  decayAmbientFlash(dt);
   decayWhiteFlash(rawDt);
 
   /* Draw with screen shake */
