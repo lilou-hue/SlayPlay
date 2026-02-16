@@ -84,6 +84,7 @@ const resetGame = () => {
   gameState.lastScore = 0;
   scoreLabel.textContent = gameState.score;
   initClouds();
+  Audio.stopDrone();
   draw();
 };
 
@@ -348,6 +349,7 @@ const updateScore = () => {
       gameState.score += 1;
       scoreLabel.textContent = gameState.score;
       gameState.scorePop = 1;
+      Audio.score();
     }
   });
 };
@@ -394,7 +396,13 @@ const update = (deltaSeconds) => {
   }
 
   if (gameState.isGameOver) {
+    const wasNewBest = gameState.score > gameState.best;
     saveBestScore();
+    Audio.crash();
+    Audio.stopDrone();
+    if (wasNewBest && gameState.score > 0) {
+      Audio.newHighScore();
+    }
   }
 
   updateScore();
@@ -465,10 +473,14 @@ const loop = (timestamp) => {
 const startGame = () => {
   if (!gameState.isRunning) {
     gameState.isRunning = true;
+    Audio.startDrone();
   }
 };
 
 const flap = () => {
+  Audio.init();
+  Audio.resume();
+
   if (gameState.isGameOver) {
     resetGame();
     startGame();
@@ -477,6 +489,7 @@ const flap = () => {
   }
 
   bird.velocity = gameState.lift;
+  Audio.flap();
 };
 
 window.addEventListener("keydown", (event) => {
@@ -498,6 +511,20 @@ canvas.addEventListener("dblclick", (event) => {
 restartButton.addEventListener("click", () => {
   resetGame();
 });
+
+/* --- Mute toggle --- */
+const muteButton = document.getElementById("muteButton");
+if (muteButton) {
+  const updateMuteLabel = () => {
+    muteButton.textContent = Audio.isMuted() ? "Unmute" : "Mute";
+  };
+  muteButton.addEventListener("click", () => {
+    Audio.init();
+    Audio.toggle();
+    updateMuteLabel();
+  });
+  updateMuteLabel();
+}
 
 loadBestScore();
 resetGame();
