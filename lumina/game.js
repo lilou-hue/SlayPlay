@@ -56,8 +56,8 @@
     SPIKE_TIGHTEN_SCALE: 0.6,
     SHADOW_INTERVAL: 380,
     SHADOW_TIGHTEN_SCALE: 1.2,
-    STALACTITE_INTERVAL: 600,
-    STALACTITE_START_SCORE: 15,
+    STALACTITE_INTERVAL: 450,
+    STALACTITE_START_SCORE: 8,
 
     // Zones
     ZONE_LEN: 40,
@@ -239,9 +239,37 @@
   }
 
   function caveNoise(y) {
-    return noise1D(y * 0.012) * 0.5
+    // Base winding increases with depth — paths snake harder over time
+    const windFactor = 1 + Math.min(score * 0.012, 0.8); // up to 1.8x amplitude
+    return (noise1D(y * 0.012) * 0.5
          + noise1D(y * 0.028 + 100) * 0.3
-         + noise1D(y * 0.06 + 200) * 0.2;
+         + noise1D(y * 0.06 + 200) * 0.2) * windFactor;
+  }
+
+  // Bottleneck choke points — periodic narrow pinch sections
+  function isBottleneck(worldY) {
+    // Every ~400 units of depth, create a 60-unit-tall choke
+    const cycle = 400 - Math.min(score * 1.5, 150); // gets more frequent
+    const phase = ((worldY % cycle) + cycle) % cycle;
+    return phase < 60;
+  }
+
+  function bottleneckSqueeze(worldY) {
+    const cycle = 400 - Math.min(score * 1.5, 150);
+    const phase = ((worldY % cycle) + cycle) % cycle;
+    if (phase >= 60) return 0;
+    // Smooth pinch: sine curve peaks at center of bottleneck
+    return Math.sin((phase / 60) * Math.PI) * (40 + Math.min(score * 0.6, 40));
+  }
+
+  // Dark zones — areas that drain light much faster
+  function isDarkZone(worldY) {
+    // Starts appearing after score 10, every ~500 units, 80 units tall
+    if (score < 10) return false;
+    const cycle = 500 - Math.min(score * 2, 200);
+    const offset = 200; // offset from bottlenecks
+    const phase = (((worldY + offset) % cycle) + cycle) % cycle;
+    return phase < 80;
   }
 
   // ── Game State ────────────────────────────────────────────
@@ -417,7 +445,10 @@
   let lastShardY = 0, lastSpikeY = 0, lastShadowY = 0, lastStalactiteY = 0;
 
   function caveWalls(worldY) {
-    const caveWidth = Math.max(CFG.CAVE_MIN_W, CFG.CAVE_BASE_W - score * CFG.CAVE_NARROW);
+    const baseCaveWidth = Math.max(CFG.CAVE_MIN_W, CFG.CAVE_BASE_W - score * CFG.CAVE_NARROW);
+    // Apply bottleneck squeeze
+    const squeeze = bottleneckSqueeze(worldY);
+    const caveWidth = Math.max(CFG.CAVE_MIN_W * 0.65, baseCaveWidth - squeeze);
     const centerX = CFG.W / 2;
     const offset = (caveNoise(worldY) - 0.5) * (CFG.W - caveWidth) * 0.6;
     const half = caveWidth / 2;
@@ -445,22 +476,59 @@
       const spikeSpacing = Math.max(80, CFG.SPIKE_INTERVAL - score * CFG.SPIKE_TIGHTEN_SCALE);
       lastSpikeY += spikeSpacing + rand(-30, 30);
       const walls = caveWalls(lastSpikeY);
-      const side = Math.random() < 0.5 ? "left" : "right";
-      const baseX = side === "left" ? walls.left : walls.right;
-      const len = rand(25, 55 + difficultyMult * 20);
-      const ang = side === "left" ? rand(-0.3, 0.5) : rand(Math.PI - 0.5, Math.PI + 0.3);
-      // Some spikes oscillate at higher difficulty
-      const oscillates = difficultyMult > 0.3 && Math.random() < difficultyMult * 0.4;
-      spikes.push({
-        x: baseX, y: lastSpikeY, length: len, angle: ang, side,
-        tipX: baseX + Math.cos(ang) * len,
-        tipY: lastSpikeY + Math.sin(ang) * len,
-        oscillates,
-        oscPhase: rand(0, Math.PI * 2),
-        oscSpeed: rand(1.5, 3.0),
-        oscAmp: rand(0.3, 0.6),
-        baseAngle: ang,
-      });
+      const caveWidth = walls.right - walls.left;
+
+      // Spike gate: paired spikes from both walls with a gap (after score 8)
+      const isGate = difficultyMult > 0.1 && Math.random() < 0.15 + difficultyMult * 0.2;
+
+      if (isGate) {
+        // Gap is 35-55% of cave width, positioned randomly
+        const gapFrac = rand(0.30, 0.50) - difficultyMult * 0.08;
+        const gapWidth = caveWidth * gapFrac;
+        const gapCenter = rand(walls.left + gapWidth * 0.6, walls.right - gapWidth * 0.6);
+
+        // Left spike reaching toward gap
+        const leftLen = (gapCenter - gapWidth / 2) - walls.left;
+        if (leftLen > 15) {
+          const leftAng = rand(-0.15, 0.15);
+          const oscillates = difficultyMult > 0.5 && Math.random() < 0.3;
+          spikes.push({
+            x: walls.left, y: lastSpikeY, length: leftLen, angle: leftAng, side: "left",
+            tipX: walls.left + Math.cos(leftAng) * leftLen,
+            tipY: lastSpikeY + Math.sin(leftAng) * leftLen,
+            oscillates, oscPhase: rand(0, Math.PI * 2),
+            oscSpeed: rand(1.5, 2.5), oscAmp: rand(0.15, 0.35), baseAngle: leftAng,
+          });
+        }
+
+        // Right spike reaching toward gap
+        const rightLen = walls.right - (gapCenter + gapWidth / 2);
+        if (rightLen > 15) {
+          const rightAng = Math.PI + rand(-0.15, 0.15);
+          const oscillates = difficultyMult > 0.5 && Math.random() < 0.3;
+          spikes.push({
+            x: walls.right, y: lastSpikeY, length: rightLen, angle: rightAng, side: "right",
+            tipX: walls.right + Math.cos(rightAng) * rightLen,
+            tipY: lastSpikeY + Math.sin(rightAng) * rightLen,
+            oscillates, oscPhase: rand(0, Math.PI * 2),
+            oscSpeed: rand(1.5, 2.5), oscAmp: rand(0.15, 0.35), baseAngle: rightAng,
+          });
+        }
+      } else {
+        // Normal single spike
+        const side = Math.random() < 0.5 ? "left" : "right";
+        const baseX = side === "left" ? walls.left : walls.right;
+        const len = rand(25, 55 + difficultyMult * 20);
+        const ang = side === "left" ? rand(-0.3, 0.5) : rand(Math.PI - 0.5, Math.PI + 0.3);
+        const oscillates = difficultyMult > 0.3 && Math.random() < difficultyMult * 0.4;
+        spikes.push({
+          x: baseX, y: lastSpikeY, length: len, angle: ang, side,
+          tipX: baseX + Math.cos(ang) * len,
+          tipY: lastSpikeY + Math.sin(ang) * len,
+          oscillates, oscPhase: rand(0, Math.PI * 2),
+          oscSpeed: rand(1.5, 3.0), oscAmp: rand(0.3, 0.6), baseAngle: ang,
+        });
+      }
     }
 
     // Shadow creatures (spawn more frequently, faster at higher scores)
@@ -747,13 +815,21 @@
 
     // ─ Cave wall collision ─
     const walls = caveWalls(player.y);
+    let wallContact = false;
     if (player.x - CFG.PLAYER_R < walls.left) {
       player.x = walls.left + CFG.PLAYER_R;
       player.vx = 0;
+      wallContact = true;
     }
     if (player.x + CFG.PLAYER_R > walls.right) {
       player.x = walls.right - CFG.PLAYER_R;
       player.vx = 0;
+      wallContact = true;
+    }
+    // Scraping walls drains light (more in bottlenecks)
+    if (wallContact) {
+      const scrapeDrain = isBottleneck(player.y) ? 12 : 4;
+      lightRadius = Math.max(CFG.LIGHT_MIN, lightRadius - scrapeDrain * adt);
     }
 
     // ─ Cooldowns ─
@@ -761,7 +837,9 @@
     pulseAnim = Math.max(0, pulseAnim - dt * 4);
 
     // ─ Light drain ─
-    const drainRate = CFG.LIGHT_DRAIN + score * CFG.LIGHT_DRAIN_SCALE;
+    const baseDrain = CFG.LIGHT_DRAIN + score * CFG.LIGHT_DRAIN_SCALE;
+    const darkMult = isDarkZone(player.y) ? 3.0 : 1.0;
+    const drainRate = baseDrain * darkMult;
     lightRadius = Math.max(CFG.LIGHT_MIN, lightRadius - drainRate * adt);
 
     // ─ Zone check ─
@@ -1030,6 +1108,9 @@
     // ─ Cave walls ─
     drawCaveWalls(sctx, pal);
 
+    // ─ Dark zones & bottleneck indicators ─
+    drawCaveHazards(sctx, pal);
+
     // ─ Spikes ─
     drawSpikes(sctx, pal);
 
@@ -1261,6 +1342,37 @@
         c.lineTo(walls.right - bw, sy);
         c.lineTo(walls.right, sy + bh);
         c.fill();
+      }
+    }
+  }
+
+  function drawCaveHazards(c, pal) {
+    const topY = cameraY;
+    const step = 8;
+
+    for (let sy = 0; sy <= CFG.H; sy += step) {
+      const worldY = topY + sy;
+      const walls = caveWalls(worldY);
+
+      // Dark zone overlay — ominous purple/red tint
+      if (isDarkZone(worldY)) {
+        const cycle = 500 - Math.min(score * 2, 200);
+        const offset = 200;
+        const phase = (((worldY + offset) % cycle) + cycle) % cycle;
+        const intensity = Math.sin((phase / 80) * Math.PI) * 0.12;
+        c.fillStyle = `rgba(120, 20, 60, ${intensity})`;
+        c.fillRect(walls.left, sy, walls.right - walls.left, step);
+      }
+
+      // Bottleneck warning — subtle pulsing edge glow
+      if (isBottleneck(worldY)) {
+        const squeeze = bottleneckSqueeze(worldY);
+        if (squeeze > 5) {
+          const glow = (squeeze / 80) * 0.2;
+          c.fillStyle = `rgba(255, 140, 40, ${glow})`;
+          c.fillRect(walls.left, sy, 8, step);
+          c.fillRect(walls.right - 8, sy, 8, step);
+        }
       }
     }
   }
