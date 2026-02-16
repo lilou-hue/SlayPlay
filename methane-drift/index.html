@@ -12,21 +12,21 @@
         <a href="/" class="back-link">&larr; Back to Games</a>
         <h1>Methane Drift</h1>
         <p>
-          Drift through an alien methane sky. Tap <strong>Space / Click</strong> to pulse upward.
-          Press <strong>Shift</strong> for Symbiosis. Chain <strong>near-misses</strong> for combo multipliers.
-          <strong>Pulse during density shifts</strong> to surf! Press <strong>Escape</strong> to pause.
+          Fly through an alien sky. <strong>Space / Tap</strong> = go up.
+          <strong>Shift</strong> = shield. Fly close to obstacles for <strong>bonus points</strong>.
+          Press <strong>Esc</strong> to pause (shows all controls).
         </p>
         <div class="stats">
-          <div><span>Distance</span><strong id="score" aria-live="polite" role="status">0</strong></div>
+          <div><span>Score</span><strong id="score" aria-live="polite" role="status">0</strong></div>
           <div><span>Best</span><strong id="best">0</strong></div>
-          <div><span>Atmosphere</span><strong id="density">Buoyant</strong></div>
-          <div><span>Symbiosis</span><strong id="symbiosis">Ready</strong></div>
+          <div><span>Air Type</span><strong id="density">Light</strong></div>
+          <div><span>Shield</span><strong id="symbiosis">Ready</strong></div>
           <div><span>Combo</span><strong id="combo">0</strong></div>
         </div>
         <button id="muteBtn" class="mute-btn" type="button" aria-label="Toggle sound">Sound: ON</button>
         <button id="fullscreenBtn" class="fullscreen-btn" type="button" aria-label="Toggle fullscreen">Fullscreen</button>
-        <button id="restartBtn" class="restart-btn" hidden>Restart Drift</button>
-        <button id="symbiosisBtn" class="symbiosis-action-btn" hidden aria-label="Activate Symbiosis">Symbiosis</button>
+        <button id="restartBtn" class="restart-btn" hidden>Play Again</button>
+        <button id="symbiosisBtn" class="symbiosis-action-btn" hidden aria-label="Activate Shield">Shield</button>
       </section>
       <canvas id="game" class="game-canvas" width="960" height="540" aria-label="Methane Drift game"></canvas>
     </main>

@@ -25,7 +25,7 @@ const Audio = (() => {
   let musicPercInterval = null;
   let musicBpm = 100;
   let musicCurrentZone = 1;
-  let musicCurrentDensity = 'Buoyant';
+  let musicCurrentDensity = 'Light';
   let musicCurrentCombo = 0;
   let musicCurrentScrollSpeed = 195;
   let musicBassIndex = 0;
@@ -141,11 +141,11 @@ const Audio = (() => {
 
   function atmosphereShift(label) {
     if (!ctx || muted) return;
-    if (label === 'Buoyant') {
+    if (label === 'Light') {
       playTone(330, 0.25, 'sine', 0.08);
       setTimeout(() => playTone(440, 0.2, 'sine', 0.06), 100);
       haptic(20);
-    } else if (label === 'Dense') {
+    } else if (label === 'Normal') {
       playTone(180, 0.3, 'sine', 0.10);
       haptic([20, 10, 20]);
     } else {
@@ -303,9 +303,9 @@ const Audio = (() => {
   function getDensityLabel(density) {
     /* density param from updateMusic can be a string label or numeric */
     if (typeof density === 'string') return density;
-    if (density <= 0.6) return 'Buoyant';
-    if (density <= 0.9) return 'Dense';
-    return 'Crushing';
+    if (density <= 0.6) return 'Light';
+    if (density <= 0.9) return 'Normal';
+    return 'Heavy';
   }
 
   function bpmFromScrollSpeed(scrollSpeed) {
@@ -404,9 +404,9 @@ const Audio = (() => {
     /* Determine chord tones */
     let chordTones;
     let detune = 0;
-    if (densityLabel === 'Buoyant') {
+    if (densityLabel === 'Light') {
       chordTones = padChords.major7th;
-    } else if (densityLabel === 'Dense') {
+    } else if (densityLabel === 'Normal') {
       chordTones = padChords.minor;
     } else {
       chordTones = padChords.diminished;
@@ -430,8 +430,8 @@ const Audio = (() => {
       } catch (e) { /* */ }
     });
 
-    /* For extra dissonance in Crushing, add a detuned copy */
-    if (densityLabel === 'Crushing') {
+    /* For extra dissonance in Heavy, add a detuned copy */
+    if (densityLabel === 'Heavy') {
       chordTones.forEach(function(freq) {
         try {
           const osc = ctx.createOscillator();
@@ -648,7 +648,7 @@ const Audio = (() => {
     try {
       musicPlaying = true;
       musicCurrentZone = 1;
-      musicCurrentDensity = 'Buoyant';
+      musicCurrentDensity = 'Light';
       musicCurrentCombo = 0;
       musicCurrentScrollSpeed = 195;
       musicBpm = 100;
