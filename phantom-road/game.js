@@ -16,6 +16,11 @@ const restartBtn = document.getElementById("restartButton");
 // ── Detect mobile ────────────────────────────────────────
 const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || ("ontouchstart" in window);
 
+// ── Haptic feedback ──────────────────────────────────────
+const haptic = (pattern) => {
+  try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (_) {}
+};
+
 // ── Audio ────────────────────────────────────────────────
 const audio = (() => {
   let actx = null;
@@ -263,10 +268,10 @@ function classifyTouch(clientX, clientY) {
   const cx = (clientX - rect.left) / rect.width * W;
   const cy = (clientY - rect.top) / rect.height * H;
 
-  // Nitro button zone: bottom-center circle
+  // Nitro button zone: bottom-center circle (generous hit area)
   const nitroBtnX = W / 2;
   const nitroBtnY = H - 50;
-  const nitroBtnR = 36;
+  const nitroBtnR = 50;
   const dx = cx - nitroBtnX;
   const dy = cy - nitroBtnY;
   if (dx * dx + dy * dy < nitroBtnR * nitroBtnR) return "nitro";
@@ -287,10 +292,28 @@ function recalcTouchState() {
   }
 }
 
+// Grace period after start/restart so the initiating tap doesn't steer
+let inputGrace = 0;
+
 canvas.addEventListener("pointerdown", (e) => {
   e.preventDefault();
-  if (state.phase === "start") { startGame(); return; }
-  if (state.phase === "gameover") { restartGame(); return; }
+  if (state.phase === "start") {
+    // Check fullscreen button hit
+    if (state._fsBtn && isMobile) {
+      const rect = canvas.getBoundingClientRect();
+      const cx = (e.clientX - rect.left) / rect.width * W;
+      const cy = (e.clientY - rect.top) / rect.height * H;
+      const b = state._fsBtn;
+      if (cx >= b.x && cx <= b.x + b.w && cy >= b.y && cy <= b.y + b.h) {
+        toggleFullscreen();
+        return;
+      }
+    }
+    startGame(); inputGrace = 0.25; return;
+  }
+  if (state.phase === "gameover") { restartGame(); inputGrace = 0.25; return; }
+  // Capture pointer so moves/up track even if finger leaves canvas bounds
+  try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
   activeTouches[e.pointerId] = classifyTouch(e.clientX, e.clientY);
   recalcTouchState();
 });
@@ -302,17 +325,38 @@ canvas.addEventListener("pointermove", (e) => {
   }
 });
 
-canvas.addEventListener("pointerup", (e) => {
+const handlePointerEnd = (e) => {
   delete activeTouches[e.pointerId];
+  try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
   recalcTouchState();
-});
-canvas.addEventListener("pointercancel", (e) => {
-  delete activeTouches[e.pointerId];
-  recalcTouchState();
+};
+canvas.addEventListener("pointerup", handlePointerEnd);
+canvas.addEventListener("pointercancel", handlePointerEnd);
+
+// Clean up stuck touches when page loses focus
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    for (const id in activeTouches) delete activeTouches[id];
+    recalcTouchState();
+    for (const k in keys) keys[k] = false;
+  }
 });
 
 restartBtn.addEventListener("click", restartGame);
 muteBtn.addEventListener("click", () => audio.toggleMute());
+
+// ── Fullscreen (mobile) ─────────────────────────────────
+function toggleFullscreen() {
+  const el = document.documentElement;
+  if (!document.fullscreenElement) {
+    (el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen || (() => {})).call(el);
+  } else {
+    (document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen || (() => {})).call(document);
+  }
+}
+function canFullscreen() {
+  return !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen);
+}
 
 // ── Game lifecycle ───────────────────────────────────────
 function startGame() {
@@ -337,6 +381,7 @@ function gameOver() {
   state.crashY = state.carY;
   audio.crash();
   audio.stopEngine();
+  haptic([50, 30, 100]);
   state.shakeTime = 0.5;
   state.shakeIntensity = 14;
 
@@ -524,14 +569,19 @@ function update(dt) {
   const curveLerp = 1.8 * dt;
   state.roadCenterX += (state.roadTargetX - state.roadCenterX) * curveLerp;
 
+  // ── Input grace period (prevent start-tap from steering) ──
+  if (inputGrace > 0) inputGrace -= dt;
+
   // ── Steering ──
   state.steerInput = 0;
   if (keys["ArrowLeft"] || keys["a"]) state.steerInput = -1;
   if (keys["ArrowRight"] || keys["d"]) state.steerInput = 1;
-  // Mobile touch: left/right halves
-  if (state.touchL) state.steerInput = -1;
-  if (state.touchR) state.steerInput = 1;
-  if (state.touchL && state.touchR) state.steerInput = 0; // both = straight
+  // Mobile touch: left/right halves (skip during grace period)
+  if (inputGrace <= 0) {
+    if (state.touchL) state.steerInput = -1;
+    if (state.touchR) state.steerInput = 1;
+    if (state.touchL && state.touchR) state.steerInput = 0; // both = straight
+  }
 
   // ── Car physics with momentum ──
   const steerAccel = 600;
@@ -655,6 +705,7 @@ function update(dt) {
           ? `CLOSE! x${state.nearMissCombo}  +${bonus}`
           : `CLOSE!  +${bonus}`;
         audio.nearMiss();
+        haptic(15);
         // Spark particles between cars
         for (let j = 0; j < 6; j++) {
           spawnParticle(
@@ -712,6 +763,7 @@ function update(dt) {
         state.carVelX += (Math.random() - 0.5) * 400;
         state.shakeTime = 0.15;
         state.shakeIntensity = 5;
+        haptic(25);
       } else {
         // Cone/pothole = crash
         gameOver();
@@ -1256,36 +1308,43 @@ function drawNitroBar() {
 }
 
 function drawMobileTouchUI() {
-  // Left/right zone indicators
   ctx.save();
 
-  // Left zone
-  ctx.globalAlpha = state.touchL ? 0.12 : 0.03;
+  // Left steering zone indicator
+  ctx.globalAlpha = state.touchL ? 0.15 : 0.04;
   ctx.fillStyle = "#fff";
   ctx.beginPath();
-  ctx.moveTo(0, H * 0.3);
-  ctx.lineTo(50, H * 0.5);
-  ctx.lineTo(0, H * 0.7);
+  ctx.moveTo(0, H * 0.25);
+  ctx.lineTo(55, H * 0.5);
+  ctx.lineTo(0, H * 0.75);
   ctx.fill();
 
-  // Right zone
-  ctx.globalAlpha = state.touchR ? 0.12 : 0.03;
+  // Right steering zone indicator
+  ctx.globalAlpha = state.touchR ? 0.15 : 0.04;
   ctx.beginPath();
-  ctx.moveTo(W, H * 0.3);
-  ctx.lineTo(W - 50, H * 0.5);
-  ctx.lineTo(W, H * 0.7);
+  ctx.moveTo(W, H * 0.25);
+  ctx.lineTo(W - 55, H * 0.5);
+  ctx.lineTo(W, H * 0.75);
   ctx.fill();
 
   ctx.globalAlpha = 1;
 
-  // Nitro button
+  // Nitro button (bigger for fat fingers)
   const btnX = W / 2;
   const btnY = H - 50;
-  const btnR = 30;
+  const btnR = 38;
   const active = state.touchNitro;
   const canUse = state.nitro >= 0.25 && state.nitroCooldown <= 0;
 
-  ctx.globalAlpha = canUse ? (active ? 0.5 : 0.25) : 0.08;
+  // Outer ring
+  ctx.globalAlpha = canUse ? 0.2 : 0.06;
+  ctx.fillStyle = canUse ? "#ff8c32" : "#555";
+  ctx.beginPath();
+  ctx.arc(btnX, btnY, btnR + 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Button fill
+  ctx.globalAlpha = canUse ? (active ? 0.55 : 0.3) : 0.08;
   ctx.fillStyle = canUse ? "#ff8c32" : "#666";
   ctx.beginPath();
   ctx.arc(btnX, btnY, btnR, 0, Math.PI * 2);
@@ -1293,15 +1352,17 @@ function drawMobileTouchUI() {
 
   if (canUse) {
     ctx.strokeStyle = "#ff8c32";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
     ctx.shadowColor = "#ff8c32";
-    ctx.shadowBlur = active ? 15 : 6;
+    ctx.shadowBlur = active ? 18 : 8;
+    ctx.beginPath();
+    ctx.arc(btnX, btnY, btnR, 0, Math.PI * 2);
     ctx.stroke();
     ctx.shadowBlur = 0;
   }
 
-  ctx.globalAlpha = canUse ? 0.8 : 0.3;
-  ctx.font = "bold 11px 'Trebuchet MS', sans-serif";
+  ctx.globalAlpha = canUse ? 0.9 : 0.3;
+  ctx.font = "bold 14px 'Trebuchet MS', sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#fff";
@@ -1338,6 +1399,24 @@ function drawStartScreen(color) {
   if (isMobile) {
     ctx.fillText("Left / right side to steer", W / 2, H / 2 + 70);
     ctx.fillText("NOS button for nitro boost", W / 2, H / 2 + 88);
+
+    // Fullscreen button (drawn on canvas)
+    if (canFullscreen() && !document.fullscreenElement) {
+      const fbY = H / 2 + 125;
+      ctx.globalAlpha = 0.4;
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(W / 2 - 60, fbY - 16, 120, 32, 8);
+      ctx.stroke();
+      ctx.globalAlpha = 0.5;
+      ctx.font = "bold 12px 'Trebuchet MS', sans-serif";
+      ctx.fillStyle = "#fff";
+      ctx.fillText("FULLSCREEN", W / 2, fbY + 4);
+      ctx.globalAlpha = 1;
+      // Store the button bounds for hit detection
+      state._fsBtn = { x: W / 2 - 60, y: fbY - 16, w: 120, h: 32 };
+    }
   } else {
     ctx.fillText("Arrow keys to steer  |  Space for nitro", W / 2, H / 2 + 70);
     ctx.fillText("Hug the edge to charge  |  Buzz traffic for bonus", W / 2, H / 2 + 88);
