@@ -15,12 +15,37 @@ const CONFIG = {
   maxDt: 0.033,
   width: 960,
   height: 540,
+  densitySurfWindow: 0.4,
+  densitySurfBoostDuration: 1.0,
+  densitySurfBoostMultiplier: 2.0,
+  stormPullStrength: 80,
+  stormPullRadius: 120,
+  geyserEruptCycle: 2.5,
+  geyserEruptPause: 1.0,
+  schoolScatterRadius: 100,
+  schoolScatterDuration: 1.5,
   difficulty: {
     scrollSpeed:     { start: 195, cap: 340, scaleScore: 100 },
     spawnRate:       { start: 1.35, cap: 2.4, scaleScore: 100 },
     obstacleDrift:   { start: 22, cap: 70, scaleScore: 100 },
     atmosphereCycle: { start: 6.0, cap: 2.8, scaleScore: 100 },
   },
+  comboThresholds: [
+    { at: 3, multiplier: 1.5, label: 'x1.5' },
+    { at: 5, multiplier: 2.0, label: 'x2' },
+    { at: 10, multiplier: 3.0, label: 'x3' },
+    { at: 20, multiplier: 5.0, label: 'x5' },
+  ],
+  loreMessages: [
+    { score: 5, text: 'Signal detected: biological origin...' },
+    { score: 12, text: 'Atmospheric composition: 94% methane, trace organics' },
+    { score: 20, text: 'Warning: symbiont bond strengthening' },
+    { score: 35, text: 'Deep current detected — navigating pressure gradient' },
+    { score: 50, text: 'Core pressure readings: anomalous' },
+    { score: 65, text: 'Bioluminescent signatures intensifying' },
+    { score: 80, text: 'Warning: entity signatures detected ahead' },
+    { score: 100, text: 'You have reached the unstable core. There is no return.' },
+  ],
   zoneColors: [
     { bg1: '#1a2248', bg2: '#111540', bg3: '#0a0d2e', bg4: '#030410', hue: 220, name: 'Upper Atmosphere' },
     { bg1: '#0a3038', bg2: '#0a2828', bg3: '#082020', bg4: '#031210', hue: 170, name: 'Mid Turbulence' },
@@ -28,6 +53,22 @@ const CONFIG = {
     { bg1: '#3a1818', bg2: '#2a1010', bg3: '#200808', bg4: '#100404', hue: 15, name: 'Core Proximity' },
     { bg1: '#1a2248', bg2: '#111540', bg3: '#0a0d2e', bg4: '#030410', hue: 220, name: 'Unstable Core' },
   ],
+  skins: {
+    default:  { name: 'Drifter',       glowHue: 170, bodyHue: 160, trailHue: 170 },
+    ember:    { name: 'Ember',          glowHue: 15,  bodyHue: 10,  trailHue: 20  },
+    void:     { name: 'Void Walker',    glowHue: 270, bodyHue: 260, trailHue: 280 },
+    solar:    { name: 'Solar Wind',     glowHue: 45,  bodyHue: 40,  trailHue: 50  },
+    deep:     { name: 'Deep Current',   glowHue: 200, bodyHue: 210, trailHue: 195 },
+    spectral: { name: 'Spectral',       glowHue: 300, bodyHue: 310, trailHue: 290 },
+  },
+  skinUnlocks: {
+    default:  { type: 'default' },
+    ember:    { type: 'score', value: 50, desc: 'Score 50+' },
+    void:     { type: 'achievement', value: 'untouchable', desc: 'Untouchable achievement' },
+    solar:    { type: 'runs', value: 25, desc: 'Complete 25 runs' },
+    deep:     { type: 'score', value: 100, desc: 'Score 100+' },
+    spectral: { type: 'achievement', value: 'near_miss_expert', desc: 'Near-Miss Expert achievement' },
+  },
 };
 
 const STATE = { MENU: 'menu', PLAYING: 'playing', PAUSED: 'paused', CRASHING: 'crashing', GAMEOVER: 'gameover' };
@@ -41,6 +82,11 @@ const ACHIEVEMENTS = [
   { id: 'untouchable', name: 'Untouchable', desc: 'Score 20 without symbiosis', check: (s) => s.noSymbiosisRecord >= 20 },
   { id: 'density_master', name: 'Density Master', desc: 'Survive 5 Crushing phases in one run', check: (s) => s.crushingPhasesThisRun >= 5 },
   { id: 'near_miss_expert', name: 'Near-Miss Expert', desc: '10 near-misses in one run', check: (s) => s.nearMissesThisRun >= 10 },
+  { id: 'combo_adept', name: 'Combo Adept', desc: 'Reach a 5x combo', check: (s) => s.longestStreak >= 5 },
+  { id: 'combo_master', name: 'Combo Master', desc: 'Reach a 10x combo', check: (s) => s.longestStreak >= 10 },
+  { id: 'density_surfer', name: 'Density Surfer', desc: 'Density surf 5 times in one run', check: (s) => s.densitySurfsThisRun >= 5 },
+  { id: 'boss_slayer', name: 'Boss Slayer', desc: 'Defeat 3 zone bosses in one run', check: (s) => s.bossesDefeatedThisRun >= 3 },
+  { id: 'marathon', name: 'Marathon Drifter', desc: 'Survive 120 seconds in one run', check: (s) => s.longestTimeAlive >= 120 },
 ];
 
 /* --- DOM --- */
@@ -58,7 +104,7 @@ const comboNode = document.getElementById('combo');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* --- Particle Pool --- */
-const PARTICLE_POOL_SIZE = 300;
+const PARTICLE_POOL_SIZE = 500;
 const particlePool = [];
 for (let i = 0; i < PARTICLE_POOL_SIZE; i++) {
   particlePool.push({ x: 0, y: 0, vx: 0, vy: 0, life: 0, maxLife: 0, hue: 0, size: 0, active: false });
@@ -85,9 +131,12 @@ const defaultProgress = {
   totalTimePlayed: 0,
   totalRuns: 0,
   longestStreak: 0,
+  longestTimeAlive: 0,
   achievements: [],
   selectedSkin: 'default',
   selectedTrailColor: null,
+  unlockedSkins: ['default'],
+  bestGhostTrail: [],
 };
 
 let progress = { ...defaultProgress };
@@ -118,6 +167,7 @@ const world = {
   state: STATE.MENU,
   score: 0,
   best: 0,
+  displayScore: 0,
   atmosphereTimer: 0,
   density: 0.72,
   densityLabel: 'Buoyant',
@@ -132,19 +182,37 @@ const world = {
   timeScaleLerpSpeed: 5.0,
   crashDelay: 0,
   scorePop: 0,
+  scorePopAmount: 0,
   flashWhite: 0,
   zone: 1,
   prevZone: 1,
   zoneTransition: 0,
   atmosphereAnnounce: null,
   zoneAnnounce: null,
+  loreAnnounce: null,
   newAchievements: [],
   achievementToast: null,
   combo: 0,
   comboTimer: 0,
+  comboMultiplier: 1,
+  comboPop: 0,
+  comboBreakPop: 0,
   starsFar: [],
   starsMid: [],
   starsNear: [],
+  densitySurfTimer: 0,
+  densitySurfBoost: 0,
+  densityShiftJustHappened: 0,
+  densityForecast: null,
+  densityForecastTimer: 0,
+  pressureAdaptation: 0,
+  crushingWithoutSymbiosis: 0,
+  boss: null,
+  bossesDefeated: 0,
+  edgeWarnings: [],
+  ghostTrail: [],
+  bestGhostTrail: [],
+  ghostTrailTimer: 0,
   runStats: {
     obstaclesDodged: 0,
     symbiosisUses: 0,
@@ -152,6 +220,12 @@ const world = {
     crushingPhases: 0,
     timeAlive: 0,
     usedSymbiosis: false,
+    densitySurfs: 0,
+    bossesDefeated: 0,
+    maxCombo: 0,
+    totalScoreWithMultiplier: 0,
+    closestNearMiss: 999,
+    longestComboStreak: 0,
   },
 };
 
@@ -167,6 +241,8 @@ const glider = {
   symbiosisTimer: 0,
   symbiosisCooldown: 0,
   pulsePop: 0,
+  glowIntensity: 1.0,
+  comboGlow: 0,
 };
 
 const hazardTypes = ['spire', 'school', 'geyser', 'storm'];
@@ -287,6 +363,7 @@ function saveBestScore() {
 /* --- Reset --- */
 function resetGame() {
   world.score = 0;
+  world.displayScore = 0;
   world.state = STATE.MENU;
   world.atmosphereTimer = 0;
   world.density = 0.72;
@@ -299,17 +376,45 @@ function resetGame() {
   world.timeScaleTarget = 1.0;
   world.crashDelay = 0;
   world.scorePop = 0;
+  world.scorePopAmount = 0;
   world.flashWhite = 0;
   world.zone = 1;
   world.prevZone = 1;
   world.zoneTransition = 0;
   world.atmosphereAnnounce = null;
   world.zoneAnnounce = null;
+  world.loreAnnounce = null;
   world.newAchievements = [];
   world.achievementToast = null;
   world.combo = 0;
   world.comboTimer = 0;
-  world.runStats = { obstaclesDodged: 0, symbiosisUses: 0, nearMisses: 0, crushingPhases: 0, timeAlive: 0, usedSymbiosis: false };
+  world.comboMultiplier = 1;
+  world.comboPop = 0;
+  world.comboBreakPop = 0;
+  world.densitySurfTimer = 0;
+  world.densitySurfBoost = 0;
+  world.densityShiftJustHappened = 0;
+  world.densityForecast = null;
+  world.densityForecastTimer = 0;
+  world.pressureAdaptation = 0;
+  world.crushingWithoutSymbiosis = 0;
+  world.boss = null;
+  world.bossesDefeated = 0;
+  world.edgeWarnings = [];
+  world.ghostTrail = [];
+  world.ghostTrailTimer = 0;
+  world.runStats = {
+    obstaclesDodged: 0, symbiosisUses: 0, nearMisses: 0, crushingPhases: 0,
+    timeAlive: 0, usedSymbiosis: false, densitySurfs: 0, bossesDefeated: 0,
+    maxCombo: 0, totalScoreWithMultiplier: 0, closestNearMiss: 999, longestComboStreak: 0,
+  };
+
+  /* Load ghost trail from best run */
+  if (progress.bestGhostTrail && progress.bestGhostTrail.length > 0) {
+    world.bestGhostTrail = progress.bestGhostTrail.slice();
+  } else {
+    world.bestGhostTrail = [];
+  }
 
   glider.y = CONFIG.height * 0.45;
   glider.vy = 0;
@@ -320,6 +425,8 @@ function resetGame() {
   glider.symbiosisTimer = 0;
   glider.symbiosisCooldown = 0;
   glider.pulsePop = 0;
+  glider.glowIntensity = 1.0;
+  glider.comboGlow = 0;
 
   for (let i = 0; i < PARTICLE_POOL_SIZE; i++) particlePool[i].active = false;
 
@@ -327,6 +434,50 @@ function resetGame() {
   initMotes();
   initNebulae();
   initStars();
+}
+
+/* --- Combo Helpers --- */
+function getComboMultiplier() {
+  let mult = 1;
+  for (const t of CONFIG.comboThresholds) {
+    if (world.combo >= t.at) mult = t.multiplier;
+  }
+  return mult;
+}
+
+function getComboLabel() {
+  for (let i = CONFIG.comboThresholds.length - 1; i >= 0; i--) {
+    if (world.combo >= CONFIG.comboThresholds[i].at) return CONFIG.comboThresholds[i].label;
+  }
+  return '';
+}
+
+/* --- Skin Helper --- */
+function getActiveSkin() {
+  return CONFIG.skins[progress.selectedSkin] || CONFIG.skins.default;
+}
+
+function isSkinUnlocked(skinId) {
+  if (skinId === 'default') return true;
+  if (progress.unlockedSkins && progress.unlockedSkins.includes(skinId)) return true;
+  const req = CONFIG.skinUnlocks[skinId];
+  if (!req) return false;
+  if (req.type === 'score') return progress.bestScore >= req.value;
+  if (req.type === 'runs') return progress.totalRuns >= req.value;
+  if (req.type === 'achievement') return progress.achievements && progress.achievements.includes(req.value);
+  return false;
+}
+
+function checkSkinUnlocks() {
+  if (!progress.unlockedSkins) progress.unlockedSkins = ['default'];
+  let unlocked = false;
+  for (const id of Object.keys(CONFIG.skins)) {
+    if (!progress.unlockedSkins.includes(id) && isSkinUnlocked(id)) {
+      progress.unlockedSkins.push(id);
+      unlocked = true;
+    }
+  }
+  return unlocked;
 }
 
 /* --- Input Actions --- */
@@ -337,12 +488,13 @@ function pulse() {
     world.state = STATE.PLAYING;
     enterFullscreen();
     Audio.startDrone();
+    if (Audio.startMusic) Audio.startMusic();
     return;
   }
   if (world.state === STATE.MENU) {
     if (!tutorialDone) {
       tutorialStep++;
-      if (tutorialStep >= 3) {
+      if (tutorialStep >= 7) {
         tutorialDone = true;
         try { localStorage.setItem('methaneDriftTutorialDone', 'true'); } catch (e) { /* */ }
       } else {
@@ -352,13 +504,17 @@ function pulse() {
     world.state = STATE.PLAYING;
     enterFullscreen();
     Audio.startDrone();
+    if (Audio.startMusic) Audio.startMusic();
     return;
   }
   if (world.state === STATE.PAUSED || world.state === STATE.CRASHING) return;
-  glider.vy += CONFIG.pulseForce * world.density;
+  const densityMod = world.pressureAdaptation > 0 && world.densityLabel === 'Crushing' ? 0.9 : world.density;
+  const surfBoost = world.densitySurfBoost > 0 ? CONFIG.densitySurfBoostMultiplier : 1;
+  glider.vy += CONFIG.pulseForce * densityMod * surfBoost;
   glider.pulsePop = 1.0;
   spawnPulseParticles();
   Audio.pulse();
+  checkDensitySurf();
 }
 
 function activateSymbiosis() {
@@ -496,10 +652,15 @@ function spawnObstacle() {
   }
 
   const oscillate = type === 'geyser' && world.score >= 50 && Math.random() < 0.4;
+  /* Geyser eruption cycle: on/off phases */
+  const eruptPhase = type === 'geyser' ? Math.random() * CONFIG.geyserEruptCycle : 0;
+  /* School scatter state */
+  const scatterTimer = 0;
 
   world.obstacles.push({
     type, x: world.width + 120, y: gapY, drift, age: 0, scored: false,
     pulse: Math.random() * Math.PI * 2, oscillate, oscPhase: Math.random() * Math.PI * 2,
+    eruptPhase, erupting: true, scatterTimer, scattered: false,
   });
 }
 
@@ -596,6 +757,111 @@ function nearMissDistance(obstacle) {
   return Math.max(0, (stormR + 20) - dist);
 }
 
+/* --- Boss System --- */
+function spawnBoss(zone) {
+  const bossTypes = {
+    2: { name: 'Storm Leviathan', radius: 140, health: 3, pattern: 'spiral', hue: 170 },
+    3: { name: 'Geyser Titan', radius: 120, health: 4, pattern: 'eruption', hue: 280 },
+    4: { name: 'Crystal Colossus', radius: 160, health: 5, pattern: 'maze', hue: 15 },
+    5: { name: 'Core Entity', radius: 180, health: 6, pattern: 'chaos', hue: 300 },
+  };
+  const def = bossTypes[zone] || bossTypes[2];
+  world.boss = {
+    ...def,
+    x: world.width + 200,
+    y: world.height / 2,
+    age: 0,
+    phase: 0,
+    active: true,
+    defeated: false,
+    hitTimer: 0,
+    enterTimer: 2.0,
+  };
+  world.atmosphereAnnounce = { text: `BOSS: ${def.name}`, timer: 3.0 };
+  if (Audio.bossAppear) Audio.bossAppear();
+}
+
+function updateBoss(dt) {
+  if (!world.boss || !world.boss.active) return;
+  const boss = world.boss;
+  boss.age += dt;
+  boss.phase += dt;
+
+  /* Enter animation */
+  if (boss.enterTimer > 0) {
+    boss.enterTimer -= dt;
+    boss.x = world.width * 0.65 + boss.enterTimer * 200;
+    return;
+  }
+  boss.x = world.width * 0.65;
+
+  /* Boss movement patterns */
+  if (boss.pattern === 'spiral') {
+    boss.y = world.height / 2 + Math.sin(boss.age * 1.2) * 150;
+  } else if (boss.pattern === 'eruption') {
+    boss.y = world.height / 2 + Math.sin(boss.age * 0.8) * 120 + Math.sin(boss.age * 2.5) * 40;
+  } else if (boss.pattern === 'maze') {
+    boss.y = world.height / 2 + Math.sin(boss.age * 0.6) * 180;
+  } else {
+    boss.y = world.height / 2 + Math.sin(boss.age * 1.5) * 160 + Math.cos(boss.age * 0.7) * 60;
+  }
+
+  /* Boss collision — damages boss during symbiosis, damages player otherwise */
+  const bdx = glider.x - boss.x;
+  const bdy = glider.y - boss.y;
+  const bDist = Math.sqrt(bdx * bdx + bdy * bdy);
+  if (bDist < boss.radius + glider.radius) {
+    if (glider.symbiosisTimer > 0 && boss.hitTimer <= 0) {
+      /* Phase through boss damages it */
+      boss.health--;
+      boss.hitTimer = 0.5;
+      if (!reducedMotion) { world.shakeTimer = 0.2; world.shakeIntensity = 6; }
+      for (let i = 0; i < 30; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        spawnParticle(boss.x, boss.y, Math.cos(angle) * 150, Math.sin(angle) * 150, 0.6, boss.hue, 3);
+      }
+      if (boss.health <= 0) {
+        defeatBoss();
+      }
+    } else if (glider.symbiosisTimer <= 0) {
+      crash();
+    }
+  }
+  if (boss.hitTimer > 0) boss.hitTimer -= dt;
+
+  /* Boss auto-exit if too old (45s) */
+  if (boss.age > 45 && boss.active) {
+    boss.active = false;
+    world.boss = null;
+  }
+}
+
+function defeatBoss() {
+  if (!world.boss) return;
+  world.boss.active = false;
+  world.boss.defeated = true;
+  world.bossesDefeated++;
+  world.runStats.bossesDefeated++;
+  /* Rewards */
+  const bonus = 10 * world.zone;
+  world.score += bonus;
+  world.displayScore = world.score;
+  world.scorePop = 1.0;
+  world.scorePopAmount = bonus;
+  glider.symbiosisCharge = 1;
+  glider.symbiosisCooldown = 0;
+  world.atmosphereAnnounce = { text: `BOSS DEFEATED! +${bonus}`, timer: 2.5 };
+  if (!reducedMotion) { world.shakeTimer = 0.4; world.shakeIntensity = 10; world.flashWhite = 0.5; }
+  /* Victory particles */
+  for (let i = 0; i < 60; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 80 + Math.random() * 200;
+    spawnParticle(world.boss.x, world.boss.y, Math.cos(angle) * speed, Math.sin(angle) * speed, 1.0, world.boss.hue + Math.random() * 60, 3);
+  }
+  if (Audio.bossDefeat) Audio.bossDefeat();
+  setTimeout(() => { world.boss = null; }, 2000);
+}
+
 /* --- Crash --- */
 function crash() {
   if (world.state === STATE.CRASHING || world.state === STATE.GAMEOVER) return;
@@ -621,20 +887,34 @@ function finishCrash() {
   restartBtn.hidden = false;
   const isNew = saveBestScore();
 
+  /* Stop music */
+  if (Audio.stopMusic) Audio.stopMusic();
+
   /* Merge run stats into progress */
   progress.totalDistance += world.score;
   progress.totalObstaclesDodged += world.runStats.obstaclesDodged;
   progress.totalSymbiosis += world.runStats.symbiosisUses;
   progress.totalTimePlayed += world.runStats.timeAlive;
   progress.totalRuns++;
-  if (world.score > progress.bestScore) progress.bestScore = world.score;
+  if (world.score > progress.bestScore) {
+    progress.bestScore = world.score;
+    /* Save ghost trail for new best */
+    progress.bestGhostTrail = world.ghostTrail.slice();
+  }
+  if (world.runStats.timeAlive > (progress.longestTimeAlive || 0)) {
+    progress.longestTimeAlive = world.runStats.timeAlive;
+  }
   if (!world.runStats.usedSymbiosis && world.score > (progress.noSymbiosisRecord || 0)) {
     progress.noSymbiosisRecord = world.score;
   }
-  if (world.combo > (progress.longestStreak || 0)) progress.longestStreak = world.combo;
+  const maxCombo = Math.max(world.runStats.maxCombo, world.combo);
+  if (maxCombo > (progress.longestStreak || 0)) progress.longestStreak = maxCombo;
   progress.crushingPhasesThisRun = world.runStats.crushingPhases;
   progress.nearMissesThisRun = world.runStats.nearMisses;
+  progress.densitySurfsThisRun = world.runStats.densitySurfs;
+  progress.bossesDefeatedThisRun = world.runStats.bossesDefeated;
 
+  checkSkinUnlocks();
   checkAchievements();
   saveProgress();
 }
@@ -658,8 +938,31 @@ function checkAchievements() {
 function updateAtmosphere(dt) {
   world.atmosphereTimer += dt;
   const cycle = getDifficulty('atmosphereCycle');
+
+  /* Density forecast — show indicator 2s before shift */
+  if (world.atmosphereTimer >= cycle - 2.0 && !world.densityForecast) {
+    world.densityForecast = true;
+    world.densityForecastTimer = 2.0;
+  }
+  if (world.densityForecastTimer > 0) {
+    world.densityForecastTimer -= dt;
+  }
+
+  /* Density surf window decay */
+  if (world.densityShiftJustHappened > 0) {
+    world.densityShiftJustHappened -= dt;
+  }
+
+  /* Density surf boost decay */
+  if (world.densitySurfBoost > 0) {
+    world.densitySurfBoost -= dt;
+    if (world.densitySurfBoost <= 0) world.densitySurfBoost = 0;
+  }
+
   if (world.atmosphereTimer >= cycle) {
     world.atmosphereTimer = 0;
+    world.densityForecast = null;
+    world.densityForecastTimer = 0;
     const prevLabel = world.densityLabel;
     const roll = Math.random();
     if (roll < 0.34) {
@@ -672,13 +975,45 @@ function updateAtmosphere(dt) {
       world.density = 1.08;
       world.densityLabel = 'Crushing';
       world.runStats.crushingPhases++;
+      /* Track crushing without symbiosis for pressure adaptation */
+      if (glider.symbiosisTimer <= 0) {
+        world.crushingWithoutSymbiosis++;
+        if (world.crushingWithoutSymbiosis >= 3 && world.pressureAdaptation === 0) {
+          world.pressureAdaptation = 1;
+          world.atmosphereAnnounce = { text: 'PRESSURE ADAPTED', timer: 2.0 };
+        }
+      }
     }
     if (prevLabel !== world.densityLabel) {
       world.ambientFlash = 0.25;
-      world.atmosphereAnnounce = { text: world.densityLabel.toUpperCase(), timer: 1.5 };
+      if (!world.pressureAdaptation || world.densityLabel !== 'Crushing') {
+        world.atmosphereAnnounce = { text: world.densityLabel.toUpperCase(), timer: 1.5 };
+      }
       Audio.atmosphereShift(world.densityLabel);
       Audio.updateDrone(world.density);
+      /* Open density surf window */
+      world.densityShiftJustHappened = CONFIG.densitySurfWindow;
     }
+  }
+}
+
+/* --- Density Surf check (called when player pulses) --- */
+function checkDensitySurf() {
+  if (world.densityShiftJustHappened > 0 && world.densitySurfBoost <= 0) {
+    world.densitySurfBoost = CONFIG.densitySurfBoostDuration;
+    world.densityShiftJustHappened = 0;
+    world.runStats.densitySurfs++;
+    world.atmosphereAnnounce = { text: 'DENSITY SURF!', timer: 1.2 };
+    if (!reducedMotion) {
+      world.shakeTimer = 0.15;
+      world.shakeIntensity = 4;
+    }
+    /* Spawn special surf particles */
+    for (let i = 0; i < 20; i++) {
+      const angle = (Math.PI * 2 / 20) * i;
+      spawnParticle(glider.x, glider.y, Math.cos(angle) * 150, Math.sin(angle) * 150, 0.8, 50 + Math.random() * 30, 2.5);
+    }
+    if (Audio.densitySurf) Audio.densitySurf();
   }
 }
 
@@ -711,6 +1046,10 @@ function updateZone() {
     world.zoneTransition = 1.0;
     world.zoneAnnounce = { text: `Zone ${newZone}: ${CONFIG.zoneColors[newZone - 1].name}`, timer: 2.5 };
     Audio.zoneChange();
+    /* Spawn boss at zone transitions (zone 2+) */
+    if (newZone >= 2 && !world.boss) {
+      setTimeout(() => { if (world.state === STATE.PLAYING && !world.boss) spawnBoss(newZone); }, 3000);
+    }
   }
 }
 
@@ -812,11 +1151,34 @@ function update(dt, rawDt) {
   /* Combo timer */
   if (world.comboTimer > 0) {
     world.comboTimer -= dt;
-    if (world.comboTimer <= 0) { world.combo = 0; if (comboNode) comboNode.textContent = '0'; }
+    if (world.comboTimer <= 0) {
+      if (world.combo >= 3) {
+        /* Combo break visual */
+        world.comboBreakPop = 1.0;
+        if (Audio.comboBreak) Audio.comboBreak();
+      }
+      world.runStats.longestComboStreak = Math.max(world.runStats.longestComboStreak, world.combo);
+      world.combo = 0;
+      world.comboMultiplier = 1;
+      glider.comboGlow = 0;
+      if (comboNode) comboNode.textContent = '0';
+    }
+  }
+
+  /* Combo break pop decay */
+  if (world.comboBreakPop > 0) {
+    world.comboBreakPop -= dt * 2;
+    if (world.comboBreakPop < 0) world.comboBreakPop = 0;
+  }
+  /* Combo pop decay */
+  if (world.comboPop > 0) {
+    world.comboPop -= dt * 2;
+    if (world.comboPop < 0) world.comboPop = 0;
   }
 
   /* Obstacles */
   const scrollSpeed = getDifficulty('scrollSpeed');
+  world.edgeWarnings = [];
   world.obstacles.forEach((obstacle) => {
     obstacle.x -= (scrollSpeed + (1 - world.density) * 72) * dt;
     obstacle.y += obstacle.drift * dt;
@@ -827,15 +1189,70 @@ function update(dt, rawDt) {
       obstacle.y += Math.sin(obstacle.oscPhase + obstacle.age * 2) * 40 * dt;
     }
 
+    /* Geyser eruption cycle */
+    if (obstacle.type === 'geyser') {
+      obstacle.eruptPhase = (obstacle.eruptPhase || 0) + dt;
+      const totalCycle = CONFIG.geyserEruptCycle + CONFIG.geyserEruptPause;
+      const phase = obstacle.eruptPhase % totalCycle;
+      obstacle.erupting = phase < CONFIG.geyserEruptCycle;
+      /* Warning tone 0.5s before re-eruption */
+      if (!obstacle.erupting && phase > totalCycle - 0.5 && phase - dt <= totalCycle - 0.5) {
+        if (Audio.geyserWarn && Math.abs(obstacle.x - glider.x) < 300) Audio.geyserWarn();
+      }
+    }
+
+    /* School scatter when symbiosis is active nearby */
+    if (obstacle.type === 'school') {
+      const distToGlider = Math.sqrt((obstacle.x - glider.x) ** 2 + (obstacle.y - glider.y) ** 2);
+      if (glider.symbiosisTimer > 0 && distToGlider < CONFIG.schoolScatterRadius && !obstacle.scattered) {
+        obstacle.scattered = true;
+        obstacle.scatterTimer = CONFIG.schoolScatterDuration;
+      }
+      if (obstacle.scatterTimer > 0) {
+        obstacle.scatterTimer -= dt;
+        if (obstacle.scatterTimer <= 0) { obstacle.scattered = false; obstacle.scatterTimer = 0; }
+      }
+    }
+
+    /* Storm gravity well — pull glider toward center */
+    if (obstacle.type === 'storm' && glider.symbiosisTimer <= 0) {
+      const sdx = obstacle.x - glider.x;
+      const sdy = obstacle.y - glider.y;
+      const sDist = Math.sqrt(sdx * sdx + sdy * sdy);
+      if (sDist < CONFIG.stormPullRadius && sDist > 10) {
+        const pullForce = CONFIG.stormPullStrength * (1 - sDist / CONFIG.stormPullRadius) * dt;
+        glider.vy += (sdy / sDist) * pullForce;
+        if (Audio.stormPull && sDist < CONFIG.stormPullRadius * 0.7) {
+          /* Visual indicator of pull */
+          if (Math.random() < 0.3) {
+            spawnParticle(glider.x, glider.y, sdx * 0.5, sdy * 0.5, 0.3, 220, 1.5);
+          }
+        }
+      }
+    }
+
+    /* Screen-edge warnings for incoming obstacles */
+    if (obstacle.x > world.width - 40 && obstacle.x < world.width + 100) {
+      const typeColor = obstacle.type === 'spire' ? 180 : obstacle.type === 'school' ? 140 : obstacle.type === 'geyser' ? 200 : 240;
+      world.edgeWarnings.push({ y: obstacle.y, hue: typeColor, type: obstacle.type });
+    }
+
     /* Clamp vertical position so obstacles stay on screen */
     if (obstacle.y < 40) { obstacle.y = 40; obstacle.drift = Math.abs(obstacle.drift); }
     if (obstacle.y > world.height - 40) { obstacle.y = world.height - 40; obstacle.drift = -Math.abs(obstacle.drift); }
 
     if (!obstacle.scored && obstacle.x + 40 < glider.x && world.state === STATE.PLAYING) {
       obstacle.scored = true;
-      world.score += 1;
+      /* Combo multiplier scoring */
+      const basePoints = 1;
+      world.comboMultiplier = getComboMultiplier();
+      const points = Math.floor(basePoints * world.comboMultiplier);
+      world.score += points;
+      world.displayScore = world.score;
       world.scorePop = 1.0;
+      world.scorePopAmount = points;
       world.runStats.obstaclesDodged++;
+      world.runStats.totalScoreWithMultiplier += points;
       Audio.score();
 
       /* Near-miss check */
@@ -845,21 +1262,77 @@ function update(dt, rawDt) {
           world.shakeTimer = 0.1;
           world.shakeIntensity = 3;
         }
+        const prevCombo = world.combo;
         world.combo++;
-        world.comboTimer = 3.0;
+        world.comboTimer = 3.5;
         world.runStats.nearMisses++;
+        if (dist < world.runStats.closestNearMiss) world.runStats.closestNearMiss = dist;
+        if (world.combo > world.runStats.maxCombo) world.runStats.maxCombo = world.combo;
         if (comboNode) comboNode.textContent = String(world.combo);
         spawnNearMissParticles();
         Audio.nearMiss();
+
+        /* Combo milestones */
+        for (const t of CONFIG.comboThresholds) {
+          if (world.combo >= t.at && prevCombo < t.at) {
+            world.comboPop = 1.5;
+            if (Audio.comboMilestone) Audio.comboMilestone(t.at);
+            /* Bonus score burst */
+            const bonus = t.at;
+            world.score += bonus;
+            world.displayScore = world.score;
+            world.scorePopAmount = bonus;
+            world.scorePop = 1.0;
+            /* Milestone particles */
+            for (let p = 0; p < t.at * 2; p++) {
+              const angle = Math.random() * Math.PI * 2;
+              spawnParticle(glider.x, glider.y, Math.cos(angle) * 120, Math.sin(angle) * 120, 0.7, 60 + Math.random() * 60, 2);
+            }
+          }
+        }
+
+        /* Glider glow scales with combo */
+        glider.comboGlow = Math.min(1, world.combo / 10);
       }
 
       if (world.score % 8 === 0) { glider.symbiosisCharge = 1; glider.symbiosisCooldown = 0; }
+
+      /* Lore messages */
+      for (const lore of CONFIG.loreMessages) {
+        if (world.score === lore.score) {
+          world.loreAnnounce = { text: lore.text, timer: 3.5 };
+        }
+      }
     }
 
-    if (checkCollision(obstacle) && glider.symbiosisTimer <= 0) crash();
+    /* Collision (geysers don't hit during pause phase, scattered schools don't hit) */
+    if (glider.symbiosisTimer <= 0) {
+      if (obstacle.type === 'geyser' && !obstacle.erupting) {
+        /* Geyser is paused — no collision */
+      } else if (obstacle.type === 'school' && obstacle.scattered) {
+        /* School is scattered — no collision */
+      } else if (checkCollision(obstacle)) {
+        crash();
+      }
+    }
   });
 
   world.obstacles = world.obstacles.filter((o) => o.x > -220);
+
+  /* Ghost trail recording (sample every 0.1s) */
+  world.ghostTrailTimer += rawDt;
+  if (world.ghostTrailTimer >= 0.1) {
+    world.ghostTrailTimer = 0;
+    world.ghostTrail.push({ y: glider.y, score: world.score });
+  }
+
+  /* Boss encounter at zone boundaries */
+  updateBoss(dt);
+
+  /* Update adaptive music */
+  if (Audio.updateMusic) {
+    Audio.updateMusic(world.zone, world.density, world.combo, scrollSpeed);
+  }
 
   /* Particles */
   updateParticles(dt);
@@ -1730,11 +2203,41 @@ function drawScorePop() {
     ctx.save();
     ctx.translate(world.width / 2, 60);
     ctx.scale(scale, scale);
-    ctx.fillStyle = `rgba(200, 255, 245, ${alpha})`;
+    const amount = world.scorePopAmount || 1;
+    const isMultiplied = world.comboMultiplier > 1;
+    ctx.fillStyle = isMultiplied ? `rgba(255, 230, 140, ${alpha})` : `rgba(200, 255, 245, ${alpha})`;
     ctx.font = 'bold 24px Inter, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('+1', 0, 0);
+    ctx.fillText(`+${amount}`, 0, 0);
+    if (isMultiplied) {
+      ctx.font = 'bold 14px Inter, sans-serif';
+      ctx.fillStyle = `rgba(255, 200, 100, ${alpha * 0.8})`;
+      ctx.fillText(getComboLabel(), 0, 20);
+    }
     ctx.restore();
+  }
+
+  /* Combo milestone pop */
+  if (world.comboPop > 0) {
+    const scale = 1 + world.comboPop * 0.3;
+    const alpha = Math.min(1, world.comboPop);
+    ctx.save();
+    ctx.translate(world.width / 2, 90);
+    ctx.scale(scale, scale);
+    ctx.fillStyle = `rgba(255, 220, 100, ${alpha})`;
+    ctx.font = 'bold 20px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`COMBO ${getComboLabel()}!`, 0, 0);
+    ctx.restore();
+  }
+
+  /* Combo break indicator */
+  if (world.comboBreakPop > 0) {
+    const alpha = world.comboBreakPop * 0.6;
+    ctx.fillStyle = `rgba(255, 100, 100, ${alpha})`;
+    ctx.font = '600 16px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Combo Lost', world.width / 2, 110);
   }
 }
 
@@ -1794,6 +2297,160 @@ function drawAnnouncements(dt) {
   }
 }
 
+/* --- Edge Warnings --- */
+function drawEdgeWarnings() {
+  for (const warn of world.edgeWarnings) {
+    const alpha = 0.4 + Math.sin(performance.now() * 0.01) * 0.15;
+    ctx.fillStyle = `hsla(${warn.hue}, 70%, 70%, ${alpha})`;
+    ctx.beginPath();
+    /* Triangle pointing left on right edge */
+    const wx = world.width - 8;
+    ctx.moveTo(wx, warn.y - 8);
+    ctx.lineTo(wx + 6, warn.y);
+    ctx.lineTo(wx, warn.y + 8);
+    ctx.closePath();
+    ctx.fill();
+    /* Glow line */
+    ctx.strokeStyle = `hsla(${warn.hue}, 60%, 60%, ${alpha * 0.5})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(wx, warn.y - 12);
+    ctx.lineTo(wx, warn.y + 12);
+    ctx.stroke();
+  }
+}
+
+/* --- Density Forecast Indicator --- */
+function drawDensityForecast() {
+  if (!world.densityForecast || world.densityForecastTimer <= 0) return;
+  const alpha = Math.min(1, world.densityForecastTimer) * 0.6;
+  const pulse = Math.sin(performance.now() * 0.01) * 0.2;
+  ctx.fillStyle = `rgba(255, 220, 130, ${alpha * (0.6 + pulse)})`;
+  ctx.font = '500 12px Inter, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('SHIFT INCOMING', 20, 74);
+  /* Pulsing bar */
+  const barW = 80;
+  const barH = 3;
+  const frac = 1 - world.densityForecastTimer / 2.0;
+  ctx.fillStyle = `rgba(255, 200, 80, ${alpha * 0.3})`;
+  ctx.fillRect(20, 78, barW, barH);
+  ctx.fillStyle = `rgba(255, 200, 80, ${alpha * 0.8})`;
+  ctx.fillRect(20, 78, barW * frac, barH);
+}
+
+/* --- Ghost Trail --- */
+function drawGhostTrail() {
+  if (world.bestGhostTrail.length === 0 || world.state !== STATE.PLAYING) return;
+  /* Find ghost position matching current score */
+  const idx = world.ghostTrail.length;
+  if (idx >= world.bestGhostTrail.length) return;
+  const ghost = world.bestGhostTrail[idx];
+  if (!ghost) return;
+  const alpha = 0.12;
+  ctx.fillStyle = `rgba(160, 200, 255, ${alpha})`;
+  ctx.beginPath();
+  ctx.arc(glider.x, ghost.y, 10, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = `rgba(160, 200, 255, ${alpha * 0.5})`;
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+/* --- Boss Drawing --- */
+function drawBoss() {
+  if (!world.boss || !world.boss.active) return;
+  const boss = world.boss;
+  const x = boss.x;
+  const y = boss.y;
+  const r = boss.radius;
+  const now = performance.now();
+
+  /* Outer menacing glow */
+  const glowAlpha = 0.15 + Math.sin(now * 0.003) * 0.05;
+  const glow = ctx.createRadialGradient(x, y, r * 0.3, x, y, r * 1.8);
+  glow.addColorStop(0, `hsla(${boss.hue}, 70%, 50%, ${glowAlpha})`);
+  glow.addColorStop(0.5, `hsla(${boss.hue}, 60%, 40%, ${glowAlpha * 0.5})`);
+  glow.addColorStop(1, 'transparent');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(x, y, r * 1.8, 0, Math.PI * 2);
+  ctx.fill();
+
+  /* Core body */
+  const bodyGrad = ctx.createRadialGradient(x, y, 0, x, y, r);
+  bodyGrad.addColorStop(0, `hsla(${boss.hue}, 80%, 70%, 0.4)`);
+  bodyGrad.addColorStop(0.5, `hsla(${boss.hue}, 70%, 50%, 0.25)`);
+  bodyGrad.addColorStop(0.8, `hsla(${boss.hue}, 60%, 40%, 0.15)`);
+  bodyGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = bodyGrad;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+
+  /* Rotating rings */
+  for (let i = 0; i < 3; i++) {
+    const ringR = r * (0.4 + i * 0.2);
+    const ringA = now * 0.002 * (1 + i * 0.3);
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(ringA + i * 1.2);
+    ctx.strokeStyle = `hsla(${boss.hue + i * 30}, 60%, 60%, ${0.2 + Math.sin(now * 0.004 + i) * 0.1})`;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([12, 8]);
+    ctx.beginPath();
+    ctx.arc(0, 0, ringR, 0, Math.PI * 1.5);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+
+  /* Health bar */
+  const maxHealth = { 2: 3, 3: 4, 4: 5, 5: 6 }[world.zone] || 3;
+  const hpFrac = boss.health / maxHealth;
+  const barW = r * 1.2;
+  const barH = 6;
+  const barX = x - barW / 2;
+  const barY = y - r - 20;
+  ctx.fillStyle = 'rgba(40, 20, 30, 0.5)';
+  ctx.beginPath();
+  ctx.roundRect(barX, barY, barW, barH, 3);
+  ctx.fill();
+  const hpColor = hpFrac > 0.5 ? `hsla(${boss.hue}, 70%, 60%, 0.8)` : 'rgba(255, 100, 80, 0.8)';
+  ctx.fillStyle = hpColor;
+  ctx.beginPath();
+  ctx.roundRect(barX, barY, barW * hpFrac, barH, 3);
+  ctx.fill();
+
+  /* Hit flash */
+  if (boss.hitTimer > 0.3) {
+    ctx.fillStyle = `rgba(255, 255, 255, ${(boss.hitTimer - 0.3) * 2})`;
+    ctx.beginPath();
+    ctx.arc(x, y, r * 0.8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  /* Name label */
+  ctx.fillStyle = `hsla(${boss.hue}, 50%, 80%, 0.6)`;
+  ctx.font = '600 13px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(boss.name, x, barY - 6);
+}
+
+/* --- Lore / Environmental Storytelling --- */
+function drawLore(dt) {
+  if (!world.loreAnnounce || world.loreAnnounce.timer <= 0) return;
+  const lore = world.loreAnnounce;
+  lore.timer -= dt;
+  const alpha = Math.min(1, lore.timer / 0.8) * 0.65;
+  ctx.fillStyle = `rgba(180, 220, 255, ${alpha})`;
+  ctx.font = 'italic 500 14px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(lore.text, world.width / 2, world.height - 30);
+}
+
 function drawText(dt) {
   if (world.state === STATE.MENU) {
     drawVignette();
@@ -1805,20 +2462,24 @@ function drawText(dt) {
 
     if (!tutorialDone) {
       /* Tutorial panels */
-      ctx.font = '600 30px Inter, sans-serif';
+      ctx.font = '600 28px Inter, sans-serif';
       const msgs = [
         ['Pulse Upward', 'Tap Space or Click to pulse the glider upward'],
-        ['Avoid Hazards', 'Navigate through spires, schools, geysers, and storms'],
-        ['Symbiosis', 'Press Shift when charged to phase through obstacles'],
+        ['Avoid Hazards', 'Navigate spires, schools, geysers, and storms'],
+        ['Symbiosis', 'Press Shift to phase through obstacles when charged'],
+        ['Combos', 'Fly close to hazards for near-misses — chain them for score multipliers!'],
+        ['Density Surfing', 'Pulse right as the atmosphere shifts for a power boost'],
+        ['Zone Bosses', 'Phase through bosses with Symbiosis to damage them'],
+        ['Adapt & Survive', 'Watch for edge warnings, density forecasts, and lore fragments'],
       ];
-      const step = Math.min(tutorialStep, 2);
+      const step = Math.min(tutorialStep, msgs.length - 1);
       ctx.fillText(msgs[step][0], world.width / 2, world.height / 2 - 20 + float);
       ctx.fillStyle = 'rgba(180, 210, 255, 0.7)';
-      ctx.font = '500 17px Inter, sans-serif';
+      ctx.font = '500 16px Inter, sans-serif';
       ctx.fillText(msgs[step][1], world.width / 2, world.height / 2 + 16 + float);
       ctx.font = '400 14px Inter, sans-serif';
       ctx.fillStyle = 'rgba(160, 200, 240, 0.5)';
-      ctx.fillText(`(${step + 1}/3) Tap to continue`, world.width / 2, world.height / 2 + 48 + float);
+      ctx.fillText(`(${step + 1}/${msgs.length}) Tap to continue`, world.width / 2, world.height / 2 + 48 + float);
     } else {
       ctx.font = '600 42px Inter, sans-serif';
       ctx.fillText('METHANE DRIFT', world.width / 2, world.height / 2 - 24 + float);
@@ -1871,32 +2532,62 @@ function drawText(dt) {
 
   if (world.state === STATE.GAMEOVER) {
     drawVignette();
+    const cx = world.width / 2;
+    let yPos = world.height / 2 - 80;
+
     ctx.fillStyle = '#d8eaff';
     ctx.textAlign = 'center';
-    ctx.font = '600 38px Inter, sans-serif';
-    ctx.fillText('Signal Lost', world.width / 2, world.height / 2 - 40);
+    ctx.font = '600 36px Inter, sans-serif';
+    ctx.fillText('Signal Lost', cx, yPos);
+    yPos += 36;
 
-    ctx.fillStyle = 'rgba(180, 210, 255, 0.7)';
-    ctx.font = '500 20px Inter, sans-serif';
-    ctx.fillText(`Distance: ${world.score}`, world.width / 2, world.height / 2);
+    /* Score with multiplier info */
+    ctx.fillStyle = 'rgba(180, 210, 255, 0.8)';
+    ctx.font = '500 22px Inter, sans-serif';
+    ctx.fillText(`Distance: ${world.score}`, cx, yPos);
+    yPos += 24;
 
-    ctx.font = '500 16px Inter, sans-serif';
-    ctx.fillText(`Best: ${world.best}`, world.width / 2, world.height / 2 + 28);
+    ctx.font = '500 15px Inter, sans-serif';
+    ctx.fillText(`Best: ${world.best}`, cx, yPos);
+    yPos += 22;
 
     if (world.score === world.best && world.score > 0) {
       ctx.fillStyle = 'rgba(255, 220, 120, 0.9)';
-      ctx.font = '700 16px Inter, sans-serif';
-      ctx.fillText('NEW RECORD', world.width / 2, world.height / 2 + 52);
+      ctx.font = '700 15px Inter, sans-serif';
+      ctx.fillText('NEW RECORD', cx, yPos);
+      yPos += 20;
     }
 
-    /* Quick stats */
-    ctx.fillStyle = 'rgba(160, 200, 240, 0.5)';
-    ctx.font = '400 13px Inter, sans-serif';
-    const statsY = world.height / 2 + 76;
-    ctx.fillText(
-      `Dodged: ${world.runStats.obstaclesDodged}  |  Near-misses: ${world.runStats.nearMisses}  |  Time: ${world.runStats.timeAlive.toFixed(1)}s`,
-      world.width / 2, statsY
-    );
+    /* Detailed run summary */
+    yPos += 8;
+    ctx.fillStyle = 'rgba(140, 180, 220, 0.6)';
+    ctx.font = '400 12px Inter, sans-serif';
+    const rs = world.runStats;
+    const summaryLines = [
+      `Dodged: ${rs.obstaclesDodged}  |  Near-misses: ${rs.nearMisses}  |  Time: ${rs.timeAlive.toFixed(1)}s`,
+      `Max Combo: ${Math.max(rs.maxCombo, world.combo)}  |  Density Surfs: ${rs.densitySurfs}  |  Bosses: ${rs.bossesDefeated}`,
+    ];
+    if (rs.closestNearMiss < 999) {
+      summaryLines.push(`Closest Near-Miss: ${rs.closestNearMiss.toFixed(1)}px  |  Symbiosis Uses: ${rs.symbiosisUses}`);
+    }
+    for (const line of summaryLines) {
+      ctx.fillText(line, cx, yPos);
+      yPos += 17;
+    }
+
+    /* Highlight moment */
+    yPos += 4;
+    if (rs.maxCombo >= 5) {
+      ctx.fillStyle = 'rgba(255, 220, 140, 0.6)';
+      ctx.fillText(`Highlight: ${rs.maxCombo}x combo streak!`, cx, yPos);
+      yPos += 17;
+    } else if (rs.densitySurfs > 0) {
+      ctx.fillStyle = 'rgba(255, 220, 140, 0.6)';
+      ctx.fillText(`Highlight: ${rs.densitySurfs} density surf${rs.densitySurfs > 1 ? 's' : ''}!`, cx, yPos);
+      yPos += 17;
+    }
+
+    const statsY = yPos;
 
     ctx.fillStyle = 'rgba(150, 190, 230, 0.45)';
     ctx.font = '400 14px Inter, sans-serif';
@@ -2008,11 +2699,38 @@ function drawCanvasHUD() {
   ctx.fillStyle = symColor;
   ctx.fillText(symLabel, world.width - 20, 36);
 
-  /* Combo */
+  /* Combo with multiplier */
   if (world.combo > 0) {
-    ctx.fillStyle = 'rgba(180, 255, 230, 0.8)';
+    const comboAlpha = 0.8 + glider.comboGlow * 0.2;
+    const comboColor = world.comboMultiplier >= 3 ? `rgba(255, 220, 100, ${comboAlpha})` :
+                       world.comboMultiplier >= 2 ? `rgba(255, 240, 170, ${comboAlpha})` :
+                       world.comboMultiplier >= 1.5 ? `rgba(200, 255, 200, ${comboAlpha})` :
+                       `rgba(180, 255, 230, ${comboAlpha})`;
+    ctx.fillStyle = comboColor;
     ctx.font = '600 16px Inter, sans-serif';
     ctx.fillText(`Combo x${world.combo}`, world.width - 20, 56);
+    if (world.comboMultiplier > 1) {
+      ctx.font = '500 13px Inter, sans-serif';
+      ctx.fillStyle = `rgba(255, 220, 140, ${comboAlpha * 0.7})`;
+      ctx.fillText(`Score ${getComboLabel()}`, world.width - 20, 72);
+    }
+  }
+
+  /* Density surf boost indicator */
+  if (world.densitySurfBoost > 0) {
+    const surfAlpha = Math.min(1, world.densitySurfBoost * 2);
+    ctx.fillStyle = `rgba(255, 220, 80, ${surfAlpha * 0.8})`;
+    ctx.font = '700 14px Inter, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('SURF BOOST', 20, 92);
+    ctx.textAlign = 'right';
+  }
+
+  /* Pressure adaptation indicator */
+  if (world.pressureAdaptation > 0) {
+    ctx.fillStyle = 'rgba(255, 180, 120, 0.5)';
+    ctx.font = '500 11px Inter, sans-serif';
+    ctx.fillText('Pressure Adapted', world.width - 20, 88);
   }
 
   ctx.restore();
@@ -2083,13 +2801,18 @@ function gameLoop(timestamp) {
 
   drawBackground();
   drawMotes();
+  drawGhostTrail();
   drawObstacles();
+  drawBoss();
   drawParticles();
   drawGlider();
   drawScorePop();
+  drawEdgeWarnings();
+  drawDensityForecast();
   drawCanvasHUD();
   drawWhiteFlash();
   drawAnnouncements(dt);
+  drawLore(dt);
   drawText(dt);
 
   ctx.restore();
