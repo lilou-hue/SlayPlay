@@ -1,8 +1,8 @@
 :root {
-  color-scheme: light;
-  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
-  background: #daf1ff;
-  color: #15324b;
+  color-scheme: dark;
+  font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  background: #060810;
+  color: #d0d8e8;
 }
 
 * {
@@ -16,11 +16,14 @@ body {
   justify-content: center;
   min-height: 100vh;
   padding: 32px 16px;
-  background: linear-gradient(170deg, #8ad4ff 0%, #c8eaff 30%, #f0fcff 60%, #d6ffe4 100%);
+  background:
+    radial-gradient(ellipse at 40% 15%, rgba(255, 140, 50, 0.06) 0%, transparent 55%),
+    radial-gradient(ellipse at 65% 85%, rgba(120, 80, 255, 0.05) 0%, transparent 55%),
+    linear-gradient(170deg, #060810 0%, #0c1020 40%, #080c18 100%);
 }
 
 .game {
-  max-width: 480px;
+  max-width: 540px;
   width: 100%;
   display: grid;
   gap: 16px;
@@ -34,11 +37,11 @@ body {
 .back-link {
   display: inline-block;
   margin-bottom: 8px;
-  color: #15324b;
+  color: #d0d8e8;
   text-decoration: none;
   font-weight: 700;
   font-size: 0.95rem;
-  opacity: 0.6;
+  opacity: 0.5;
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
@@ -51,36 +54,41 @@ body {
   font-size: 2.2rem;
   margin-bottom: 4px;
   letter-spacing: 0.02em;
-  color: #1a4060;
+  background: linear-gradient(90deg, #ff8c32, #ff5544, #cc44ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .game__header p {
-  color: #3d6a8a;
+  color: rgba(208, 216, 232, 0.6);
   font-size: 0.95rem;
 }
 
 .game__panel {
-  background: #ffffff;
+  background: rgba(10, 14, 24, 0.85);
   border-radius: 18px;
   padding: 16px;
   box-shadow:
-    0 20px 50px rgba(21, 50, 75, 0.12),
-    0 4px 12px rgba(21, 50, 75, 0.08);
+    0 20px 50px rgba(0, 0, 0, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 140, 50, 0.08);
   display: grid;
   gap: 12px;
   justify-items: center;
 }
 
 canvas {
-  width: min(100%, 360px);
+  width: min(100%, 480px);
   height: auto;
-  aspect-ratio: 9 / 16;
-  background: linear-gradient(180deg, #5cb8ff, #a8e0ff 55%, #d4f0d4 85%, #7be495 100%);
+  aspect-ratio: 480 / 720;
+  background: #050508;
   border-radius: 14px;
-  border: 3px solid #1a5070;
+  border: 2px solid rgba(255, 100, 40, 0.25);
   box-shadow:
-    inset 0 2px 8px rgba(0, 0, 0, 0.08),
-    0 8px 24px rgba(21, 50, 75, 0.12);
+    inset 0 2px 8px rgba(0, 0, 0, 0.3),
+    0 0 30px rgba(255, 100, 40, 0.06);
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -102,49 +110,76 @@ canvas {
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: #5a7a90;
+  color: rgba(208, 216, 232, 0.5);
 }
 
 .hud__score strong {
   font-size: 1.7rem;
-  color: #1a4060;
+  color: #d0d8e8;
   letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud__mute {
+  border: none;
+  background: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 8px;
+  line-height: 1;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.hud__mute:hover {
+  background: rgba(255, 140, 50, 0.1);
+  transform: scale(1.1);
+}
+
+.hud__mute:active {
+  transform: scale(0.95);
 }
 
 .hud__button {
   border: none;
   border-radius: 999px;
   padding: 10px 20px;
-  background: linear-gradient(135deg, #ffca28, #ffb703);
-  color: #1b2a36;
+  background: linear-gradient(135deg, #ff8c32, #ff4422);
+  color: #fff;
   font-weight: 700;
   font-size: 0.9rem;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   justify-self: end;
-  box-shadow: 0 4px 10px rgba(255, 183, 3, 0.3);
+  box-shadow: 0 4px 10px rgba(255, 100, 40, 0.25);
 }
 
 .hud__button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(255, 183, 3, 0.4);
+  box-shadow: 0 8px 20px rgba(255, 100, 40, 0.35);
 }
 
 .hud__button:active {
   transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(255, 183, 3, 0.2);
-}
-
-.hud__mute {
-  padding: 10px 12px;
-  font-size: 1.1rem;
-  line-height: 1;
+  box-shadow: 0 2px 6px rgba(255, 100, 40, 0.15);
 }
 
 .game__footer p {
-  color: #6a8fa8;
+  color: rgba(208, 216, 232, 0.4);
   font-size: 0.88rem;
   font-style: italic;
+}
+
+@media (max-width: 540px) {
+  .game__hud {
+    grid-template-columns: 1fr 1fr auto auto;
+    gap: 8px;
+  }
+
+  .hud__button {
+    padding: 8px 14px;
+    font-size: 0.82rem;
+  }
 }
 
 @media (min-width: 768px) and (max-width: 1194px) {
@@ -159,10 +194,6 @@ canvas {
 
   .game__panel {
     padding: 20px;
-  }
-
-  canvas {
-    width: min(100%, 420px);
   }
 
   .game__header h1 {

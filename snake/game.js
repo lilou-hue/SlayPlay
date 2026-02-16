@@ -40,6 +40,16 @@ const state = {
   speedBoostEnd: 0,       // timestamp when speed boost expires
   slowMoEnd: 0,           // timestamp when slow-mo expires
   savedTickInterval: 0,
+  // Visual enhancement state
+  dustMotes: [],           // ambient floating dust particles
+  tongueVisible: true,     // tongue flicker toggle
+  tongueTimer: 0,          // tongue flicker timer (ms)
+  tongueWobble: 0,         // random wobble offset for tongue
+  deathTime: 0,            // timestamp when death occurred
+  deathPos: null,           // {x,y} pixel position of death (head)
+  deathRingRadius: 0,      // expanding flash ring radius
+  deathRingAlpha: 0,        // expanding flash ring alpha
+  crackleParticles: [],    // electric crackle particles along wall edges
 };
 
 const snake = {
@@ -360,6 +370,34 @@ function spawnParticles(cx, cy, count, color, sizeMin, sizeMax, lifeMin, lifeMax
   }
 }
 
+/* ── Dust Motes ────────────────────────────────────────────── */
+
+function initDustMotes() {
+  state.dustMotes = [];
+  for (let i = 0; i < 8; i++) {
+    state.dustMotes.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 8,
+      vy: (Math.random() - 0.5) * 8,
+      size: 1 + Math.random() * 1.5,
+      alpha: 0.15 + Math.random() * 0.15,
+    });
+  }
+}
+
+function updateDustMotes(dt) {
+  for (const m of state.dustMotes) {
+    m.x += m.vx * dt;
+    m.y += m.vy * dt;
+    // Wrap around canvas edges
+    if (m.x < 0) m.x += canvas.width;
+    if (m.x > canvas.width) m.x -= canvas.width;
+    if (m.y < 0) m.y += canvas.height;
+    if (m.y > canvas.height) m.y -= canvas.height;
+  }
+}
+
 /* ── Food Spawning ─────────────────────────────────────────── */
 
 function spawnFood() {
@@ -411,6 +449,16 @@ function resetGame() {
   state.speedBoostEnd = 0;
   state.slowMoEnd = 0;
   state.savedTickInterval = 0;
+  state.deathTime = 0;
+  state.deathPos = null;
+  state.deathRingRadius = 0;
+  state.deathRingAlpha = 0;
+  state.crackleParticles = [];
+  state.tongueVisible = true;
+  state.tongueTimer = 0;
+  state.tongueWobble = 0;
+
+  initDustMotes();
 
   scoreLabel.textContent = "0";
   spawnFood();
@@ -548,6 +596,7 @@ function eatFood(now) {
       state.arenaMax -= 1;
       state.arenaFlash = 1.0;
       state.lastShrinkScore = state.score;
+      spawnCrackleParticles();
       playSound(soundWallWarning);
       haptics.wallShrink();
 
@@ -573,6 +622,13 @@ function die() {
   state.shakeIntensity = 8;
   stopAmbientHum();
 
+  // Death animation state: record death position and time
+  const head = snake.segments[0];
+  state.deathPos = { x: (head.x + 0.5) * CELL, y: (head.y + 0.5) * CELL };
+  state.deathTime = performance.now();
+  state.deathRingRadius = 0;
+  state.deathRingAlpha = 1.0;
+
   // Death particles from each segment
   for (let i = 0; i < snake.segments.length; i++) {
     const seg = snake.segments[i];
@@ -596,6 +652,16 @@ function die() {
 
 function drawBackground() {
   ctx.fillStyle = "#0a0f0a";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Dark radial vignette toward corners
+  const vignetteGrad = ctx.createRadialGradient(
+    canvas.width / 2, canvas.height / 2, canvas.width * 0.25,
+    canvas.width / 2, canvas.height / 2, canvas.width * 0.75
+  );
+  vignetteGrad.addColorStop(0, "rgba(0,0,0,0)");
+  vignetteGrad.addColorStop(1, "rgba(0,0,0,0.45)");
+  ctx.fillStyle = vignetteGrad;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // Outer wall area (darker)
@@ -624,6 +690,19 @@ function drawBackground() {
     ctx.moveTo(minPx, p);
     ctx.lineTo(maxPx, p);
     ctx.stroke();
+  }
+
+  // Ambient floating dust motes
+  for (const m of state.dustMotes) {
+    ctx.save();
+    ctx.globalAlpha = m.alpha;
+    ctx.shadowBlur = 4;
+    ctx.shadowColor = "rgba(57,255,20,0.3)";
+    ctx.fillStyle = "rgba(57,255,20,0.5)";
+    ctx.beginPath();
+    ctx.arc(m.x, m.y, m.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   }
 }
 
@@ -655,22 +734,123 @@ function drawArenaWalls() {
     ctx.strokeRect(amin, amin, size, size);
     ctx.restore();
   }
+
+  // Electric crackle particles along wall edge during arena flash
+  if (state.arenaFlash > 0) {
+    drawCrackleParticles();
+  }
+}
+
+function spawnCrackleParticles() {
+  // Spawn electric crackle particles along the new wall edges
+  const amin = state.arenaMin * CELL;
+  const amax = (state.arenaMax + 1) * CELL;
+  const count = 20;
+  state.crackleParticles = [];
+  for (let i = 0; i < count; i++) {
+    // Pick a random edge: 0=top, 1=bottom, 2=left, 3=right
+    const edge = Math.floor(Math.random() * 4);
+    let x, y;
+    if (edge === 0) { x = amin + Math.random() * (amax - amin); y = amin; }
+    else if (edge === 1) { x = amin + Math.random() * (amax - amin); y = amax; }
+    else if (edge === 2) { x = amin; y = amin + Math.random() * (amax - amin); }
+    else { x = amax; y = amin + Math.random() * (amax - amin); }
+    const life = 0.6 + Math.random() * 0.5;
+    state.crackleParticles.push({
+      x, y,
+      ox: x + (Math.random() - 0.5) * 6,
+      oy: y + (Math.random() - 0.5) * 6,
+      life,
+      maxLife: life,
+      size: 1.5 + Math.random() * 2,
+    });
+  }
+}
+
+function updateCrackleParticles(dt) {
+  for (let i = state.crackleParticles.length - 1; i >= 0; i--) {
+    const p = state.crackleParticles[i];
+    p.life -= dt;
+    // Snap to a new random offset along the edge each frame for electric effect
+    p.ox = p.x + (Math.random() - 0.5) * 8;
+    p.oy = p.y + (Math.random() - 0.5) * 8;
+    if (p.life <= 0) {
+      state.crackleParticles.splice(i, 1);
+    }
+  }
+}
+
+function drawCrackleParticles() {
+  for (const p of state.crackleParticles) {
+    const frac = p.life / p.maxLife;
+    const alpha = frac;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = "rgba(150,255,255,0.8)";
+    // Alternate between white and cyan for electric look
+    ctx.fillStyle = Math.random() > 0.5 ? "#ffffff" : "#88ffff";
+    ctx.beginPath();
+    ctx.arc(p.ox, p.oy, p.size * frac, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
 }
 
 function drawSnake(movePhase) {
   const segs = snake.segments;
   const prev = snake.prevPositions;
+  const isDead = state.phase === "dead";
+  const deathElapsed = isDead && state.deathTime > 0 ? (performance.now() - state.deathTime) / 1000 : 0;
 
-  for (let i = segs.length - 1; i >= 0; i--) {
+  // Precompute interpolated positions for all segments
+  const positions = [];
+  for (let i = 0; i < segs.length; i++) {
     const cur = segs[i];
     const prv = prev[i] || cur;
+    let rx = lerp(prv.x, cur.x, movePhase);
+    let ry = lerp(prv.y, cur.y, movePhase);
+    let cx = (rx + 0.5) * CELL;
+    let cy = (ry + 0.5) * CELL;
 
-    const rx = lerp(prv.x, cur.x, movePhase);
-    const ry = lerp(prv.y, cur.y, movePhase);
-    const cx = (rx + 0.5) * CELL;
-    const cy = (ry + 0.5) * CELL;
+    // Death scatter: segments fly apart from center
+    if (isDead && deathElapsed > 0 && state.deathPos) {
+      const dx = cx - state.deathPos.x;
+      const dy = cy - state.deathPos.y;
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      const scatterForce = deathElapsed * 120 * (1 + i * 0.3);
+      cx += (dx / dist) * scatterForce;
+      cy += (dy / dist) * scatterForce;
+    }
 
+    positions.push({ cx, cy });
+  }
+
+  // Draw connecting arcs between adjacent body segments (back to front)
+  for (let i = segs.length - 1; i >= 1; i--) {
+    const p1 = positions[i];
+    const p2 = positions[i - 1];
     const t = segs.length > 1 ? i / (segs.length - 1) : 0;
+    const [cr, cg, cb] = lerpColor(57, 255, 20, 0, 184, 148, t);
+    const alpha = Math.max(0.3, 1 - t * 0.7);
+
+    // Joint circle between adjacent segments
+    const jx = (p1.cx + p2.cx) / 2;
+    const jy = (p1.cy + p2.cy) / 2;
+    ctx.save();
+    ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * 0.7})`;
+    ctx.beginPath();
+    ctx.arc(jx, jy, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  for (let i = segs.length - 1; i >= 0; i--) {
+    const { cx, cy } = positions[i];
+    const t = segs.length > 1 ? i / (segs.length - 1) : 0;
+
+    // Skip rendering if scattered too far off screen during death
+    if (isDead && (cx < -50 || cx > canvas.width + 50 || cy < -50 || cy > canvas.height + 50)) continue;
 
     if (i === 0) {
       // Head
@@ -721,6 +901,52 @@ function drawSnake(movePhase) {
       ctx.arc(cx + e2x + dir.x * 0.8, cy + e2y + dir.y * 0.8, 1.5, 0, Math.PI * 2);
       ctx.fill();
 
+      // Flickering forked tongue
+      if (state.tongueVisible && !isDead) {
+        const tongueLen = 8 + Math.random() * 2;
+        const forkLen = 4;
+        const forkAngle = 0.35;
+        const wobble = state.tongueWobble;
+
+        // Tongue base point (front of head)
+        const baseTx = cx + dir.x * half;
+        const baseTy = cy + dir.y * half;
+
+        // Tongue direction angle
+        const tongueAngle = Math.atan2(dir.y, dir.x) + wobble;
+
+        // Tongue tip
+        const tipX = baseTx + Math.cos(tongueAngle) * tongueLen;
+        const tipY = baseTy + Math.sin(tongueAngle) * tongueLen;
+
+        // Fork prongs
+        const fork1X = tipX + Math.cos(tongueAngle + forkAngle) * forkLen;
+        const fork1Y = tipY + Math.sin(tongueAngle + forkAngle) * forkLen;
+        const fork2X = tipX + Math.cos(tongueAngle - forkAngle) * forkLen;
+        const fork2Y = tipY + Math.sin(tongueAngle - forkAngle) * forkLen;
+
+        ctx.save();
+        ctx.strokeStyle = "#ff2244";
+        ctx.lineWidth = 1.2;
+        ctx.lineCap = "round";
+        // Main tongue line
+        ctx.beginPath();
+        ctx.moveTo(baseTx, baseTy);
+        ctx.lineTo(tipX, tipY);
+        ctx.stroke();
+        // Fork prong 1
+        ctx.beginPath();
+        ctx.moveTo(tipX, tipY);
+        ctx.lineTo(fork1X, fork1Y);
+        ctx.stroke();
+        // Fork prong 2
+        ctx.beginPath();
+        ctx.moveTo(tipX, tipY);
+        ctx.lineTo(fork2X, fork2Y);
+        ctx.stroke();
+        ctx.restore();
+      }
+
     } else {
       // Body
       const bodySize = 16;
@@ -735,7 +961,19 @@ function drawSnake(movePhase) {
         ctx.shadowColor = `rgba(${cr},${cg},${cb},0.4)`;
       }
 
-      ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha})`;
+      // Radial gradient: lighter center, darker outer edge
+      const segGrad = ctx.createRadialGradient(cx, cy, 1, cx, cy, half + 1);
+      const lightenAmt = 40;
+      const lightR = Math.min(255, cr + lightenAmt);
+      const lightG = Math.min(255, cg + lightenAmt);
+      const lightB = Math.min(255, cb + lightenAmt);
+      const darkR = Math.max(0, cr - 30);
+      const darkG = Math.max(0, cg - 30);
+      const darkB = Math.max(0, cb - 30);
+      segGrad.addColorStop(0, `rgba(${lightR},${lightG},${lightB},${alpha})`);
+      segGrad.addColorStop(1, `rgba(${darkR},${darkG},${darkB},${alpha})`);
+      ctx.fillStyle = segGrad;
+
       if (ctx.roundRect) {
         ctx.beginPath();
         ctx.roundRect(cx - half, cy - half, bodySize, bodySize, 4);
@@ -743,10 +981,6 @@ function drawSnake(movePhase) {
       } else {
         ctx.fillRect(cx - half, cy - half, bodySize, bodySize);
       }
-
-      // Inner highlight
-      ctx.fillStyle = "rgba(255,255,255,0.08)";
-      ctx.fillRect(cx - half + 1, cy - half + 1, bodySize / 2 - 1, bodySize / 2 - 1);
 
       ctx.restore();
     }
@@ -766,6 +1000,12 @@ function drawFood(dt) {
   if (food.type === "normal") {
     const pulse = 8 + Math.sin(food.pulsePhase) * 4;
     const r = 7 * ease;
+
+    // Gentle spin/rotation: rotate canvas around food center
+    ctx.translate(cx, cy);
+    ctx.rotate(food.pulsePhase * 0.5);
+    ctx.translate(-cx, -cy);
+
     ctx.shadowBlur = pulse;
     ctx.shadowColor = "rgba(255,190,11,0.5)";
     const grad = ctx.createRadialGradient(cx - 1, cy - 1, 1, cx, cy, r);
@@ -774,6 +1014,16 @@ function drawFood(dt) {
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Inner sparkle highlight: small white dot that orbits inside
+    const sparkleAngle = food.pulsePhase * 2.5;
+    const sparkleR = r * 0.4;
+    const sparkleX = cx + Math.cos(sparkleAngle) * sparkleR;
+    const sparkleY = cy + Math.sin(sparkleAngle) * sparkleR;
+    ctx.fillStyle = "rgba(255,255,255,0.7)";
+    ctx.beginPath();
+    ctx.arc(sparkleX, sparkleY, 1.5, 0, Math.PI * 2);
     ctx.fill();
 
   } else if (food.type === "golden") {
@@ -786,14 +1036,26 @@ function drawFood(dt) {
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.fill();
 
-    // Orbiting sparkles
-    for (let i = 0; i < 3; i++) {
-      const angle = food.pulsePhase * 1.5 + (i * Math.PI * 2 / 3);
-      const sx = cx + Math.cos(angle) * 12;
-      const sy = cy + Math.sin(angle) * 12;
-      ctx.fillStyle = "rgba(255,255,200,0.6)";
+    // Inner sparkle highlight
+    const sparkleAngle = food.pulsePhase * 3;
+    const sparkleR = r * 0.35;
+    const sparkleX = cx + Math.cos(sparkleAngle) * sparkleR;
+    const sparkleY = cy + Math.sin(sparkleAngle) * sparkleR;
+    ctx.fillStyle = "rgba(255,255,255,0.8)";
+    ctx.beginPath();
+    ctx.arc(sparkleX, sparkleY, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 5 orbiting mini-particles (slightly larger gold dots)
+    for (let i = 0; i < 5; i++) {
+      const angle = food.pulsePhase * 1.5 + (i * Math.PI * 2 / 5);
+      const sx = cx + Math.cos(angle) * 13;
+      const sy = cy + Math.sin(angle) * 13;
+      ctx.fillStyle = "rgba(255,230,100,0.7)";
+      ctx.shadowBlur = 4;
+      ctx.shadowColor = "rgba(255,215,0,0.5)";
       ctx.beginPath();
-      ctx.arc(sx, sy, 1.5, 0, Math.PI * 2);
+      ctx.arc(sx, sy, 2.2, 0, Math.PI * 2);
       ctx.fill();
     }
 
@@ -810,6 +1072,22 @@ function drawFood(dt) {
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.fill();
+
+    // Motion-blur streaks behind the speed food (2-3 streaks radiating backward)
+    ctx.strokeStyle = "rgba(255,0,110,0.35)";
+    ctx.lineWidth = 1.5;
+    ctx.lineCap = "round";
+    for (let i = 0; i < 3; i++) {
+      const streakAngle = Math.PI + (i - 1) * 0.4 + food.pulsePhase * 3;
+      const startX = cx + Math.cos(streakAngle) * (r + 1);
+      const startY = cy + Math.sin(streakAngle) * (r + 1);
+      const endX = cx + Math.cos(streakAngle) * (r + 8 + Math.sin(food.pulsePhase * 6 + i) * 3);
+      const endY = cy + Math.sin(streakAngle) * (r + 8 + Math.sin(food.pulsePhase * 6 + i) * 3);
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(endX, endY);
+      ctx.stroke();
+    }
   }
 
   ctx.restore();
@@ -859,6 +1137,27 @@ function drawScorePop() {
   ctx.restore();
   state.scorePop *= 0.90;
   if (state.scorePop < 0.02) state.scorePop = 0;
+}
+
+function drawDeathRing() {
+  if (state.deathRingAlpha <= 0 || !state.deathPos) return;
+  ctx.save();
+  ctx.globalAlpha = state.deathRingAlpha;
+  ctx.strokeStyle = "#39ff14";
+  ctx.shadowBlur = 15;
+  ctx.shadowColor = "rgba(57,255,20,0.8)";
+  ctx.lineWidth = 3 * state.deathRingAlpha;
+  ctx.beginPath();
+  ctx.arc(state.deathPos.x, state.deathPos.y, state.deathRingRadius, 0, Math.PI * 2);
+  ctx.stroke();
+  // Inner white ring
+  ctx.globalAlpha = state.deathRingAlpha * 0.5;
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 1.5 * state.deathRingAlpha;
+  ctx.beginPath();
+  ctx.arc(state.deathPos.x, state.deathPos.y, state.deathRingRadius * 0.7, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
 }
 
 function drawEatFlash() {
@@ -918,6 +1217,29 @@ function gameLoop(timestamp) {
     state.shakeIntensity *= 0.82;
   }
 
+  // Update dust motes
+  updateDustMotes(dt);
+
+  // Update tongue flicker (~300ms toggle)
+  state.tongueTimer += rawDelta;
+  if (state.tongueTimer >= 300) {
+    state.tongueTimer -= 300;
+    state.tongueVisible = !state.tongueVisible;
+    state.tongueWobble = (Math.random() - 0.5) * 0.3;
+  }
+
+  // Update crackle particles
+  if (state.crackleParticles.length > 0) {
+    updateCrackleParticles(dt);
+  }
+
+  // Update death flash ring
+  if (state.deathRingAlpha > 0 && state.deathPos) {
+    state.deathRingRadius += dt * 200;
+    state.deathRingAlpha -= dt * 1.5;
+    if (state.deathRingAlpha < 0) state.deathRingAlpha = 0;
+  }
+
   // Logic ticks
   if (state.phase === "playing") {
     state.tickAccumulator += rawDelta;
@@ -946,6 +1268,7 @@ function gameLoop(timestamp) {
   drawFood(dt);
   drawSnake(movePhase);
   drawParticles(dt);
+  drawDeathRing();
   drawScorePop();
   drawEatFlash();
 

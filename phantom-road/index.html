@@ -3,37 +3,35 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Flappy Bird</title>
-    <link rel="stylesheet" href="style.css" />
+    <title>Phantom Road</title>
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <main class="game">
       <header class="game__header">
         <a href="/" class="back-link">&larr; Back to Games</a>
-        <h1>Flappy Bird</h1>
-        <p>Press space or click/tap to flap. Avoid the pipes!</p>
+        <h1>Phantom Road</h1>
+        <p>Steer through the dark. Your headlights are all you have.</p>
       </header>
       <section class="game__panel">
-        <canvas id="gameCanvas" width="360" height="640" aria-label="Flappy Bird game"></canvas>
+        <canvas id="gameCanvas" width="480" height="720" aria-label="Phantom Road game"></canvas>
         <div class="game__hud">
           <div class="hud__score">
-            <span>Score</span>
+            <span>Distance</span>
             <strong id="score">0</strong>
           </div>
           <div class="hud__score">
             <span>Best</span>
             <strong id="bestScore">0</strong>
           </div>
-          <button id="muteButton" class="hud__button hud__mute" type="button">🔊</button>
+          <button id="muteButton" class="hud__mute" type="button" aria-label="Toggle sound">&#x1F50A;</button>
           <button id="restartButton" class="hud__button" type="button">Restart</button>
-          <button id="muteButton" class="hud__button hud__button--mute" type="button">Mute</button>
         </div>
       </section>
       <footer class="game__footer">
-        <p>Tip: keep a steady rhythm to stay in the gap.</p>
+        <p>Arrows / touch to steer &mdash; hug the edge for nitro, buzz traffic for bonus points</p>
       </footer>
     </main>
-    <script src="audio.js"></script>
-    <script src="script.js"></script>
+    <script src="game.js"></script>
   </body>
 </html>
