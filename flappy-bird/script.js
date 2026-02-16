@@ -262,6 +262,7 @@ const resetGame = () => {
   gameState.lastScore = 0;
   scoreLabel.textContent = gameState.score;
   initClouds();
+  Audio.stopDrone();
   initHills();
   initTrees();
   initGrass();
@@ -836,6 +837,7 @@ const updateScore = () => {
       gameState.score += 1;
       scoreLabel.textContent = gameState.score;
       gameState.scorePop = 1;
+      Audio.score();
       sound.score();
     }
   });
@@ -897,7 +899,12 @@ const update = (deltaSeconds) => {
   }
 
   if (gameState.isGameOver) {
+    const wasNewBest = gameState.score > gameState.best;
     saveBestScore();
+    Audio.crash();
+    Audio.stopDrone();
+    if (wasNewBest && gameState.score > 0) {
+      Audio.newHighScore();
     if (!feathersSpawned) {
       spawnFeatherParticles();
       feathersSpawned = true;
@@ -998,10 +1005,14 @@ const loop = (timestamp) => {
 const startGame = () => {
   if (!gameState.isRunning) {
     gameState.isRunning = true;
+    Audio.startDrone();
   }
 };
 
 const flap = () => {
+  Audio.init();
+  Audio.resume();
+
   if (gameState.isGameOver) {
     resetGame();
     startGame();
@@ -1012,6 +1023,7 @@ const flap = () => {
   }
 
   bird.velocity = gameState.lift;
+  Audio.flap();
   sound.flap();
 };
 
