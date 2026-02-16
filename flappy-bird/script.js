@@ -905,6 +905,7 @@ const update = (deltaSeconds) => {
     Audio.stopDrone();
     if (wasNewBest && gameState.score > 0) {
       Audio.newHighScore();
+    }
     if (!feathersSpawned) {
       spawnFeatherParticles();
       feathersSpawned = true;
