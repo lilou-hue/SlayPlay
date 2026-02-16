@@ -1518,130 +1518,212 @@ function drawObstacles() {
 
     if (obstacle.type === 'spire') {
       /* Outer ambient glow */
-      const sg = ctx.createRadialGradient(x, y, 0, x, y, 100);
-      sg.addColorStop(0, 'rgba(168, 246, 255, 0.08)');
-      sg.addColorStop(0.5, 'rgba(100, 200, 255, 0.03)');
+      const sg = ctx.createRadialGradient(x, y, 0, x, y, 110);
+      sg.addColorStop(0, 'rgba(168, 246, 255, 0.10)');
+      sg.addColorStop(0.4, 'rgba(100, 200, 255, 0.05)');
+      sg.addColorStop(0.8, 'rgba(80, 170, 240, 0.02)');
       sg.addColorStop(1, 'transparent');
       ctx.fillStyle = sg;
-      ctx.fillRect(x - 100, y - 140, 200, 280);
+      ctx.fillRect(x - 110, y - 150, 220, 300);
 
-      /* Main crystal body - multi-faceted */
-      const spireGrad = ctx.createLinearGradient(x - 10, y - 130, x + 10, y + 130);
-      spireGrad.addColorStop(0, 'rgba(220, 255, 255, 0.9)');
-      spireGrad.addColorStop(0.3, 'rgba(160, 240, 255, 0.75)');
-      spireGrad.addColorStop(0.6, 'rgba(120, 210, 240, 0.55)');
-      spireGrad.addColorStop(1, 'rgba(80, 160, 210, 0.25)');
+      /* --- Multi-faceted hexagonal crystal polygon --- */
+      /* Define hexagonal cross-section vertices at several heights */
+      const crystalW = 18; /* half-width at widest point */
+      const tipY = y - 130;
+      const shoulderY = y - 70;
+      const midY = y - 10;
+      const waistY = y + 50;
+      const baseY = y + 130;
 
-      /* Left facet (darker) */
-      ctx.fillStyle = spireGrad;
-      ctx.beginPath();
-      ctx.moveTo(x, y - 130);
-      ctx.lineTo(x - 6, y - 40);
-      ctx.lineTo(x - 20, y + 130);
-      ctx.lineTo(x - 2, y + 80);
-      ctx.lineTo(x, y - 20);
-      ctx.closePath();
-      ctx.fill();
+      /* Hexagon vertices at shoulder (widest) - 6 points */
+      const hexPts = [];
+      for (let h = 0; h < 6; h++) {
+        const ha = (Math.PI * 2 / 6) * h - Math.PI / 2;
+        hexPts.push({ hx: Math.cos(ha) * crystalW, hy: Math.sin(ha) * crystalW * 0.35 });
+      }
 
-      /* Right facet (brighter) */
-      const rightGrad = ctx.createLinearGradient(x, y - 130, x + 15, y + 130);
-      rightGrad.addColorStop(0, 'rgba(240, 255, 255, 0.95)');
-      rightGrad.addColorStop(0.4, 'rgba(180, 245, 255, 0.7)');
-      rightGrad.addColorStop(1, 'rgba(100, 190, 230, 0.3)');
-      ctx.fillStyle = rightGrad;
-      ctx.beginPath();
-      ctx.moveTo(x, y - 130);
-      ctx.lineTo(x + 7, y - 30);
-      ctx.lineTo(x + 20, y + 130);
-      ctx.lineTo(x + 2, y + 60);
-      ctx.lineTo(x, y - 20);
-      ctx.closePath();
-      ctx.fill();
+      /* Draw 6 crystal facets from tip to base */
+      for (let f = 0; f < 6; f++) {
+        const f2 = (f + 1) % 6;
+        const hue = 190 + f * 8;
+        const lightness = 75 + (f % 2 === 0 ? 10 : -5);
+        const facetAlpha = 0.55 + (f % 3) * 0.12 + Math.sin(obstacle.pulse * 0.8 + f) * 0.06;
 
-      /* Center facet highlight */
-      ctx.fillStyle = 'rgba(200, 250, 255, 0.2)';
-      ctx.beginPath();
-      ctx.moveTo(x, y - 130);
-      ctx.lineTo(x + 3, y - 20);
-      ctx.lineTo(x + 2, y + 60);
-      ctx.lineTo(x - 2, y + 80);
-      ctx.lineTo(x, y - 20);
-      ctx.closePath();
-      ctx.fill();
+        /* Upper facet (tip to shoulder) */
+        const upperGrad = ctx.createLinearGradient(x + hexPts[f].hx, shoulderY, x, tipY);
+        upperGrad.addColorStop(0, `hsla(${hue}, 70%, ${lightness}%, ${facetAlpha * 0.8})`);
+        upperGrad.addColorStop(1, `hsla(${hue + 10}, 80%, 90%, ${facetAlpha})`);
+        ctx.fillStyle = upperGrad;
+        ctx.beginPath();
+        ctx.moveTo(x, tipY);
+        ctx.lineTo(x + hexPts[f].hx, shoulderY + hexPts[f].hy);
+        ctx.lineTo(x + hexPts[f2].hx, shoulderY + hexPts[f2].hy);
+        ctx.closePath();
+        ctx.fill();
 
-      /* Crystal edge lines */
+        /* Mid facet (shoulder to waist) */
+        const midScale = 0.85;
+        const midGrad = ctx.createLinearGradient(x - crystalW, shoulderY, x + crystalW, waistY);
+        midGrad.addColorStop(0, `hsla(${hue}, 65%, ${lightness - 5}%, ${facetAlpha * 0.7})`);
+        midGrad.addColorStop(0.5, `hsla(${hue + 5}, 55%, ${lightness - 10}%, ${facetAlpha * 0.5})`);
+        midGrad.addColorStop(1, `hsla(${hue}, 50%, ${lightness - 15}%, ${facetAlpha * 0.35})`);
+        ctx.fillStyle = midGrad;
+        ctx.beginPath();
+        ctx.moveTo(x + hexPts[f].hx, shoulderY + hexPts[f].hy);
+        ctx.lineTo(x + hexPts[f2].hx, shoulderY + hexPts[f2].hy);
+        ctx.lineTo(x + hexPts[f2].hx * midScale, waistY + hexPts[f2].hy * midScale);
+        ctx.lineTo(x + hexPts[f].hx * midScale, waistY + hexPts[f].hy * midScale);
+        ctx.closePath();
+        ctx.fill();
+
+        /* Lower facet (waist to base point) */
+        const baseScale = 0.4;
+        ctx.fillStyle = `hsla(${hue}, 45%, ${lightness - 20}%, ${facetAlpha * 0.3})`;
+        ctx.beginPath();
+        ctx.moveTo(x + hexPts[f].hx * midScale, waistY + hexPts[f].hy * midScale);
+        ctx.lineTo(x + hexPts[f2].hx * midScale, waistY + hexPts[f2].hy * midScale);
+        ctx.lineTo(x + hexPts[f2].hx * baseScale, baseY);
+        ctx.lineTo(x + hexPts[f].hx * baseScale, baseY);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      /* Crystal edge lines along hexagonal ridges */
       ctx.strokeStyle = 'rgba(220, 255, 255, 0.35)';
       ctx.lineWidth = 0.8;
-      ctx.beginPath();
-      ctx.moveTo(x, y - 130);
-      ctx.lineTo(x, y - 20);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(x, y - 20);
-      ctx.lineTo(x - 20, y + 130);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(x, y - 20);
-      ctx.lineTo(x + 20, y + 130);
-      ctx.stroke();
+      for (let e = 0; e < 6; e++) {
+        ctx.beginPath();
+        ctx.moveTo(x, tipY);
+        ctx.lineTo(x + hexPts[e].hx, shoulderY + hexPts[e].hy);
+        ctx.lineTo(x + hexPts[e].hx * 0.85, waistY + hexPts[e].hy * 0.85);
+        ctx.lineTo(x + hexPts[e].hx * 0.4, baseY);
+        ctx.stroke();
+      }
 
-      /* Internal refraction lines */
+      /* Internal refraction lines - thin white angled lines inside crystal */
       const refrPhase = Math.sin(obstacle.pulse * 0.7);
-      ctx.strokeStyle = `rgba(200, 255, 255, ${0.08 + refrPhase * 0.04})`;
+      const refrAlpha = 0.12 + refrPhase * 0.06;
+      ctx.strokeStyle = `rgba(220, 255, 255, ${refrAlpha})`;
       ctx.lineWidth = 0.5;
+      /* Refraction line 1 - diagonal across upper */
       ctx.beginPath();
-      ctx.moveTo(x - 3, y - 60);
-      ctx.lineTo(x + 8, y + 20);
-      ctx.lineTo(x - 5, y + 90);
+      ctx.moveTo(x - 8, tipY + 25);
+      ctx.lineTo(x + 12, shoulderY + 15);
+      ctx.lineTo(x - 4, midY + 10);
+      ctx.stroke();
+      /* Refraction line 2 - crossing zigzag */
+      ctx.beginPath();
+      ctx.moveTo(x + 6, tipY + 40);
+      ctx.lineTo(x - 10, shoulderY + 5);
+      ctx.lineTo(x + 8, waistY - 10);
+      ctx.stroke();
+      /* Refraction line 3 - lower diagonal */
+      ctx.strokeStyle = `rgba(200, 250, 255, ${refrAlpha * 0.7})`;
+      ctx.beginPath();
+      ctx.moveTo(x - 5, midY + 5);
+      ctx.lineTo(x + 10, waistY + 20);
+      ctx.lineTo(x - 8, baseY - 20);
+      ctx.stroke();
+      /* Refraction line 4 - short horizontal glint */
+      ctx.strokeStyle = `rgba(240, 255, 255, ${refrAlpha * 0.5 + Math.sin(obstacle.pulse * 1.3) * 0.04})`;
+      ctx.lineWidth = 0.4;
+      ctx.beginPath();
+      ctx.moveTo(x - 10, shoulderY + 10);
+      ctx.lineTo(x + 10, shoulderY + 5);
       ctx.stroke();
       ctx.beginPath();
-      ctx.moveTo(x + 4, y - 80);
-      ctx.lineTo(x - 6, y - 10);
-      ctx.lineTo(x + 10, y + 60);
+      ctx.moveTo(x - 7, waistY - 5);
+      ctx.lineTo(x + 9, waistY + 2);
       ctx.stroke();
 
       /* Glowing nodes at facet intersections */
       const nodePulse = 0.3 + Math.sin(obstacle.pulse * 1.5) * 0.2;
-      ctx.fillStyle = `rgba(200, 255, 255, ${nodePulse})`;
-      ctx.beginPath(); ctx.arc(x, y - 130, 3, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = `rgba(180, 240, 255, ${nodePulse * 0.7})`;
-      ctx.beginPath(); ctx.arc(x, y - 20, 2.5, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(x - 6, y - 40, 1.5, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(x + 7, y - 30, 1.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = `rgba(200, 255, 255, ${nodePulse * 0.7})`;
+      ctx.beginPath(); ctx.arc(x, midY, 2.5, 0, Math.PI * 2); ctx.fill();
+      for (let n = 0; n < 6; n++) {
+        ctx.fillStyle = `rgba(180, 240, 255, ${nodePulse * 0.5})`;
+        ctx.beginPath(); ctx.arc(x + hexPts[n].hx * 0.5, shoulderY + hexPts[n].hy * 0.5, 1.5, 0, Math.PI * 2); ctx.fill();
+      }
+
+      /* --- Tip glow pulse effect --- */
+      const tipPulse = 0.4 + Math.sin(obstacle.pulse * 2.0) * 0.3;
+      const tipGlowR = 12 + Math.sin(obstacle.pulse * 2.0) * 5;
+      const tipGlow = ctx.createRadialGradient(x, tipY, 0, x, tipY, tipGlowR);
+      tipGlow.addColorStop(0, `rgba(240, 255, 255, ${tipPulse})`);
+      tipGlow.addColorStop(0.3, `rgba(200, 250, 255, ${tipPulse * 0.5})`);
+      tipGlow.addColorStop(0.6, `rgba(160, 240, 255, ${tipPulse * 0.2})`);
+      tipGlow.addColorStop(1, 'transparent');
+      ctx.fillStyle = tipGlow;
+      ctx.beginPath();
+      ctx.arc(x, tipY, tipGlowR, 0, Math.PI * 2);
+      ctx.fill();
+      /* Bright tip core */
+      ctx.fillStyle = `rgba(255, 255, 255, ${tipPulse * 0.6})`;
+      ctx.beginPath();
+      ctx.arc(x, tipY, 2.5 + Math.sin(obstacle.pulse * 2.0) * 1, 0, Math.PI * 2);
+      ctx.fill();
+      /* Tip light rays (subtle) */
+      ctx.strokeStyle = `rgba(220, 255, 255, ${tipPulse * 0.15})`;
+      ctx.lineWidth = 0.6;
+      for (let ray = 0; ray < 4; ray++) {
+        const rayAngle = obstacle.pulse * 0.3 + ray * (Math.PI / 2);
+        const rayLen = 8 + Math.sin(obstacle.pulse * 1.5 + ray) * 4;
+        ctx.beginPath();
+        ctx.moveTo(x + Math.cos(rayAngle) * 4, tipY + Math.sin(rayAngle) * 4);
+        ctx.lineTo(x + Math.cos(rayAngle) * rayLen, tipY + Math.sin(rayAngle) * rayLen);
+        ctx.stroke();
+      }
 
       /* Floating crystal shards */
       const shardT = now * 0.002;
-      for (let s = 0; s < 3; s++) {
-        const sx = x + Math.sin(shardT + s * 2.1) * 25;
-        const sy = y - 60 + s * 50 + Math.cos(shardT * 0.7 + s) * 10;
+      for (let s = 0; s < 4; s++) {
+        const sx = x + Math.sin(shardT + s * 1.7) * 28;
+        const sy = y - 70 + s * 45 + Math.cos(shardT * 0.7 + s) * 12;
         const sAngle = shardT * 0.5 + s * 1.4;
         ctx.save();
         ctx.translate(sx, sy);
         ctx.rotate(sAngle);
         ctx.fillStyle = `rgba(190, 245, 255, ${0.15 + Math.sin(shardT + s) * 0.08})`;
         ctx.beginPath();
-        ctx.moveTo(0, -4); ctx.lineTo(2, 0); ctx.lineTo(0, 4); ctx.lineTo(-2, 0);
+        /* Mini hexagonal shard */
+        ctx.moveTo(0, -5); ctx.lineTo(3, -2.5); ctx.lineTo(3, 2.5);
+        ctx.lineTo(0, 5); ctx.lineTo(-3, 2.5); ctx.lineTo(-3, -2.5);
         ctx.closePath();
         ctx.fill();
+        ctx.strokeStyle = `rgba(220, 255, 255, ${0.1 + Math.sin(shardT + s) * 0.05})`;
+        ctx.lineWidth = 0.4;
+        ctx.stroke();
         ctx.restore();
       }
 
     } else if (obstacle.type === 'school') {
       /* Group ambient glow */
-      const groupGlow = ctx.createRadialGradient(x - 16, y, 0, x - 16, y, 50);
-      groupGlow.addColorStop(0, 'rgba(100, 255, 200, 0.06)');
+      const groupGlow = ctx.createRadialGradient(x - 16, y, 0, x - 16, y, 60);
+      groupGlow.addColorStop(0, 'rgba(100, 255, 200, 0.08)');
+      groupGlow.addColorStop(0.5, 'rgba(80, 220, 180, 0.03)');
       groupGlow.addColorStop(1, 'transparent');
       ctx.fillStyle = groupGlow;
       ctx.beginPath();
-      ctx.arc(x - 16, y, 50, 0, Math.PI * 2);
+      ctx.arc(x - 16, y, 60, 0, Math.PI * 2);
       ctx.fill();
 
-      for (let i = 0; i < 5; i++) {
-        const sa = 0.35 + i * 0.06;
-        const fx = x - i * 10 + Math.sin(obstacle.pulse * 0.8 + i * 0.5) * 3;
-        const fy = y + Math.sin(obstacle.pulse + i) * 12;
-        const fishScale = 1 - i * 0.06;
-        const fishAngle = Math.sin(obstacle.pulse * 1.2 + i * 0.8) * 0.15;
+      /* Per-fish size variation seeds (deterministic per obstacle) */
+      const fishSizes = [1.15, 0.85, 1.0, 0.75, 1.1, 0.9, 0.8];
+      const fishCount = 7;
+
+      for (let i = 0; i < fishCount; i++) {
+        const sa = 0.35 + i * 0.04;
+        /* Sine wave formation offsets for organic shifting */
+        const formationPhase = obstacle.pulse * 0.6;
+        const rowOffset = Math.floor(i / 3); /* stagger rows */
+        const colOffset = i % 3;
+        const sineOffX = Math.sin(formationPhase + i * 0.9) * 6 + Math.sin(formationPhase * 1.7 + i * 1.3) * 3;
+        const sineOffY = Math.sin(formationPhase * 0.8 + i * 1.1 + 0.5) * 10 + Math.cos(formationPhase * 1.3 + i * 0.7) * 5;
+        const fx = x - colOffset * 14 + rowOffset * 5 + sineOffX;
+        const fy = y + (i - fishCount / 2) * 11 + sineOffY;
+        const sizeVar = fishSizes[i % fishSizes.length];
+        const fishScale = (1 - i * 0.03) * sizeVar;
+        const fishAngle = Math.sin(obstacle.pulse * 1.2 + i * 0.8) * 0.18 + Math.sin(formationPhase * 0.5 + i) * 0.08;
 
         ctx.save();
         ctx.translate(fx, fy);
@@ -1650,14 +1732,14 @@ function drawObstacles() {
         /* Fish body glow halo */
         const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, 22 * fishScale);
         glow.addColorStop(0, `rgba(143, 255, 213, ${sa * 0.5})`);
-        glow.addColorStop(0.5, `rgba(100, 220, 190, ${sa * 0.15})`);
+        glow.addColorStop(0.5, `rgba(100, 220, 190, ${sa * 0.12})`);
         glow.addColorStop(1, 'transparent');
         ctx.fillStyle = glow;
         ctx.beginPath();
         ctx.arc(0, 0, 22 * fishScale, 0, Math.PI * 2);
         ctx.fill();
 
-        /* Fish body - streamlined shape */
+        /* Fish body - oval silhouette */
         const bodyGrad = ctx.createLinearGradient(-10 * fishScale, -6 * fishScale, 10 * fishScale, 4 * fishScale);
         bodyGrad.addColorStop(0, `rgba(80, 200, 170, ${sa * 0.7})`);
         bodyGrad.addColorStop(0.5, `rgba(143, 255, 213, ${sa * 0.85})`);
@@ -1665,41 +1747,80 @@ function drawObstacles() {
         ctx.fillStyle = bodyGrad;
         ctx.beginPath();
         ctx.moveTo(14 * fishScale, 0);
-        ctx.quadraticCurveTo(10 * fishScale, -5 * fishScale, 2 * fishScale, -6 * fishScale);
-        ctx.quadraticCurveTo(-6 * fishScale, -5 * fishScale, -10 * fishScale, -2 * fishScale);
+        ctx.quadraticCurveTo(10 * fishScale, -5.5 * fishScale, 2 * fishScale, -6.5 * fishScale);
+        ctx.quadraticCurveTo(-6 * fishScale, -5.5 * fishScale, -10 * fishScale, -2 * fishScale);
         ctx.quadraticCurveTo(-12 * fishScale, 0, -10 * fishScale, 2 * fishScale);
-        ctx.quadraticCurveTo(-6 * fishScale, 5 * fishScale, 2 * fishScale, 5 * fishScale);
-        ctx.quadraticCurveTo(10 * fishScale, 4 * fishScale, 14 * fishScale, 0);
+        ctx.quadraticCurveTo(-6 * fishScale, 5.5 * fishScale, 2 * fishScale, 5.5 * fishScale);
+        ctx.quadraticCurveTo(10 * fishScale, 4.5 * fishScale, 14 * fishScale, 0);
         ctx.closePath();
         ctx.fill();
+        /* Belly highlight */
+        ctx.fillStyle = `rgba(180, 255, 235, ${sa * 0.2})`;
+        ctx.beginPath();
+        ctx.ellipse(2 * fishScale, 2 * fishScale, 7 * fishScale, 2.5 * fishScale, 0, 0, Math.PI * 2);
+        ctx.fill();
 
-        /* Dorsal fin */
+        /* Dorsal fin - on top of body */
         ctx.fillStyle = `rgba(120, 240, 200, ${sa * 0.5})`;
         ctx.beginPath();
-        ctx.moveTo(2 * fishScale, -6 * fishScale);
-        ctx.quadraticCurveTo(0, -11 * fishScale, -4 * fishScale, -6 * fishScale);
+        ctx.moveTo(3 * fishScale, -6 * fishScale);
+        ctx.quadraticCurveTo(1 * fishScale, -12 * fishScale, -3 * fishScale, -10 * fishScale);
+        ctx.quadraticCurveTo(-5 * fishScale, -7 * fishScale, -4 * fishScale, -5.5 * fishScale);
         ctx.closePath();
         ctx.fill();
+        /* Dorsal fin edge */
+        ctx.strokeStyle = `rgba(160, 255, 220, ${sa * 0.3})`;
+        ctx.lineWidth = 0.4;
+        ctx.stroke();
 
-        /* Tail fin - forked */
-        const tailFlick = Math.sin(obstacle.pulse * 2.5 + i * 0.7) * 2;
+        /* V-shaped tail fin */
+        const tailFlick = Math.sin(obstacle.pulse * 2.5 + i * 0.7) * 2.5 * sizeVar;
         ctx.fillStyle = `rgba(110, 235, 195, ${sa * 0.55})`;
         ctx.beginPath();
         ctx.moveTo(-10 * fishScale, 0);
-        ctx.quadraticCurveTo(-14 * fishScale, -4 * fishScale + tailFlick, -18 * fishScale, -6 * fishScale + tailFlick);
-        ctx.quadraticCurveTo(-13 * fishScale, 0, -18 * fishScale, 6 * fishScale - tailFlick);
-        ctx.quadraticCurveTo(-14 * fishScale, 4 * fishScale - tailFlick, -10 * fishScale, 0);
+        /* Upper V arm */
+        ctx.lineTo(-14 * fishScale, -2 * fishScale + tailFlick * 0.5);
+        ctx.lineTo(-19 * fishScale, -7 * fishScale + tailFlick);
+        /* V notch */
+        ctx.lineTo(-14 * fishScale, -1 * fishScale);
+        /* Lower V arm */
+        ctx.lineTo(-19 * fishScale, 7 * fishScale - tailFlick);
+        ctx.lineTo(-14 * fishScale, 2 * fishScale - tailFlick * 0.5);
+        ctx.lineTo(-10 * fishScale, 0);
+        ctx.closePath();
+        ctx.fill();
+        /* Tail fin edge */
+        ctx.strokeStyle = `rgba(160, 255, 220, ${sa * 0.25})`;
+        ctx.lineWidth = 0.4;
+        ctx.stroke();
+
+        /* Anal fin (small, under body near tail) */
+        ctx.fillStyle = `rgba(110, 230, 200, ${sa * 0.35})`;
+        ctx.beginPath();
+        ctx.moveTo(-6 * fishScale, 4.5 * fishScale);
+        ctx.quadraticCurveTo(-7 * fishScale, 8 * fishScale, -10 * fishScale, 5 * fishScale);
         ctx.closePath();
         ctx.fill();
 
-        /* Eye */
+        /* Eye - white with dark pupil */
         ctx.fillStyle = `rgba(220, 255, 245, ${sa * 0.9})`;
         ctx.beginPath();
-        ctx.arc(8 * fishScale, -2 * fishScale, 1.8 * fishScale, 0, Math.PI * 2);
+        ctx.arc(8 * fishScale, -2 * fishScale, 2.0 * fishScale, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = `rgba(20, 60, 50, ${sa * 0.8})`;
+        /* Iris ring */
+        ctx.fillStyle = `rgba(60, 150, 130, ${sa * 0.6})`;
         ctx.beginPath();
-        ctx.arc(8.5 * fishScale, -2 * fishScale, 0.8 * fishScale, 0, Math.PI * 2);
+        ctx.arc(8 * fishScale, -2 * fishScale, 1.3 * fishScale, 0, Math.PI * 2);
+        ctx.fill();
+        /* Pupil dot */
+        ctx.fillStyle = `rgba(15, 40, 35, ${sa * 0.85})`;
+        ctx.beginPath();
+        ctx.arc(8.4 * fishScale, -2 * fishScale, 0.7 * fishScale, 0, Math.PI * 2);
+        ctx.fill();
+        /* Eye specular */
+        ctx.fillStyle = `rgba(240, 255, 255, ${sa * 0.7})`;
+        ctx.beginPath();
+        ctx.arc(8.8 * fishScale, -2.5 * fishScale, 0.4 * fishScale, 0, Math.PI * 2);
         ctx.fill();
 
         /* Bioluminescent stripe */
@@ -1710,36 +1831,94 @@ function drawObstacles() {
         ctx.quadraticCurveTo(0, 0, -8 * fishScale, -1 * fishScale);
         ctx.stroke();
 
+        /* Pectoral fin (small side fin) */
+        ctx.fillStyle = `rgba(130, 245, 210, ${sa * 0.3})`;
+        ctx.beginPath();
+        ctx.moveTo(4 * fishScale, 3 * fishScale);
+        ctx.quadraticCurveTo(6 * fishScale, 7 * fishScale, 1 * fishScale, 6 * fishScale);
+        ctx.quadraticCurveTo(2 * fishScale, 4 * fishScale, 4 * fishScale, 3 * fishScale);
+        ctx.fill();
+
         ctx.restore();
       }
 
     } else if (obstacle.type === 'geyser') {
-      /* Base vent glow */
-      const baseGlow = ctx.createRadialGradient(x, y + 120, 0, x, y + 120, 40);
+      const turbT = now * 0.004;
+
+      /* --- Rock-textured vent base (triangular) --- */
+      /* Outer rock base shape - dark triangular mount */
+      const ventBaseGrad = ctx.createLinearGradient(x, y + 95, x, y + 140);
+      ventBaseGrad.addColorStop(0, 'rgba(60, 90, 120, 0.65)');
+      ventBaseGrad.addColorStop(0.4, 'rgba(45, 65, 90, 0.8)');
+      ventBaseGrad.addColorStop(1, 'rgba(30, 45, 65, 0.9)');
+      ctx.fillStyle = ventBaseGrad;
+      ctx.beginPath();
+      ctx.moveTo(x - 5, y + 95);  /* top-left of vent opening */
+      ctx.lineTo(x - 28, y + 138);  /* bottom-left base */
+      ctx.lineTo(x - 10, y + 140);  /* bottom notch left */
+      ctx.lineTo(x, y + 135);       /* bottom center */
+      ctx.lineTo(x + 10, y + 140);  /* bottom notch right */
+      ctx.lineTo(x + 28, y + 138);  /* bottom-right base */
+      ctx.lineTo(x + 5, y + 95);    /* top-right of vent opening */
+      ctx.closePath();
+      ctx.fill();
+      /* Rock texture lines */
+      ctx.strokeStyle = 'rgba(35, 55, 80, 0.6)';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(x - 18, y + 125); ctx.lineTo(x - 5, y + 110); ctx.lineTo(x - 15, y + 100);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x + 15, y + 130); ctx.lineTo(x + 8, y + 115); ctx.lineTo(x + 18, y + 105);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x - 3, y + 132); ctx.lineTo(x + 2, y + 120); ctx.lineTo(x - 2, y + 108);
+      ctx.stroke();
+      /* Rock surface highlights */
+      ctx.strokeStyle = 'rgba(90, 130, 170, 0.25)';
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(x - 20, y + 130); ctx.lineTo(x - 12, y + 122);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x + 10, y + 135); ctx.lineTo(x + 20, y + 128);
+      ctx.stroke();
+      /* Inner vent opening glow */
+      const ventGlow = ctx.createRadialGradient(x, y + 98, 2, x, y + 98, 12);
+      ventGlow.addColorStop(0, 'rgba(140, 210, 255, 0.5)');
+      ventGlow.addColorStop(0.5, 'rgba(100, 170, 240, 0.2)');
+      ventGlow.addColorStop(1, 'transparent');
+      ctx.fillStyle = ventGlow;
+      ctx.beginPath();
+      ctx.arc(x, y + 98, 12, 0, Math.PI * 2);
+      ctx.fill();
+
+      /* Base vent glow (behind rock) */
+      const baseGlow = ctx.createRadialGradient(x, y + 120, 0, x, y + 120, 45);
       baseGlow.addColorStop(0, 'rgba(100, 180, 255, 0.15)');
+      baseGlow.addColorStop(0.5, 'rgba(80, 150, 230, 0.06)');
       baseGlow.addColorStop(1, 'transparent');
       ctx.fillStyle = baseGlow;
       ctx.beginPath();
-      ctx.arc(x, y + 120, 40, 0, Math.PI * 2);
+      ctx.arc(x, y + 120, 45, 0, Math.PI * 2);
       ctx.fill();
 
       /* Main column - wider with turbulent edges */
       const colWidth = 7;
-      const turbT = now * 0.004;
       ctx.beginPath();
-      ctx.moveTo(x - colWidth - 3, y + 120);
-      for (let cy = y + 120; cy >= y - 120; cy -= 8) {
+      ctx.moveTo(x - colWidth - 3, y + 95);
+      for (let cy = y + 95; cy >= y - 120; cy -= 8) {
         const turbulence = Math.sin(turbT + cy * 0.05) * 3 + Math.sin(turbT * 1.7 + cy * 0.08) * 1.5;
         const narrowing = 1 - Math.abs(cy - y) / 240 * 0.3;
         ctx.lineTo(x - colWidth * narrowing + turbulence, cy);
       }
-      for (let cy = y - 120; cy <= y + 120; cy += 8) {
+      for (let cy = y - 120; cy <= y + 95; cy += 8) {
         const turbulence = Math.sin(turbT + cy * 0.05 + 2) * 3 + Math.sin(turbT * 1.3 + cy * 0.07) * 1.5;
         const narrowing = 1 - Math.abs(cy - y) / 240 * 0.3;
         ctx.lineTo(x + colWidth * narrowing + turbulence, cy);
       }
       ctx.closePath();
-      const gg = ctx.createLinearGradient(x, y - 120, x, y + 120);
+      const gg = ctx.createLinearGradient(x, y - 120, x, y + 95);
       gg.addColorStop(0, 'rgba(200, 240, 255, 0.75)');
       gg.addColorStop(0.3, 'rgba(140, 210, 255, 0.55)');
       gg.addColorStop(0.7, 'rgba(100, 180, 240, 0.35)');
@@ -1751,8 +1930,8 @@ function drawObstacles() {
       ctx.strokeStyle = 'rgba(220, 250, 255, 0.4)';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(x, y + 110);
-      for (let cy = y + 110; cy >= y - 110; cy -= 6) {
+      ctx.moveTo(x, y + 90);
+      for (let cy = y + 90; cy >= y - 110; cy -= 6) {
         const wave = Math.sin(turbT * 2 + cy * 0.06) * 2;
         ctx.lineTo(x + wave, cy);
       }
@@ -1770,26 +1949,36 @@ function drawObstacles() {
       ctx.arc(x, y - 120, headR + 10, 0, Math.PI * 2);
       ctx.fill();
 
-      /* Spray droplets from top */
-      for (let d = 0; d < 6; d++) {
-        const dropAngle = -Math.PI / 2 + (d / 5 - 0.5) * 1.2;
-        const dropDist = 20 + Math.sin(turbT * 3 + d * 1.3) * 12;
+      /* --- Turbulent eruption particles (varied sizes and speeds) --- */
+      for (let d = 0; d < 10; d++) {
+        const particleSpeed = 2.5 + (d % 4) * 0.8;
+        const particlePhase = (turbT * particleSpeed + d * 0.314) % (Math.PI * 2);
+        const dropAngle = -Math.PI / 2 + Math.sin(particlePhase + d * 0.7) * 0.8;
+        const dropDist = 15 + Math.abs(Math.sin(particlePhase)) * 25 + (d % 3) * 5;
         const dx = x + Math.cos(dropAngle) * dropDist;
-        const dy = y - 120 + Math.sin(dropAngle) * dropDist;
-        const dropA = 0.3 + Math.sin(turbT * 2 + d) * 0.15;
+        const dy = y - 120 + Math.sin(dropAngle) * dropDist * 0.7;
+        const dropSize = 1.2 + (d % 4) * 0.8 + Math.sin(turbT * 2 + d) * 0.6;
+        const dropA = (0.35 + Math.sin(turbT * 2.5 + d) * 0.15) * (1 - (d % 3) * 0.1);
         ctx.fillStyle = `rgba(200, 245, 255, ${dropA})`;
         ctx.beginPath();
-        ctx.arc(dx, dy, 2 + Math.sin(turbT + d * 0.8) * 1, 0, Math.PI * 2);
+        ctx.arc(dx, dy, dropSize, 0, Math.PI * 2);
         ctx.fill();
+        /* Particle hot center for larger ones */
+        if (dropSize > 2) {
+          ctx.fillStyle = `rgba(240, 255, 255, ${dropA * 0.6})`;
+          ctx.beginPath();
+          ctx.arc(dx, dy, dropSize * 0.4, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
 
       /* Rising bubbles along the column */
       const bt = now * 0.003;
-      for (let b = 0; b < 6; b++) {
-        const bubbleLife = (bt * 0.5 + b * 0.167) % 1;
-        const by = y + 100 - bubbleLife * 220;
-        const bx = x + Math.sin(bt * 2 + b * 1.1) * 5;
-        const bSize = 2 + Math.sin(bt + b * 0.7) * 1 + bubbleLife * 1.5;
+      for (let b = 0; b < 8; b++) {
+        const bubbleLife = (bt * 0.5 + b * 0.125) % 1;
+        const by = y + 80 - bubbleLife * 200;
+        const bx = x + Math.sin(bt * 2 + b * 1.1) * 6;
+        const bSize = 1.5 + (b % 3) * 0.8 + Math.sin(bt + b * 0.7) * 1 + bubbleLife * 1.5;
         const bAlpha = (0.25 + Math.sin(bt + b) * 0.1) * (1 - bubbleLife * 0.5);
         ctx.fillStyle = `rgba(200, 240, 255, ${bAlpha})`;
         ctx.beginPath();
@@ -1802,8 +1991,31 @@ function drawObstacles() {
         ctx.fill();
       }
 
-      /* Base vent cracks */
-      ctx.strokeStyle = 'rgba(140, 200, 255, 0.2)';
+      /* --- Steam wisps drifting sideways after eruption --- */
+      for (let sw = 0; sw < 6; sw++) {
+        const wispLife = (now * 0.0008 + sw * 0.167) % 1;
+        const wispBaseY = y - 110 - sw * 8;
+        /* Drift sideways as they rise and age */
+        const wispDriftX = (sw % 2 === 0 ? 1 : -1) * wispLife * 35 + Math.sin(now * 0.002 + sw * 1.4) * 8;
+        const wispDriftY = -wispLife * 20;
+        const wispX = x + wispDriftX;
+        const wispY = wispBaseY + wispDriftY;
+        const wispSize = 4 + wispLife * 10 + Math.sin(now * 0.003 + sw) * 2;
+        const wispAlpha = (0.12 - wispLife * 0.1) * (1 + Math.sin(now * 0.005 + sw * 0.8) * 0.2);
+        if (wispAlpha > 0.01) {
+          const wispGrad = ctx.createRadialGradient(wispX, wispY, 0, wispX, wispY, wispSize);
+          wispGrad.addColorStop(0, `rgba(200, 240, 255, ${wispAlpha})`);
+          wispGrad.addColorStop(0.5, `rgba(180, 225, 250, ${wispAlpha * 0.5})`);
+          wispGrad.addColorStop(1, 'transparent');
+          ctx.fillStyle = wispGrad;
+          ctx.beginPath();
+          ctx.arc(wispX, wispY, wispSize, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      /* Base vent cracks on rock */
+      ctx.strokeStyle = 'rgba(80, 130, 180, 0.25)';
       ctx.lineWidth = 0.7;
       ctx.beginPath();
       ctx.moveTo(x - 15, y + 118); ctx.lineTo(x - 8, y + 110); ctx.lineTo(x - 12, y + 100);
@@ -1818,32 +2030,53 @@ function drawObstacles() {
       const rAngle = obstacle.pulse * 0.5;
 
       /* Multi-layer outer halo */
-      const shg = ctx.createRadialGradient(x, y, stormR * 0.3, x, y, stormR * 1.6);
-      shg.addColorStop(0, 'rgba(160, 200, 255, 0.06)');
-      shg.addColorStop(0.5, 'rgba(140, 180, 255, 0.04)');
-      shg.addColorStop(0.8, 'rgba(120, 160, 240, 0.02)');
+      const shg = ctx.createRadialGradient(x, y, stormR * 0.3, x, y, stormR * 1.8);
+      shg.addColorStop(0, 'rgba(160, 200, 255, 0.08)');
+      shg.addColorStop(0.3, 'rgba(140, 180, 255, 0.05)');
+      shg.addColorStop(0.6, 'rgba(120, 160, 240, 0.03)');
       shg.addColorStop(1, 'transparent');
       ctx.fillStyle = shg;
       ctx.beginPath();
-      ctx.arc(x, y, stormR * 1.6, 0, Math.PI * 2);
+      ctx.arc(x, y, stormR * 1.8, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(rAngle);
 
-      /* Spiral arms */
-      for (let arm = 0; arm < 4; arm++) {
-        const armAngle = (Math.PI * 2 / 4) * arm;
-        ctx.strokeStyle = `rgba(170, 210, 255, ${0.12 + Math.sin(obstacle.pulse + arm) * 0.05})`;
-        ctx.lineWidth = 1.5;
+      /* --- Logarithmic spiral arm pattern (3 arms) --- */
+      const spiralGrowth = 0.18; /* controls tightness of logarithmic spiral */
+      for (let arm = 0; arm < 3; arm++) {
+        const armBaseAngle = (Math.PI * 2 / 3) * arm;
+        const armAlpha = 0.15 + Math.sin(obstacle.pulse * 0.8 + arm * 1.2) * 0.06;
+        /* Main spiral line */
+        ctx.strokeStyle = `rgba(170, 210, 255, ${armAlpha})`;
+        ctx.lineWidth = 1.8 - arm * 0.15;
         ctx.beginPath();
-        for (let t = 0; t < 1; t += 0.02) {
-          const spiralR = stormR * 0.15 + t * stormR * 0.8;
-          const spiralA = armAngle + t * 2.5;
-          const px = Math.cos(spiralA) * spiralR;
-          const py = Math.sin(spiralA) * spiralR;
-          if (t === 0) ctx.moveTo(px, py);
+        let firstPt = true;
+        for (let t = 0; t < 4.0; t += 0.04) {
+          /* Logarithmic spiral: r = a * e^(b*theta) */
+          const logR = stormR * 0.08 * Math.exp(spiralGrowth * t);
+          if (logR > stormR * 1.05) break;
+          const spiralA = armBaseAngle + t;
+          const px = Math.cos(spiralA) * logR;
+          const py = Math.sin(spiralA) * logR;
+          if (firstPt) { ctx.moveTo(px, py); firstPt = false; }
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+        /* Secondary thinner spiral (offset) for depth */
+        ctx.strokeStyle = `rgba(150, 195, 245, ${armAlpha * 0.5})`;
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        firstPt = true;
+        for (let t = 0.3; t < 3.5; t += 0.05) {
+          const logR = stormR * 0.1 * Math.exp(spiralGrowth * t);
+          if (logR > stormR * 0.95) break;
+          const spiralA = armBaseAngle + t + 0.15;
+          const px = Math.cos(spiralA) * logR;
+          const py = Math.sin(spiralA) * logR;
+          if (firstPt) { ctx.moveTo(px, py); firstPt = false; }
           else ctx.lineTo(px, py);
         }
         ctx.stroke();
@@ -1861,13 +2094,13 @@ function drawObstacles() {
       }
 
       /* Central eye */
-      const eyeGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, stormR * 0.2);
-      eyeGrad.addColorStop(0, 'rgba(220, 240, 255, 0.15)');
-      eyeGrad.addColorStop(0.5, 'rgba(180, 210, 255, 0.08)');
+      const eyeGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, stormR * 0.22);
+      eyeGrad.addColorStop(0, 'rgba(230, 245, 255, 0.18)');
+      eyeGrad.addColorStop(0.4, 'rgba(180, 210, 255, 0.1)');
       eyeGrad.addColorStop(1, 'transparent');
       ctx.fillStyle = eyeGrad;
       ctx.beginPath();
-      ctx.arc(0, 0, stormR * 0.2, 0, Math.PI * 2);
+      ctx.arc(0, 0, stormR * 0.22, 0, Math.PI * 2);
       ctx.fill();
 
       /* Outer boundary ring — pulsing */
@@ -1897,8 +2130,46 @@ function drawObstacles() {
         ctx.stroke();
       }
 
-      /* Lightning flash */
-      if (Math.random() < 0.015) {
+      /* --- Inner lightning bolt flashes (multiple, jagged, fading) --- */
+      /* Use obstacle.pulse to create pseudo-random but time-varying flashes */
+      const lightningSeeds = [1.7, 3.1, 5.3]; /* multiple independent bolt timings */
+      for (let lb = 0; lb < lightningSeeds.length; lb++) {
+        const lbPhase = obstacle.pulse * lightningSeeds[lb];
+        const lbFlash = Math.sin(lbPhase);
+        /* Flash appears briefly when sine crosses a threshold */
+        if (lbFlash > 0.92) {
+          const lbFade = (lbFlash - 0.92) / 0.08; /* 0..1 intensity */
+          const lbBaseAngle = lbPhase * 0.7 + lb * 2.1;
+          const lbStartR = stormR * (0.1 + lb * 0.1);
+          const lbEndR = stormR * (0.5 + lb * 0.15);
+          const segments = 3 + lb;
+          /* Jagged bolt line */
+          ctx.strokeStyle = `rgba(240, 250, 255, ${0.5 * lbFade})`;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          let bx = Math.cos(lbBaseAngle) * lbStartR;
+          let by = Math.sin(lbBaseAngle) * lbStartR;
+          ctx.moveTo(bx, by);
+          for (let seg = 1; seg <= segments; seg++) {
+            const segT = seg / segments;
+            const segR = lbStartR + (lbEndR - lbStartR) * segT;
+            const segA = lbBaseAngle + (seg % 2 === 0 ? 0.25 : -0.2) * (1 - segT * 0.3);
+            bx = Math.cos(segA) * segR + (seg % 2 === 0 ? 4 : -3);
+            by = Math.sin(segA) * segR + (seg % 2 === 0 ? -3 : 5);
+            ctx.lineTo(bx, by);
+          }
+          ctx.stroke();
+          /* Bolt glow */
+          ctx.strokeStyle = `rgba(200, 235, 255, ${0.15 * lbFade})`;
+          ctx.lineWidth = 5;
+          ctx.stroke();
+          /* Brief flash on the vortex */
+          if (lbFade > 0.5) world.ambientFlash = Math.max(world.ambientFlash || 0, 0.06 * lbFade);
+        }
+      }
+
+      /* Main lightning flash (original, less frequent) */
+      if (Math.random() < 0.012) {
         ctx.strokeStyle = 'rgba(240, 250, 255, 0.7)';
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -1914,16 +2185,33 @@ function drawObstacles() {
         world.ambientFlash = 0.14;
       }
 
-      /* Debris particles orbiting */
-      for (let d = 0; d < 5; d++) {
-        const debrisAngle = obstacle.pulse * (0.8 + d * 0.12) + d * 1.26;
-        const debrisR = stormR * (0.5 + d * 0.1);
-        const dx = Math.cos(debrisAngle) * debrisR;
-        const dy = Math.sin(debrisAngle) * debrisR;
-        ctx.fillStyle = `rgba(180, 215, 255, ${0.2 + Math.sin(obstacle.pulse + d) * 0.1})`;
+      /* --- Debris particle dots orbiting the vortex center --- */
+      for (let d = 0; d < 10; d++) {
+        const debrisSpeed = 0.6 + d * 0.08 + (d % 3) * 0.05;
+        const debrisAngle = obstacle.pulse * debrisSpeed + d * 0.628;
+        const debrisBand = stormR * (0.3 + (d / 10) * 0.6);
+        const debrisWobble = Math.sin(obstacle.pulse * 1.5 + d * 0.9) * stormR * 0.05;
+        const dR = debrisBand + debrisWobble;
+        const dx = Math.cos(debrisAngle) * dR;
+        const dy = Math.sin(debrisAngle) * dR;
+        const debrisSize = 1.0 + (d % 3) * 0.6 + Math.sin(obstacle.pulse * 0.8 + d) * 0.4;
+        const debrisAlpha = 0.2 + Math.sin(obstacle.pulse + d * 0.7) * 0.1;
+        ctx.fillStyle = `rgba(180, 215, 255, ${debrisAlpha})`;
         ctx.beginPath();
-        ctx.arc(dx, dy, 1.5, 0, Math.PI * 2);
+        ctx.arc(dx, dy, debrisSize, 0, Math.PI * 2);
         ctx.fill();
+        /* Debris trailing streak */
+        if (d < 5) {
+          const trailAngle = debrisAngle - 0.15;
+          const trailX = Math.cos(trailAngle) * dR;
+          const trailY = Math.sin(trailAngle) * dR;
+          ctx.strokeStyle = `rgba(170, 210, 250, ${debrisAlpha * 0.4})`;
+          ctx.lineWidth = 0.6;
+          ctx.beginPath();
+          ctx.moveTo(dx, dy);
+          ctx.lineTo(trailX, trailY);
+          ctx.stroke();
+        }
       }
 
       ctx.restore();
@@ -1977,20 +2265,61 @@ function drawGlider() {
   ctx.translate(glider.x, glider.y);
   ctx.rotate(tilt);
 
-  /* --- Tail fin (behind body) --- */
+  /* --- Swept-back tail fins (animate with velocity) --- */
   const tailSpread = 1 + breathe * 0.15;
+  const vyDeflect = Math.max(-1, Math.min(1, glider.vy * 0.003)); /* fin deflection from velocity */
+  const finTipRotTop = vyDeflect * 0.35;  /* upper fin tip rotation */
+  const finTipRotBot = -vyDeflect * 0.35; /* lower fin tip rotation */
+
+  /* Upper swept-back fin */
   ctx.fillStyle = `rgba(80, 220, 210, ${bodyAlpha * 0.45})`;
   ctx.beginPath();
-  ctx.moveTo(-16 * pop, 0);
-  ctx.quadraticCurveTo(-26 * pop, -10 * pop * tailSpread, -32 * pop, -6 * pop * tailSpread);
-  ctx.quadraticCurveTo(-24 * pop, 0, -32 * pop, 6 * pop * tailSpread);
-  ctx.quadraticCurveTo(-26 * pop, 10 * pop * tailSpread, -16 * pop, 0);
+  ctx.moveTo(-14 * pop, -2 * pop);
+  ctx.quadraticCurveTo(-20 * pop, -6 * pop * tailSpread, -28 * pop, -4 * pop * tailSpread + finTipRotTop * 8);
+  ctx.lineTo(-34 * pop, -8 * pop * tailSpread + finTipRotTop * 12); /* swept tip */
+  ctx.quadraticCurveTo(-30 * pop, -2 * pop + finTipRotTop * 4, -22 * pop, 0);
   ctx.closePath();
   ctx.fill();
-  /* Tail fin edge highlight */
-  ctx.strokeStyle = `rgba(160, 255, 240, ${bodyAlpha * 0.25})`;
+  ctx.strokeStyle = `rgba(160, 255, 240, ${bodyAlpha * 0.3})`;
   ctx.lineWidth = 0.8;
   ctx.stroke();
+  /* Upper fin edge accent */
+  ctx.strokeStyle = `rgba(200, 255, 250, ${bodyAlpha * 0.2})`;
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(-14 * pop, -2 * pop);
+  ctx.lineTo(-34 * pop, -8 * pop * tailSpread + finTipRotTop * 12);
+  ctx.stroke();
+
+  /* Lower swept-back fin */
+  ctx.fillStyle = `rgba(80, 220, 210, ${bodyAlpha * 0.45})`;
+  ctx.beginPath();
+  ctx.moveTo(-14 * pop, 2 * pop);
+  ctx.quadraticCurveTo(-20 * pop, 6 * pop * tailSpread, -28 * pop, 4 * pop * tailSpread + finTipRotBot * 8);
+  ctx.lineTo(-34 * pop, 8 * pop * tailSpread + finTipRotBot * 12); /* swept tip */
+  ctx.quadraticCurveTo(-30 * pop, 2 * pop + finTipRotBot * 4, -22 * pop, 0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = `rgba(160, 255, 240, ${bodyAlpha * 0.3})`;
+  ctx.lineWidth = 0.8;
+  ctx.stroke();
+  /* Lower fin edge accent */
+  ctx.strokeStyle = `rgba(200, 255, 250, ${bodyAlpha * 0.2})`;
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(-14 * pop, 2 * pop);
+  ctx.lineTo(-34 * pop, 8 * pop * tailSpread + finTipRotBot * 12);
+  ctx.stroke();
+
+  /* Central tail keel between fins */
+  ctx.fillStyle = `rgba(70, 200, 195, ${bodyAlpha * 0.35})`;
+  ctx.beginPath();
+  ctx.moveTo(-16 * pop, 0);
+  ctx.lineTo(-30 * pop, -1 * pop);
+  ctx.lineTo(-32 * pop, 0);
+  ctx.lineTo(-30 * pop, 1 * pop);
+  ctx.closePath();
+  ctx.fill();
 
   /* --- Membrane wings --- */
   const wingAngleTop = -0.35 - wingFlap;
@@ -2188,7 +2517,86 @@ function drawGlider() {
   ctx.quadraticCurveTo(0, 9 * pop, 4 * pop, 7 * pop);
   ctx.fill();
 
+  /* --- Exhaust/thrust particles from rear when pulsing --- */
+  if (glider.pulsePop > 0.05) {
+    const exhaustIntensity = glider.pulsePop;
+    for (let ep = 0; ep < 8; ep++) {
+      const epLife = (now * 0.005 + ep * 0.125) % 1;
+      const epDist = epLife * 28 * pop * exhaustIntensity;
+      const epSpread = (Math.sin(now * 0.02 + ep * 1.7) * 6 + (ep % 2 === 0 ? 3 : -3)) * epLife;
+      const epX = -18 * pop - epDist;
+      const epY = epSpread;
+      const epAlpha = (1 - epLife) * exhaustIntensity * 0.6;
+      const epSize = (2 + Math.sin(ep * 2.3) * 1.2) * (1 - epLife * 0.5) * pop;
+      const epGlow = ctx.createRadialGradient(epX, epY, 0, epX, epY, epSize * 2.5);
+      epGlow.addColorStop(0, `rgba(180, 255, 250, ${epAlpha})`);
+      epGlow.addColorStop(0.4, `rgba(100, 230, 240, ${epAlpha * 0.5})`);
+      epGlow.addColorStop(1, 'transparent');
+      ctx.fillStyle = epGlow;
+      ctx.beginPath();
+      ctx.arc(epX, epY, epSize * 2.5, 0, Math.PI * 2);
+      ctx.fill();
+      /* Hot core of each exhaust particle */
+      ctx.fillStyle = `rgba(220, 255, 255, ${epAlpha * 0.8})`;
+      ctx.beginPath();
+      ctx.arc(epX, epY, epSize * 0.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    /* Exhaust cone glow */
+    const coneAlpha = exhaustIntensity * 0.15;
+    ctx.fillStyle = `rgba(140, 255, 245, ${coneAlpha})`;
+    ctx.beginPath();
+    ctx.moveTo(-18 * pop, -2 * pop);
+    ctx.lineTo(-38 * pop, -8 * pop * exhaustIntensity);
+    ctx.lineTo(-38 * pop, 8 * pop * exhaustIntensity);
+    ctx.lineTo(-18 * pop, 2 * pop);
+    ctx.closePath();
+    ctx.fill();
+  }
+
   ctx.restore();
+
+  /* --- Shield bubble when symbiosis is active --- */
+  if (phase) {
+    const shieldR = 32 * pop;
+    const shimmerPhase = now * 0.003;
+    /* Main shield bubble - semi-transparent */
+    ctx.save();
+    ctx.globalAlpha = 0.3 + Math.sin(shimmerPhase) * 0.08;
+    const shieldGrad = ctx.createRadialGradient(glider.x, glider.y, shieldR * 0.6, glider.x, glider.y, shieldR);
+    shieldGrad.addColorStop(0, 'rgba(130, 255, 240, 0.02)');
+    shieldGrad.addColorStop(0.7, 'rgba(100, 230, 255, 0.08)');
+    shieldGrad.addColorStop(0.9, 'rgba(160, 255, 250, 0.2)');
+    shieldGrad.addColorStop(1, 'rgba(200, 255, 255, 0.05)');
+    ctx.fillStyle = shieldGrad;
+    ctx.beginPath();
+    ctx.arc(glider.x, glider.y, shieldR, 0, Math.PI * 2);
+    ctx.fill();
+    /* Shield edge ring */
+    ctx.strokeStyle = `rgba(180, 255, 250, ${0.35 + Math.sin(shimmerPhase * 1.5) * 0.15})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(glider.x, glider.y, shieldR, 0, Math.PI * 2);
+    ctx.stroke();
+    /* Shimmer highlights - rotating sparkle points on the bubble surface */
+    for (let sh = 0; sh < 6; sh++) {
+      const shAngle = shimmerPhase * 0.8 + sh * (Math.PI * 2 / 6);
+      const shX = glider.x + Math.cos(shAngle) * shieldR;
+      const shY = glider.y + Math.sin(shAngle) * shieldR;
+      const shAlpha = 0.3 + Math.sin(shimmerPhase * 2 + sh * 1.2) * 0.25;
+      ctx.fillStyle = `rgba(220, 255, 255, ${shAlpha})`;
+      ctx.beginPath();
+      ctx.arc(shX, shY, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    /* Inner shimmer wave */
+    ctx.strokeStyle = `rgba(160, 255, 245, ${0.1 + Math.sin(shimmerPhase * 2.5) * 0.06})`;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.arc(glider.x, glider.y, shieldR * 0.85, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
 
   /* Crash dissipation rings */
   if (glider.crashed) {

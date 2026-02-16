@@ -287,6 +287,7 @@
   let zoneAnnounceTmr, zoneAnnounceName;
   let prevZone;
   let timeDilation;
+  let waterDrops, waterDropTimer;
 
   // ── Touch / Mobile State ───────────────────────────────────
   let touchMoveDir = 0;       // -1 left, 0 none, 1 right
@@ -419,6 +420,8 @@
     zoneAnnounceName = "";
     prevZone = 0;
     timeDilation = 1;
+    waterDrops = [];
+    waterDropTimer = 0;
     seedNoise();
     generateBgCrystals();
     scoreEl.textContent = "0";
@@ -997,6 +1000,38 @@
       }
     }
 
+    // ─ Water drip system ─
+    waterDropTimer += dt;
+    if (waterDropTimer >= 2.0 && waterDrops.length < 8) {
+      waterDropTimer = 0;
+      // Spawn a drop at a random point along the visible cave ceiling
+      const spawnWorldY = cameraY + rand(0, 30);
+      const walls = caveWalls(spawnWorldY);
+      const dropX = rand(walls.left + 15, walls.right - 15);
+      waterDrops.push({ x: dropX, y: spawnWorldY, vy: 0 });
+    }
+    for (let i = waterDrops.length - 1; i >= 0; i--) {
+      const drop = waterDrops[i];
+      drop.vy += 200 * dt;
+      drop.y += drop.vy * dt;
+      const screenDY = drop.y - cameraY;
+      // Check if drop hit bottom of screen or a cave wall
+      const walls = caveWalls(drop.y);
+      const hitWall = drop.x <= walls.left + 2 || drop.x >= walls.right - 2;
+      if (screenDY >= CFG.H || hitWall) {
+        // Spawn 2-3 tiny splash particles
+        const splashCount = 2 + Math.floor(Math.random() * 2);
+        const pal = currentPalette();
+        for (let si = 0; si < splashCount; si++) {
+          spawnParticle("burst", drop.x, drop.y,
+            rand(-20, 20), rand(-30, -10),
+            rand(0.2, 0.4), rand(1, 2),
+            pal.crystal, 0.3);
+        }
+        waterDrops.splice(i, 1);
+      }
+    }
+
     // ─ Generate ahead & cull ─
     generateAhead(cameraY + CFG.H * 2.5);
     cullBehind();
@@ -1107,6 +1142,12 @@
 
     // ─ Cave walls ─
     drawCaveWalls(sctx, pal);
+
+    // ─ Water drops ─
+    drawWaterDrops(sctx, pal);
+
+    // ─ Atmospheric fog bands ─
+    drawFogBands(sctx, pal);
 
     // ─ Dark zones & bottleneck indicators ─
     drawCaveHazards(sctx, pal);
@@ -1312,6 +1353,39 @@
     c.lineWidth = 2;
     c.stroke();
 
+    // Mineral vein lines along walls
+    c.strokeStyle = rgb(pal.crystal, 0.15);
+    c.lineWidth = 1;
+    for (let sy = 0; sy < CFG.H; sy += 30) {
+      const worldY = topY + sy;
+      const walls = caveWalls(worldY);
+      const veinSeed = (Math.floor(worldY / 30) * 13) % 100;
+      // Left wall veins
+      if (veinSeed < 50) {
+        c.beginPath();
+        const vx = walls.left + 2 + (veinSeed % 12);
+        c.moveTo(vx, sy);
+        for (let v = 1; v <= 3; v++) {
+          const wy = sy + v * 8;
+          const wx = vx + Math.sin(worldY * 0.1 + v * 1.7) * 4;
+          c.lineTo(wx, wy);
+        }
+        c.stroke();
+      }
+      // Right wall veins
+      if (veinSeed > 40) {
+        c.beginPath();
+        const vx = walls.right - 2 - (veinSeed % 10);
+        c.moveTo(vx, sy);
+        for (let v = 1; v <= 3; v++) {
+          const wy = sy + v * 8;
+          const wx = vx + Math.sin(worldY * 0.13 + v * 2.1) * 4;
+          c.lineTo(wx, wy);
+        }
+        c.stroke();
+      }
+    }
+
     // Wall texture bumps
     drawWallBumps(c, pal);
   }
@@ -1344,6 +1418,71 @@
         c.fill();
       }
     }
+
+    // Embedded crystal clusters at ~150px intervals along wall edges
+    for (let sy = 0; sy < CFG.H; sy += 150) {
+      const worldY = topY + sy;
+      const walls = caveWalls(worldY);
+      const clusterSeed = (Math.floor(worldY / 150) * 11) % 100;
+
+      // Left wall cluster
+      if (clusterSeed < 60) {
+        const clusterCount = 2 + (clusterSeed % 2); // 2-3 crystals
+        for (let ci = 0; ci < clusterCount; ci++) {
+          const cSize = 4 + (clusterSeed + ci * 3) % 5; // size 4-8
+          const cx = walls.left + 2 + ci * 5;
+          const cy = sy + (ci - 1) * 6;
+          c.save();
+          c.globalAlpha = 0.5;
+          c.rotate((clusterSeed + ci) * 0.3 - 0.5);
+          drawCrystalShape(c, cx, cy, cSize, pal.crystal);
+          c.restore();
+        }
+      }
+
+      // Right wall cluster
+      if (clusterSeed > 35) {
+        const clusterCount = 2 + ((clusterSeed + 5) % 2);
+        for (let ci = 0; ci < clusterCount; ci++) {
+          const cSize = 4 + (clusterSeed + ci * 7) % 5;
+          const cx = walls.right - 2 - ci * 5;
+          const cy = sy + (ci - 1) * 6;
+          c.save();
+          c.globalAlpha = 0.5;
+          c.rotate(-(clusterSeed + ci) * 0.3 + 0.5);
+          drawCrystalShape(c, cx, cy, cSize, pal.crystal);
+          c.restore();
+        }
+      }
+    }
+  }
+
+  function drawWaterDrops(c, pal) {
+    if (!waterDrops || waterDrops.length === 0) return;
+    c.save();
+    for (const drop of waterDrops) {
+      const sy = drop.y - cameraY;
+      if (sy < -10 || sy > CFG.H + 10) continue;
+      c.fillStyle = rgb(pal.crystal, 0.3);
+      c.beginPath();
+      c.ellipse(drop.x, sy, 2, 4, 0, 0, Math.PI * 2);
+      c.fill();
+    }
+    c.restore();
+  }
+
+  function drawFogBands(c, pal) {
+    const t = performance.now() / 1000;
+    c.save();
+    for (let i = 0; i < 4; i++) {
+      const alpha = 0.03 + i * 0.01; // 0.03, 0.04, 0.05, 0.06
+      const speed = 0.3 + i * 0.15;  // different drift speed per band
+      const xOffset = Math.sin(t * speed + i * 1.8) * 40;
+      const bandY = (CFG.H * (0.15 + i * 0.22)) + Math.sin(t * 0.2 + i) * 15;
+      c.fillStyle = rgb(pal.ambient, alpha);
+      c.fillRect(xOffset - 20, bandY - 20, CFG.W + 40, 40);
+    }
+    c.restore();
   }
 
   function drawCaveHazards(c, pal) {
@@ -1482,16 +1621,62 @@
       c.lineWidth = 1;
       c.stroke();
 
+      // Facet lines inside the diamond (crossing lines like player crystal)
+      c.strokeStyle = rgb([255, 255, 255], 0.25);
+      c.lineWidth = 0.5;
+      c.beginPath();
+      c.moveTo(0, -9); c.lineTo(0, 9);   // vertical facet
+      c.moveTo(-6, 0); c.lineTo(6, 0);    // horizontal facet
+      c.stroke();
+
+      // Prismatic rainbow edge highlight
+      const hue = (t * 60) % 360;
+      c.beginPath();
+      c.moveTo(0, -9);
+      c.lineTo(6, 0);
+      c.lineTo(0, 9);
+      c.lineTo(-6, 0);
+      c.closePath();
+      c.strokeStyle = `hsl(${hue}, 80%, 70%)`;
+      c.lineWidth = 1.5;
+      c.stroke();
+
       c.restore();
     }
   }
 
   function drawShadows(c, pal) {
     const topY = cameraY;
+    const t = performance.now() / 1000;
+    const plScreenY = player.y - cameraY;
 
     for (const sh of shadows) {
       const sy = sh.y - topY;
       if (sy < -60 || sy > CFG.H + 60) continue;
+
+      // Tendrils extending from the body
+      c.save();
+      c.strokeStyle = "rgba(15,3,30,0.6)";
+      c.lineWidth = 2;
+      const tendrilAngles = [0, Math.PI * 0.5, Math.PI, Math.PI * 1.5];
+      for (let ti = 0; ti < tendrilAngles.length; ti++) {
+        const baseAngle = tendrilAngles[ti] + Math.sin(t * 1.5 + ti * 1.3) * 0.4;
+        c.beginPath();
+        const startX = sh.x + Math.cos(baseAngle) * sh.r * 0.5;
+        const startY = sy + Math.sin(baseAngle) * sh.r * 0.5;
+        c.moveTo(startX, startY);
+        const segments = 5;
+        const tendrilLen = sh.r * 1.2;
+        for (let s = 1; s <= segments; s++) {
+          const frac = s / segments;
+          const waveOff = Math.sin(t * 3 + ti * 2.0 + s * 0.8) * 6 * frac;
+          const tx = sh.x + Math.cos(baseAngle) * (sh.r * 0.5 + tendrilLen * frac) + Math.cos(baseAngle + Math.PI * 0.5) * waveOff;
+          const ty = sy + Math.sin(baseAngle) * (sh.r * 0.5 + tendrilLen * frac) + Math.sin(baseAngle + Math.PI * 0.5) * waveOff;
+          c.lineTo(tx, ty);
+        }
+        c.stroke();
+      }
+      c.restore();
 
       // Dark body
       const bg = c.createRadialGradient(sh.x, sy, 0, sh.x, sy, sh.r);
@@ -1512,10 +1697,17 @@
       c.arc(sh.x, sy, sh.r * 0.7, 0, Math.PI * 2);
       c.fill();
 
-      // Eyes
+      // Eyes - pupils track player position
       const eyeSpread = 5;
       const eyeY = sy - 2 + Math.sin(sh.eyePhase) * 1.5;
       const eyeColor = zoneIndex() >= 3 ? [255, 120, 60] : [255, 50, 50];
+
+      // Calculate direction to player for pupil offset
+      const dxToPlayer = player.x - sh.x;
+      const dyToPlayer = plScreenY - sy;
+      const distToPlayer = Math.sqrt(dxToPlayer * dxToPlayer + dyToPlayer * dyToPlayer) || 1;
+      const pupilOffX = (dxToPlayer / distToPlayer) * 1.5;
+      const pupilOffY = (dyToPlayer / distToPlayer) * 1.5;
 
       for (const ex of [-eyeSpread, eyeSpread]) {
         // Eye glow
@@ -1526,9 +1718,9 @@
         c.fillStyle = eg;
         c.fillRect(sh.x + ex - 6, eyeY - 6, 12, 12);
 
-        // Eye core
+        // Eye core (pupil tracks player)
         c.beginPath();
-        c.arc(sh.x + ex, eyeY, 2, 0, Math.PI * 2);
+        c.arc(sh.x + ex + pupilOffX, eyeY + pupilOffY, 2, 0, Math.PI * 2);
         c.fillStyle = rgb(eyeColor);
         c.fill();
       }
