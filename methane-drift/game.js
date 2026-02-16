@@ -78,15 +78,15 @@ const ACHIEVEMENTS = [
   { id: 'deep_diver', name: 'Deep Diver', desc: 'Score 25 points', check: (s) => s.bestScore >= 25 },
   { id: 'pressure_veteran', name: 'Pressure Veteran', desc: 'Score 50 points', check: (s) => s.bestScore >= 50 },
   { id: 'core_runner', name: 'Core Runner', desc: 'Score 100 points', check: (s) => s.bestScore >= 100 },
-  { id: 'symbiont', name: 'Symbiont', desc: 'Use symbiosis 10 times total', check: (s) => s.totalSymbiosis >= 10 },
-  { id: 'untouchable', name: 'Untouchable', desc: 'Score 20 without symbiosis', check: (s) => s.noSymbiosisRecord >= 20 },
-  { id: 'density_master', name: 'Density Master', desc: 'Survive 5 Crushing phases in one run', check: (s) => s.crushingPhasesThisRun >= 5 },
-  { id: 'near_miss_expert', name: 'Near-Miss Expert', desc: '10 near-misses in one run', check: (s) => s.nearMissesThisRun >= 10 },
+  { id: 'symbiont', name: 'Shield Expert', desc: 'Use your shield 10 times total', check: (s) => s.totalSymbiosis >= 10 },
+  { id: 'untouchable', name: 'Untouchable', desc: 'Score 20 without using your shield', check: (s) => s.noSymbiosisRecord >= 20 },
+  { id: 'density_master', name: 'Density Master', desc: 'Survive 5 Heavy air phases in one run', check: (s) => s.crushingPhasesThisRun >= 5 },
+  { id: 'near_miss_expert', name: 'Close Call Expert', desc: '10 close calls in one run', check: (s) => s.nearMissesThisRun >= 10 },
   { id: 'combo_adept', name: 'Combo Adept', desc: 'Reach a 5x combo', check: (s) => s.longestStreak >= 5 },
   { id: 'combo_master', name: 'Combo Master', desc: 'Reach a 10x combo', check: (s) => s.longestStreak >= 10 },
-  { id: 'density_surfer', name: 'Density Surfer', desc: 'Density surf 5 times in one run', check: (s) => s.densitySurfsThisRun >= 5 },
-  { id: 'boss_slayer', name: 'Boss Slayer', desc: 'Defeat 3 zone bosses in one run', check: (s) => s.bossesDefeatedThisRun >= 3 },
-  { id: 'marathon', name: 'Marathon Drifter', desc: 'Survive 120 seconds in one run', check: (s) => s.longestTimeAlive >= 120 },
+  { id: 'density_surfer', name: 'Wave Rider', desc: 'Ride the air change 5 times in one run', check: (s) => s.densitySurfsThisRun >= 5 },
+  { id: 'boss_slayer', name: 'Boss Slayer', desc: 'Defeat 3 bosses in one run', check: (s) => s.bossesDefeatedThisRun >= 3 },
+  { id: 'marathon', name: 'Marathon Runner', desc: 'Stay alive for 2 minutes in one run', check: (s) => s.longestTimeAlive >= 120 },
 ];
 
 /* --- DOM --- */
@@ -170,7 +170,7 @@ const world = {
   displayScore: 0,
   atmosphereTimer: 0,
   density: 0.72,
-  densityLabel: 'Buoyant',
+  densityLabel: 'Light',
   obstacles: [],
   ambientFlash: 0,
   motes: [],
@@ -251,6 +251,26 @@ let lastTime = 0;
 let tutorialDone = false;
 let tutorialStep = 0;
 let isFullscreen = false;
+
+/* --- First-encounter tips (shown once per session) --- */
+const firstEncounterTips = {
+  nearMiss: { shown: false, text: 'Nice! Fly close to obstacles for bonus points', timer: 0 },
+  combo: { shown: false, text: 'Keep flying close to build your combo!', timer: 0 },
+  densityShift: { shown: false, text: 'The air just changed \u2014 this affects your movement', timer: 0 },
+  shield: { shown: false, text: 'Shield ready! Press Shift to become invincible', timer: 0 },
+  boss: { shown: false, text: 'Boss ahead! Use your Shield to fly through and damage it', timer: 0 },
+  geyser: { shown: false, text: 'Geyser! Wait for it to stop erupting, then fly past', timer: 0 },
+  storm: { shown: false, text: 'Storm! It pulls you in \u2014 steer clear or use your Shield', timer: 0 },
+};
+let activeTip = null;
+
+function showTip(key) {
+  const tip = firstEncounterTips[key];
+  if (!tip || tip.shown) return;
+  tip.shown = true;
+  tip.timer = 3.0;
+  activeTip = tip;
+}
 
 /* --- Fullscreen --- */
 function enterFullscreen() {
@@ -367,7 +387,7 @@ function resetGame() {
   world.state = STATE.MENU;
   world.atmosphereTimer = 0;
   world.density = 0.72;
-  world.densityLabel = 'Buoyant';
+  world.densityLabel = 'Light';
   world.obstacles = [];
   world.ambientFlash = 0;
   world.shakeTimer = 0;
@@ -508,7 +528,7 @@ function pulse() {
     return;
   }
   if (world.state === STATE.PAUSED || world.state === STATE.CRASHING) return;
-  const densityMod = world.pressureAdaptation > 0 && world.densityLabel === 'Crushing' ? 0.9 : world.density;
+  const densityMod = world.pressureAdaptation > 0 && world.densityLabel === 'Heavy' ? 0.9 : world.density;
   const surfBoost = world.densitySurfBoost > 0 ? CONFIG.densitySurfBoostMultiplier : 1;
   glider.vy += CONFIG.pulseForce * densityMod * surfBoost;
   glider.pulsePop = 1.0;
@@ -662,6 +682,8 @@ function spawnObstacle() {
     pulse: Math.random() * Math.PI * 2, oscillate, oscPhase: Math.random() * Math.PI * 2,
     eruptPhase, erupting: true, scatterTimer, scattered: false,
   });
+  if (type === 'geyser') showTip('geyser');
+  if (type === 'storm') showTip('storm');
 }
 
 /* Find the y position with the most open space among nearby obstacles */
@@ -779,6 +801,7 @@ function spawnBoss(zone) {
   };
   world.atmosphereAnnounce = { text: `BOSS: ${def.name}`, timer: 3.0 };
   if (Audio.bossAppear) Audio.bossAppear();
+  showTip('boss');
 }
 
 function updateBoss(dt) {
@@ -967,32 +990,33 @@ function updateAtmosphere(dt) {
     const roll = Math.random();
     if (roll < 0.34) {
       world.density = 0.72;
-      world.densityLabel = 'Buoyant';
+      world.densityLabel = 'Light';
     } else if (roll < 0.68) {
       world.density = 0.92;
-      world.densityLabel = 'Dense';
+      world.densityLabel = 'Normal';
     } else {
       world.density = 1.08;
-      world.densityLabel = 'Crushing';
+      world.densityLabel = 'Heavy';
       world.runStats.crushingPhases++;
       /* Track crushing without symbiosis for pressure adaptation */
       if (glider.symbiosisTimer <= 0) {
         world.crushingWithoutSymbiosis++;
         if (world.crushingWithoutSymbiosis >= 3 && world.pressureAdaptation === 0) {
           world.pressureAdaptation = 1;
-          world.atmosphereAnnounce = { text: 'PRESSURE ADAPTED', timer: 2.0 };
+          world.atmosphereAnnounce = { text: 'ADAPTED TO HEAVY AIR', timer: 2.0 };
         }
       }
     }
     if (prevLabel !== world.densityLabel) {
       world.ambientFlash = 0.25;
-      if (!world.pressureAdaptation || world.densityLabel !== 'Crushing') {
+      if (!world.pressureAdaptation || world.densityLabel !== 'Heavy') {
         world.atmosphereAnnounce = { text: world.densityLabel.toUpperCase(), timer: 1.5 };
       }
       Audio.atmosphereShift(world.densityLabel);
       Audio.updateDrone(world.density);
       /* Open density surf window */
       world.densityShiftJustHappened = CONFIG.densitySurfWindow;
+      showTip('densityShift');
     }
   }
 }
@@ -1003,7 +1027,7 @@ function checkDensitySurf() {
     world.densitySurfBoost = CONFIG.densitySurfBoostDuration;
     world.densityShiftJustHappened = 0;
     world.runStats.densitySurfs++;
-    world.atmosphereAnnounce = { text: 'DENSITY SURF!', timer: 1.2 };
+    world.atmosphereAnnounce = { text: 'WAVE RIDE!', timer: 1.2 };
     if (!reducedMotion) {
       world.shakeTimer = 0.15;
       world.shakeIntensity = 4;
@@ -1254,6 +1278,7 @@ function update(dt, rawDt) {
       world.runStats.obstaclesDodged++;
       world.runStats.totalScoreWithMultiplier += points;
       Audio.score();
+      if (world.score === 1 && glider.symbiosisCharge >= 1) showTip('shield');
 
       /* Near-miss check */
       const dist = nearMissDistance(obstacle);
@@ -1271,6 +1296,8 @@ function update(dt, rawDt) {
         if (comboNode) comboNode.textContent = String(world.combo);
         spawnNearMissParticles();
         Audio.nearMiss();
+        if (world.combo === 1) showTip('nearMiss');
+        if (world.combo === 3) showTip('combo');
 
         /* Combo milestones */
         for (const t of CONFIG.comboThresholds) {
@@ -1348,25 +1375,25 @@ function update(dt, rawDt) {
   scoreNode.textContent = String(world.score);
   densityNode.textContent = world.densityLabel;
   symbiosisNode.textContent = glider.symbiosisTimer > 0
-    ? `Phasing ${glider.symbiosisTimer.toFixed(1)}s`
+    ? `Active ${glider.symbiosisTimer.toFixed(1)}s`
     : glider.symbiosisCooldown > 0
-    ? `Cooldown ${glider.symbiosisCooldown.toFixed(1)}s`
-    : glider.symbiosisCharge >= 1 ? 'Ready' : 'Charging';
+    ? `Recharging ${glider.symbiosisCooldown.toFixed(1)}s`
+    : glider.symbiosisCharge >= 1 ? 'Ready' : 'Recharging';
 
   /* Update HTML symbiosis button label */
   const symBtn = document.getElementById('symbiosisBtn');
   if (symBtn) {
     if (glider.symbiosisTimer > 0) {
-      symBtn.textContent = `Phasing ${glider.symbiosisTimer.toFixed(1)}s`;
+      symBtn.textContent = `Shield Active ${glider.symbiosisTimer.toFixed(1)}s`;
       symBtn.disabled = true;
     } else if (glider.symbiosisCooldown > 0) {
-      symBtn.textContent = `Cooldown ${Math.ceil(glider.symbiosisCooldown)}s`;
+      symBtn.textContent = `Recharging ${Math.ceil(glider.symbiosisCooldown)}s`;
       symBtn.disabled = true;
     } else if (glider.symbiosisCharge >= 1) {
-      symBtn.textContent = 'Symbiosis';
+      symBtn.textContent = 'Shield';
       symBtn.disabled = false;
     } else {
-      symBtn.textContent = 'Charging...';
+      symBtn.textContent = 'Recharging...';
       symBtn.disabled = true;
     }
   }
@@ -2257,8 +2284,8 @@ function drawAnnouncements(dt) {
   if (world.atmosphereAnnounce && world.atmosphereAnnounce.timer > 0) {
     const a = world.atmosphereAnnounce;
     const alpha = Math.min(1, a.timer) * 0.7;
-    const densityColor = world.densityLabel === 'Buoyant' ? '130, 230, 200' :
-                         world.densityLabel === 'Dense' ? '180, 180, 255' : '255, 140, 140';
+    const densityColor = world.densityLabel === 'Light' ? '130, 230, 200' :
+                         world.densityLabel === 'Normal' ? '180, 180, 255' : '255, 140, 140';
     ctx.fillStyle = `rgba(${densityColor}, ${alpha})`;
     ctx.font = '600 26px Inter, sans-serif';
     ctx.textAlign = 'center';
@@ -2325,18 +2352,38 @@ function drawDensityForecast() {
   if (!world.densityForecast || world.densityForecastTimer <= 0) return;
   const alpha = Math.min(1, world.densityForecastTimer) * 0.6;
   const pulse = Math.sin(performance.now() * 0.01) * 0.2;
+
+  /* Background pill for visibility */
+  ctx.fillStyle = `rgba(40, 30, 10, ${alpha * 0.5})`;
+  ctx.beginPath();
+  ctx.roundRect(14, 62, 120, 28, 6);
+  ctx.fill();
+
   ctx.fillStyle = `rgba(255, 220, 130, ${alpha * (0.6 + pulse)})`;
-  ctx.font = '500 12px Inter, sans-serif';
+  ctx.font = '600 12px Inter, sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText('SHIFT INCOMING', 20, 74);
-  /* Pulsing bar */
-  const barW = 80;
-  const barH = 3;
+  ctx.fillText('AIR CHANGING...', 22, 76);
+
+  /* Countdown bar */
+  const barW = 104;
+  const barH = 4;
   const frac = 1 - world.densityForecastTimer / 2.0;
-  ctx.fillStyle = `rgba(255, 200, 80, ${alpha * 0.3})`;
-  ctx.fillRect(20, 78, barW, barH);
+  ctx.fillStyle = `rgba(255, 200, 80, ${alpha * 0.25})`;
+  ctx.beginPath();
+  ctx.roundRect(22, 80, barW, barH, 2);
+  ctx.fill();
   ctx.fillStyle = `rgba(255, 200, 80, ${alpha * 0.8})`;
-  ctx.fillRect(20, 78, barW * frac, barH);
+  ctx.beginPath();
+  ctx.roundRect(22, 80, barW * frac, barH, 2);
+  ctx.fill();
+
+  /* Surf hint — appears when bar is mostly full */
+  if (frac > 0.6) {
+    const hintAlpha = alpha * Math.min(1, (frac - 0.6) * 2.5);
+    ctx.fillStyle = `rgba(255, 240, 160, ${hintAlpha * 0.7})`;
+    ctx.font = '500 10px Inter, sans-serif';
+    ctx.fillText('Press Space now for boost!', 22, 98);
+  }
 }
 
 /* --- Ghost Trail --- */
@@ -2451,6 +2498,30 @@ function drawLore(dt) {
   ctx.fillText(lore.text, world.width / 2, world.height - 30);
 }
 
+/* --- First-Encounter Tips --- */
+function drawTips(dt) {
+  if (!activeTip || activeTip.timer <= 0) { activeTip = null; return; }
+  activeTip.timer -= dt;
+  const alpha = Math.min(1, activeTip.timer / 0.5) * 0.9;
+  const tipY = world.height - 24;
+
+  /* Background pill */
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.font = '500 13px Inter, sans-serif';
+  const tw = ctx.measureText(activeTip.text).width + 28;
+  ctx.fillStyle = `rgba(10, 20, 40, ${alpha * 0.7})`;
+  ctx.beginPath();
+  ctx.roundRect(world.width / 2 - tw / 2, tipY - 14, tw, 24, 12);
+  ctx.fill();
+  ctx.strokeStyle = `rgba(130, 220, 255, ${alpha * 0.3})`;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.fillStyle = `rgba(200, 235, 255, ${alpha})`;
+  ctx.fillText(activeTip.text, world.width / 2, tipY + 2);
+  ctx.restore();
+}
+
 function drawText(dt) {
   if (world.state === STATE.MENU) {
     drawVignette();
@@ -2461,25 +2532,60 @@ function drawText(dt) {
     ctx.textAlign = 'center';
 
     if (!tutorialDone) {
-      /* Tutorial panels */
+      /* Tutorial panels — plain language with visual cues */
       ctx.font = '600 28px Inter, sans-serif';
       const msgs = [
-        ['Pulse Upward', 'Tap Space or Click to pulse the glider upward'],
-        ['Avoid Hazards', 'Navigate spires, schools, geysers, and storms'],
-        ['Symbiosis', 'Press Shift to phase through obstacles when charged'],
-        ['Combos', 'Fly close to hazards for near-misses — chain them for score multipliers!'],
-        ['Density Surfing', 'Pulse right as the atmosphere shifts for a power boost'],
-        ['Zone Bosses', 'Phase through bosses with Symbiosis to damage them'],
-        ['Adapt & Survive', 'Watch for edge warnings, density forecasts, and lore fragments'],
+        { title: 'Go Up', desc: 'Press SPACE or TAP the screen to fly upward', icon: '\u2191', hint: 'SPACE / TAP' },
+        { title: 'Dodge Obstacles', desc: 'Crystals, fish, geysers, and storms will block your path', icon: '\u26A0', hint: 'Steer around them' },
+        { title: 'Shield (Symbiosis)', desc: 'Press SHIFT to become invincible for a short time', icon: '\u25C9', hint: 'SHIFT / on-screen button' },
+        { title: 'Close Calls = Points', desc: 'Fly NEAR obstacles without touching them to build combos', icon: '\u2605', hint: 'The closer, the better!' },
+        { title: 'Ride the Wave', desc: 'Press SPACE right when the air changes for a speed boost', icon: '\u2248', hint: 'Watch for "SHIFT INCOMING"' },
+        { title: 'Beat the Bosses', desc: 'Use your shield to fly THROUGH bosses and hurt them', icon: '\u2694', hint: 'Shield + fly into boss' },
+        { title: 'You\'re Ready!', desc: 'The air changes between light, normal, and heavy — adapt!', icon: '\u2713', hint: 'Good luck out there' },
       ];
       const step = Math.min(tutorialStep, msgs.length - 1);
-      ctx.fillText(msgs[step][0], world.width / 2, world.height / 2 - 20 + float);
-      ctx.fillStyle = 'rgba(180, 210, 255, 0.7)';
+      const m = msgs[step];
+
+      /* Icon circle */
+      ctx.fillStyle = 'rgba(130, 220, 255, 0.12)';
+      ctx.beginPath();
+      ctx.arc(world.width / 2, world.height / 2 - 54 + float, 30, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.font = '400 28px Inter, sans-serif';
+      ctx.fillStyle = 'rgba(180, 240, 255, 0.9)';
+      ctx.fillText(m.icon, world.width / 2, world.height / 2 - 44 + float);
+
+      /* Title */
+      ctx.font = '600 28px Inter, sans-serif';
+      ctx.fillStyle = '#d8eaff';
+      ctx.fillText(m.title, world.width / 2, world.height / 2 - 8 + float);
+
+      /* Description */
+      ctx.fillStyle = 'rgba(180, 210, 255, 0.75)';
       ctx.font = '500 16px Inter, sans-serif';
-      ctx.fillText(msgs[step][1], world.width / 2, world.height / 2 + 16 + float);
-      ctx.font = '400 14px Inter, sans-serif';
-      ctx.fillStyle = 'rgba(160, 200, 240, 0.5)';
-      ctx.fillText(`(${step + 1}/${msgs.length}) Tap to continue`, world.width / 2, world.height / 2 + 48 + float);
+      ctx.fillText(m.desc, world.width / 2, world.height / 2 + 20 + float);
+
+      /* Input hint pill */
+      ctx.fillStyle = 'rgba(130, 200, 255, 0.15)';
+      const hintW = ctx.measureText(m.hint).width + 24;
+      ctx.beginPath();
+      ctx.roundRect(world.width / 2 - hintW / 2, world.height / 2 + 32 + float, hintW, 26, 13);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(180, 230, 255, 0.8)';
+      ctx.font = '600 13px Inter, sans-serif';
+      ctx.fillText(m.hint, world.width / 2, world.height / 2 + 49 + float);
+
+      /* Progress dots + tap prompt */
+      const dotY = world.height / 2 + 76 + float;
+      for (let i = 0; i < msgs.length; i++) {
+        ctx.fillStyle = i === step ? 'rgba(130, 220, 255, 0.9)' : i < step ? 'rgba(130, 220, 255, 0.4)' : 'rgba(130, 220, 255, 0.15)';
+        ctx.beginPath();
+        ctx.arc(world.width / 2 + (i - 3) * 16, dotY, i === step ? 5 : 3.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.font = '400 13px Inter, sans-serif';
+      ctx.fillStyle = 'rgba(160, 200, 240, 0.45)';
+      ctx.fillText('Tap or press Space to continue', world.width / 2, dotY + 22);
     } else {
       ctx.font = '600 42px Inter, sans-serif';
       ctx.fillText('METHANE DRIFT', world.width / 2, world.height / 2 - 24 + float);
@@ -2496,13 +2602,77 @@ function drawText(dt) {
 
   if (world.state === STATE.PAUSED) {
     drawVignette();
+    const pcx = world.width / 2;
     ctx.fillStyle = '#d8eaff';
     ctx.textAlign = 'center';
-    ctx.font = '600 34px Inter, sans-serif';
-    ctx.fillText('Paused', world.width / 2, world.height / 2 - 10);
-    ctx.fillStyle = 'rgba(180, 210, 255, 0.7)';
-    ctx.font = '500 17px Inter, sans-serif';
-    ctx.fillText('Press Escape or tap X to resume', world.width / 2, world.height / 2 + 24);
+    ctx.font = '600 30px Inter, sans-serif';
+    ctx.fillText('Paused', pcx, 60);
+    ctx.fillStyle = 'rgba(180, 210, 255, 0.6)';
+    ctx.font = '500 14px Inter, sans-serif';
+    ctx.fillText('Press Escape or tap X to resume', pcx, 82);
+
+    /* Controls reference card */
+    const cardX = pcx - 180;
+    const cardY = 105;
+    const cardW = 360;
+    const cardH = world.height - 130;
+    ctx.fillStyle = 'rgba(8, 14, 30, 0.6)';
+    ctx.beginPath();
+    ctx.roundRect(cardX, cardY, cardW, cardH, 12);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(130, 200, 240, 0.15)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.textAlign = 'left';
+    const lx = cardX + 20;
+    const rx = cardX + cardW - 20;
+    let ry = cardY + 28;
+
+    ctx.fillStyle = 'rgba(130, 220, 255, 0.8)';
+    ctx.font = '600 15px Inter, sans-serif';
+    ctx.fillText('Controls', lx, ry);
+    ry += 24;
+
+    const controls = [
+      ['Space / Tap', 'Fly upward'],
+      ['Shift / Button', 'Activate shield'],
+      ['Escape', 'Pause / Resume'],
+    ];
+    ctx.font = '500 13px Inter, sans-serif';
+    for (const [key, desc] of controls) {
+      ctx.fillStyle = 'rgba(200, 230, 255, 0.8)';
+      ctx.fillText(key, lx, ry);
+      ctx.fillStyle = 'rgba(160, 190, 220, 0.6)';
+      ctx.textAlign = 'right';
+      ctx.fillText(desc, rx, ry);
+      ctx.textAlign = 'left';
+      ry += 20;
+    }
+
+    ry += 10;
+    ctx.fillStyle = 'rgba(130, 220, 255, 0.8)';
+    ctx.font = '600 15px Inter, sans-serif';
+    ctx.fillText('How to Play', lx, ry);
+    ry += 22;
+
+    const tips = [
+      'Fly through the sky and dodge obstacles to score.',
+      'Fly CLOSE to obstacles for near-miss bonus points.',
+      'Chain near-misses to build combos (x1.5 to x5 score).',
+      'Use your Shield (Shift) to become invincible briefly.',
+      'The air changes between Light, Normal, and Heavy.',
+      'Press Space RIGHT when air changes for a speed boost.',
+      'Bosses appear every 25 points \u2014 shield through them!',
+      'Geysers turn off briefly \u2014 wait for the pause.',
+      'Storms pull you in \u2014 steer away or use Shield.',
+    ];
+    ctx.font = '400 12px Inter, sans-serif';
+    ctx.fillStyle = 'rgba(180, 210, 240, 0.65)';
+    for (const tip of tips) {
+      ctx.fillText('\u2022 ' + tip, lx, ry);
+      ry += 17;
+    }
 
     /* X close button — top right */
     const xBtnX = world.width - 56;
@@ -2533,42 +2703,42 @@ function drawText(dt) {
   if (world.state === STATE.GAMEOVER) {
     drawVignette();
     const cx = world.width / 2;
-    let yPos = world.height / 2 - 80;
+    let yPos = world.height / 2 - 90;
 
     ctx.fillStyle = '#d8eaff';
     ctx.textAlign = 'center';
-    ctx.font = '600 36px Inter, sans-serif';
-    ctx.fillText('Signal Lost', cx, yPos);
-    yPos += 36;
+    ctx.font = '600 32px Inter, sans-serif';
+    ctx.fillText('Game Over', cx, yPos);
+    yPos += 34;
 
-    /* Score with multiplier info */
+    /* Score */
     ctx.fillStyle = 'rgba(180, 210, 255, 0.8)';
     ctx.font = '500 22px Inter, sans-serif';
-    ctx.fillText(`Distance: ${world.score}`, cx, yPos);
+    ctx.fillText(`Score: ${world.score}`, cx, yPos);
     yPos += 24;
 
     ctx.font = '500 15px Inter, sans-serif';
-    ctx.fillText(`Best: ${world.best}`, cx, yPos);
+    ctx.fillText(`Your Best: ${world.best}`, cx, yPos);
     yPos += 22;
 
     if (world.score === world.best && world.score > 0) {
       ctx.fillStyle = 'rgba(255, 220, 120, 0.9)';
       ctx.font = '700 15px Inter, sans-serif';
-      ctx.fillText('NEW RECORD', cx, yPos);
+      ctx.fillText('NEW BEST SCORE!', cx, yPos);
       yPos += 20;
     }
 
-    /* Detailed run summary */
-    yPos += 8;
+    /* Run summary — friendly labels */
+    yPos += 6;
     ctx.fillStyle = 'rgba(140, 180, 220, 0.6)';
     ctx.font = '400 12px Inter, sans-serif';
     const rs = world.runStats;
     const summaryLines = [
-      `Dodged: ${rs.obstaclesDodged}  |  Near-misses: ${rs.nearMisses}  |  Time: ${rs.timeAlive.toFixed(1)}s`,
-      `Max Combo: ${Math.max(rs.maxCombo, world.combo)}  |  Density Surfs: ${rs.densitySurfs}  |  Bosses: ${rs.bossesDefeated}`,
+      `Obstacles dodged: ${rs.obstaclesDodged}  \u00B7  Close calls: ${rs.nearMisses}  \u00B7  Time alive: ${rs.timeAlive.toFixed(1)}s`,
+      `Best combo: ${Math.max(rs.maxCombo, world.combo)}  \u00B7  Wave rides: ${rs.densitySurfs}  \u00B7  Bosses beaten: ${rs.bossesDefeated}`,
     ];
     if (rs.closestNearMiss < 999) {
-      summaryLines.push(`Closest Near-Miss: ${rs.closestNearMiss.toFixed(1)}px  |  Symbiosis Uses: ${rs.symbiosisUses}`);
+      summaryLines.push(`Closest call: ${rs.closestNearMiss.toFixed(1)}px  \u00B7  Shield uses: ${rs.symbiosisUses}`);
     }
     for (const line of summaryLines) {
       ctx.fillText(line, cx, yPos);
@@ -2579,19 +2749,30 @@ function drawText(dt) {
     yPos += 4;
     if (rs.maxCombo >= 5) {
       ctx.fillStyle = 'rgba(255, 220, 140, 0.6)';
-      ctx.fillText(`Highlight: ${rs.maxCombo}x combo streak!`, cx, yPos);
+      ctx.fillText(`Best moment: ${rs.maxCombo}x combo streak!`, cx, yPos);
       yPos += 17;
     } else if (rs.densitySurfs > 0) {
       ctx.fillStyle = 'rgba(255, 220, 140, 0.6)';
-      ctx.fillText(`Highlight: ${rs.densitySurfs} density surf${rs.densitySurfs > 1 ? 's' : ''}!`, cx, yPos);
+      ctx.fillText(`Best moment: ${rs.densitySurfs} wave ride${rs.densitySurfs > 1 ? 's' : ''}!`, cx, yPos);
       yPos += 17;
     }
 
-    const statsY = yPos;
+    /* Tip for improvement */
+    yPos += 4;
+    ctx.fillStyle = 'rgba(160, 200, 240, 0.45)';
+    ctx.font = 'italic 400 11px Inter, sans-serif';
+    if (rs.nearMisses === 0) {
+      ctx.fillText('Tip: Fly close to obstacles for near-miss bonus points!', cx, yPos);
+    } else if (rs.symbiosisUses === 0) {
+      ctx.fillText('Tip: Press Shift to use your Shield when things get tough!', cx, yPos);
+    } else if (rs.densitySurfs === 0 && world.score >= 5) {
+      ctx.fillText('Tip: Press Space right when the air changes for a speed boost!', cx, yPos);
+    }
+    yPos += 20;
 
-    ctx.fillStyle = 'rgba(150, 190, 230, 0.45)';
-    ctx.font = '400 14px Inter, sans-serif';
-    ctx.fillText('Tap or press Space to restart', world.width / 2, statsY + 28);
+    ctx.fillStyle = 'rgba(150, 190, 230, 0.5)';
+    ctx.font = '500 14px Inter, sans-serif';
+    ctx.fillText('Tap or press Space to try again', world.width / 2, yPos + 10);
   }
 }
 
@@ -2606,8 +2787,8 @@ function drawCanvasHUD() {
   ctx.fillText(String(world.score), 20, 36);
 
   /* Atmosphere label */
-  const densityColor = world.densityLabel === 'Buoyant' ? 'rgba(130, 230, 200, 0.7)' :
-                       world.densityLabel === 'Dense' ? 'rgba(180, 180, 255, 0.7)' : 'rgba(255, 140, 140, 0.7)';
+  const densityColor = world.densityLabel === 'Light' ? 'rgba(130, 230, 200, 0.7)' :
+                       world.densityLabel === 'Normal' ? 'rgba(180, 180, 255, 0.7)' : 'rgba(255, 140, 140, 0.7)';
   ctx.font = '500 14px Inter, sans-serif';
   ctx.fillStyle = densityColor;
   ctx.fillText(world.densityLabel, 20, 56);
@@ -2675,31 +2856,31 @@ function drawCanvasHUD() {
   const labelY = (phasing || cooling) ? btnY + btnH / 2 + 1 : btnY + btnH / 2 + 6;
   if (phasing) {
     ctx.fillStyle = 'rgba(130, 255, 240, 0.95)';
-    ctx.fillText(`Phasing ${glider.symbiosisTimer.toFixed(1)}s`, btnX + btnW / 2, labelY);
+    ctx.fillText(`Shield ON ${glider.symbiosisTimer.toFixed(1)}s`, btnX + btnW / 2, labelY);
   } else if (cooling) {
     ctx.fillStyle = 'rgba(160, 200, 230, 0.6)';
-    ctx.fillText(`Cooldown ${Math.ceil(glider.symbiosisCooldown)}s`, btnX + btnW / 2, labelY);
+    ctx.fillText(`Recharging ${Math.ceil(glider.symbiosisCooldown)}s`, btnX + btnW / 2, labelY);
   } else if (ready) {
     ctx.fillStyle = 'rgba(130, 255, 200, 0.9)';
-    ctx.fillText('Symbiosis', btnX + btnW / 2, labelY);
+    ctx.fillText('Shield [Shift]', btnX + btnW / 2, labelY);
   } else {
     ctx.fillStyle = 'rgba(160, 180, 210, 0.4)';
-    ctx.fillText('Charging', btnX + btnW / 2, labelY);
+    ctx.fillText('Recharging', btnX + btnW / 2, labelY);
   }
 
-  /* Symbiosis status — top right */
+  /* Shield status — top right */
   ctx.textAlign = 'right';
   ctx.font = '600 14px Inter, sans-serif';
-  const symLabel = phasing ? `Phasing ${glider.symbiosisTimer.toFixed(1)}s`
-    : cooling ? `Cooldown ${Math.ceil(glider.symbiosisCooldown)}s`
-    : glider.symbiosisCharge >= 1 ? 'Symbiosis Ready' : 'Charging';
+  const symLabel = phasing ? `Shield ON ${glider.symbiosisTimer.toFixed(1)}s`
+    : cooling ? `Recharging ${Math.ceil(glider.symbiosisCooldown)}s`
+    : glider.symbiosisCharge >= 1 ? 'Shield Ready' : 'Recharging';
   const symColor = phasing ? 'rgba(130, 255, 240, 0.8)' :
                    cooling ? 'rgba(160, 200, 230, 0.5)' :
                    glider.symbiosisCharge >= 1 ? 'rgba(130, 255, 200, 0.7)' : 'rgba(180, 200, 230, 0.4)';
   ctx.fillStyle = symColor;
   ctx.fillText(symLabel, world.width - 20, 36);
 
-  /* Combo with multiplier */
+  /* Combo with multiplier + timer bar */
   if (world.combo > 0) {
     const comboAlpha = 0.8 + glider.comboGlow * 0.2;
     const comboColor = world.comboMultiplier >= 3 ? `rgba(255, 220, 100, ${comboAlpha})` :
@@ -2709,10 +2890,27 @@ function drawCanvasHUD() {
     ctx.fillStyle = comboColor;
     ctx.font = '600 16px Inter, sans-serif';
     ctx.fillText(`Combo x${world.combo}`, world.width - 20, 56);
+
+    /* Combo countdown bar — shows how long before combo resets */
+    const comboFrac = Math.max(0, world.comboTimer / 3.5);
+    const cBarW = 80;
+    const cBarH = 3;
+    const cBarX = world.width - 20 - cBarW;
+    const cBarY = 62;
+    ctx.fillStyle = `rgba(180, 200, 230, ${comboAlpha * 0.15})`;
+    ctx.beginPath();
+    ctx.roundRect(cBarX, cBarY, cBarW, cBarH, 1.5);
+    ctx.fill();
+    const urgentColor = comboFrac < 0.3 ? `rgba(255, 120, 80, ${comboAlpha * 0.8})` : comboColor;
+    ctx.fillStyle = urgentColor;
+    ctx.beginPath();
+    ctx.roundRect(cBarX, cBarY, cBarW * comboFrac, cBarH, 1.5);
+    ctx.fill();
+
     if (world.comboMultiplier > 1) {
       ctx.font = '500 13px Inter, sans-serif';
       ctx.fillStyle = `rgba(255, 220, 140, ${comboAlpha * 0.7})`;
-      ctx.fillText(`Score ${getComboLabel()}`, world.width - 20, 72);
+      ctx.fillText(`Score ${getComboLabel()}`, world.width - 20, 78);
     }
   }
 
@@ -2722,7 +2920,7 @@ function drawCanvasHUD() {
     ctx.fillStyle = `rgba(255, 220, 80, ${surfAlpha * 0.8})`;
     ctx.font = '700 14px Inter, sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText('SURF BOOST', 20, 92);
+    ctx.fillText('SPEED BOOST!', 20, 92);
     ctx.textAlign = 'right';
   }
 
@@ -2730,7 +2928,7 @@ function drawCanvasHUD() {
   if (world.pressureAdaptation > 0) {
     ctx.fillStyle = 'rgba(255, 180, 120, 0.5)';
     ctx.font = '500 11px Inter, sans-serif';
-    ctx.fillText('Pressure Adapted', world.width - 20, 88);
+    ctx.fillText('Heavy Air Adapted', world.width - 20, 88);
   }
 
   ctx.restore();
@@ -2813,6 +3011,7 @@ function gameLoop(timestamp) {
   drawWhiteFlash();
   drawAnnouncements(dt);
   drawLore(dt);
+  drawTips(dt);
   drawText(dt);
 
   ctx.restore();
