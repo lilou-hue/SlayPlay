@@ -132,6 +132,8 @@
   let shakeAmount = 0;
   let sparkleTimer = 0;
   let shopOpen = false;
+  let skinsOpen = false;
+  let shopScroll = 0;
 
   /* ────────────────── Restart confirm state ────────────────── */
   let confirmRestart = false;
@@ -141,6 +143,9 @@
   const UNICORN_X = W * 0.48;
   const UNICORN_Y = H * 0.47;
   const UNICORN_RADIUS = 70 + 10; // hitbox
+  const CHAR_X = UNICORN_X;
+  const CHAR_Y = UNICORN_Y;
+  const CHAR_RADIUS = UNICORN_RADIUS;
 
   /* ────────────────── Background stars ────────────────── */
   const stars = Array.from({ length: 80 }, () => ({
@@ -219,8 +224,6 @@
     } catch(e) {}
   }
 
-  let saveTimer = 0;
-
   function resetGame() {
     state = defaultState();
     try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
@@ -230,6 +233,8 @@
     squash = 0;
     shakeAmount = 0;
     shopOpen = false;
+    skinsOpen = false;
+    shopScroll = 0;
     confirmRestart = false;
     sparkleTimer = 0;
     spawnFloatingText(W / 2, H * 0.4, 'Fresh start!');
@@ -501,24 +506,10 @@
     ctx.restore();
   }
 
-  /* ────────────────── Drawing: Unicorn (Chibi) ────────────────── */
-  function drawUnicorn() {
-    const evo = state.evolution;
-    const cx = UNICORN_X;
-    const cy = UNICORN_Y + Math.sin(gameTime * 2) * 6;
-    const OL = '#9e70a8'; // soft outline color
-
-    const sq = squash > 0 ? squash : 0;
-    const scaleX = 1 + sq * 0.15;
-    const scaleY = 1 - sq * 0.12;
-
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.scale(scaleX, scaleY);
-
-    const S = 1 + evo * 0.1; // overall scale per evolution
-
-    // ── Aura (evo 3+) ──
+  /* ────────────────── Evolution pre-effects (aura, throne) ────────────────── */
+  function drawEvoPreEffects(evo, bs) {
+    const S = 1 + evo * 0.1;
+    // Aura (evo 3+)
     if (evo >= 3) {
       const ag = ctx.createRadialGradient(0, -10 * S, 5, 0, -10 * S, 90 * S);
       ag.addColorStop(0, evo >= 4 ? 'rgba(255,215,0,0.15)' : 'rgba(200,160,255,0.15)');
@@ -529,8 +520,7 @@
       ctx.arc(0, -10 * S, 90 * S, 0, Math.PI * 2);
       ctx.fill();
     }
-
-    // ── Fart God cloud throne ──
+    // Fart God cloud throne (evo 4+)
     if (evo >= 4) {
       for (let i = 0; i < 5; i++) {
         const angle = (i / 5) * Math.PI * 2 + gameTime * 0.3;
@@ -586,6 +576,10 @@
       }
     }
   }
+
+  /* ── Skin: Unicorn (Chibi) ── */
+  function drawSkinUnicorn(bs, evo) {
+    const S = 1 + evo * 0.1;
 
     // ── Tail (chunky flowing sections matching mane style) ──
     const tailX = -24 * S, tailY = 6 * S;
@@ -1202,6 +1196,71 @@
         drawStar4(sx, sy, ss, gameTime * 2 + i);
       }
     }
+  }
+
+  /* ── Skin: Tuna ── */
+  function drawSkinTuna(bs, evo) {
+    const S = 1 + evo * 0.1;
+    // Tail fin
+    ctx.fillStyle = evo >= 3 ? '#6a5acd' : '#708090';
+    ctx.beginPath();
+    ctx.moveTo(-30*S, 0);
+    ctx.lineTo(-48*S, -18*S);
+    ctx.lineTo(-48*S, 18*S);
+    ctx.closePath();
+    ctx.fill();
+    // Body
+    const bodyGrad = ctx.createRadialGradient(-4*S, -4*S, 4, 0, 0, 32*S);
+    bodyGrad.addColorStop(0, evo >= 3 ? '#9370db' : '#4682b4');
+    bodyGrad.addColorStop(1, evo >= 3 ? '#483d8b' : '#1e3a5f');
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 32*S, 18*S, 0, 0, Math.PI*2);
+    ctx.fill();
+    // Belly
+    ctx.fillStyle = evo >= 3 ? 'rgba(200,180,255,0.4)' : 'rgba(200,220,240,0.5)';
+    ctx.beginPath();
+    ctx.ellipse(2*S, 6*S, 22*S, 10*S, 0, 0, Math.PI*2);
+    ctx.fill();
+    // Dorsal fin
+    ctx.fillStyle = evo >= 3 ? '#7b68ee' : '#5f8fad';
+    ctx.beginPath();
+    ctx.moveTo(-6*S, -17*S);
+    ctx.quadraticCurveTo(4*S, -38*S, 14*S, -17*S);
+    ctx.closePath();
+    ctx.fill();
+    // Pectoral fin
+    ctx.fillStyle = evo >= 3 ? '#8878ce' : '#5a7f9a';
+    ctx.beginPath();
+    ctx.moveTo(10*S, 6*S);
+    ctx.quadraticCurveTo(22*S, 20*S, 8*S, 18*S);
+    ctx.closePath();
+    ctx.fill();
+    // Eye
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(16*S, -4*S, 5*S, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#222';
+    ctx.beginPath(); ctx.arc(17.5*S, -4*S, 2.8*S, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(18.5*S, -5.5*S, 1.2*S, 0, Math.PI*2); ctx.fill();
+    // Mouth
+    ctx.strokeStyle = evo >= 3 ? '#6a5acd' : '#2c5a7a';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(26*S, 2*S, 5*S, -0.3, 0.5);
+    ctx.stroke();
+  }
+
+  /* ── Skin: Volleyball ── */
+  function drawSkinVolleyball(bs, evo) {
+    // Ball body
+    const ballGrad = ctx.createRadialGradient(-5*bs, -8*bs, 2, 0, 0, 28*bs);
+    ballGrad.addColorStop(0, '#fff');
+    ballGrad.addColorStop(1, '#e8e0d0');
+    ctx.fillStyle = ballGrad;
+    ctx.beginPath(); ctx.arc(0, 0, 26*bs, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#bbb'; ctx.lineWidth = 1.5;
+    ctx.stroke();
     // Face (cute eyes on the ball)
     const ey = -4*bs;
     ctx.fillStyle='#333'; ctx.beginPath(); ctx.arc(-8*bs,ey,3.5*bs,0,Math.PI*2); ctx.fill();
@@ -1509,8 +1568,7 @@
   }
 
   function drawButton(x, y, w, h, r, label, color, active) {
-    ctx.fillStyle = active ? color : color.replace(')', ',0.25)').replace('rgb', 'rgba');
-    if (!active) ctx.fillStyle = hexToRGBA(color, 0.25);
+    ctx.fillStyle = active ? color : hexToRGBA(color, 0.25);
     ctx.beginPath();
     if (ctx.roundRect) ctx.roundRect(x, y, w, h, r);
     else ctx.rect(x, y, w, h);
@@ -1778,7 +1836,7 @@
 
     if (state.spPerSec > 0) {
       sparkleTimer += dt;
-      if (sparkleTimer > 2 + Math.random()) { Audio.sparkle(); sparkleTimer = 0; }
+      if (sparkleTimer > 2 + Math.random()) { SFX.sparkle(); sparkleTimer = 0; }
     }
 
     if (squash > 0) { squash -= dt * 6; if (squash < 0) squash = 0; }
@@ -1834,6 +1892,7 @@
     drawUI();
     ctx.restore();
     drawShop();
+    drawSkinsPanel();
     drawConfirmRestart();
 
     requestAnimationFrame(loop);
@@ -1875,6 +1934,34 @@
       return;
     }
 
+    // Skins panel — handle clicks
+    if (skinsOpen) {
+      // Close X button
+      if (pos.x > p.x+p.w-40 && pos.y > p.y && pos.y < p.y+40) { skinsOpen = false; return; }
+      // Click outside panel
+      if (pos.x < p.x || pos.x > p.x+p.w || pos.y < p.y || pos.y > p.y+p.h) { skinsOpen = false; return; }
+      // Skin rows
+      const startY = p.y + 50, rowH = 80;
+      for (let i = 0; i < SKINS.length; i++) {
+        const ry = startY + i * rowH;
+        if (ry + rowH > p.y + p.h) break;
+        if (pos.y >= ry && pos.y < ry + rowH - 6) {
+          const s = SKINS[i];
+          const unlocked = state.unlockedSkins.includes(s.key);
+          if (unlocked) {
+            state.skin = s.key;
+          } else if (state.sp >= s.cost) {
+            state.sp -= s.cost;
+            state.unlockedSkins.push(s.key);
+            state.skin = s.key;
+            SFX.purchase();
+          }
+          return;
+        }
+      }
+      return;
+    }
+
     // Shop open — handle shop clicks
     if (shopOpen) {
       if (pos.x > p.x+p.w-40 && pos.y > p.y && pos.y < p.y+40) { shopOpen = false; return; }
@@ -1897,7 +1984,7 @@
             if (u.oneTime) state.upgrades[u.key] = true;
             else state.upgrades[u.key]++;
             applyUpgrade(u.key);
-            Audio.purchase();
+            SFX.purchase();
           }
           return;
         }
@@ -1909,14 +1996,6 @@
     const rstX = W - 38, rstY = 12, rstS = 24;
     if (pos.x >= rstX && pos.x <= rstX + rstS && pos.y >= rstY && pos.y <= rstY + rstS) {
       confirmRestart = true;
-      return;
-    }
-
-    // Shop button
-    const btnY = H - 55;
-    const shopBtnX = W * 0.25 - 60, shopBtnW = 120, btnH = 40;
-    if (pos.x >= shopBtnX && pos.x <= shopBtnX + shopBtnW && pos.y >= btnY && pos.y <= btnY + btnH) {
-      shopOpen = true;
       return;
     }
 
@@ -1932,7 +2011,7 @@
       if (canEvolve() && pos.x >= evoX && pos.x <= evoX + btnW) {
         state.sp -= EVOLUTIONS[state.evolution].cost;
         state.evolution++;
-        Audio.evolve();
+        SFX.evolve();
         spawnFartParticles(CHAR_X, CHAR_Y, 30);
         shakeAmount = 1.5;
         spawnFloatingText(W/2, H*0.3, I18N.t(EVOLUTIONS[state.evolution].i18nKey) + '!', '#ffd700');
@@ -1956,7 +2035,7 @@
       state.totalClicks++;
       squash = 1;
       shakeAmount = Math.max(shakeAmount, 0.5);
-      Audio.fart(state.evolution);
+      SFX.fart(state.evolution);
       const sk = currentSkin();
       const count = 5 + Math.floor(Math.random() * 6) + state.evolution * 2;
       spawnFartParticles(CHAR_X + sk.fartDx, CHAR_Y + sk.fartDy, count);

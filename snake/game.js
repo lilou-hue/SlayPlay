@@ -612,13 +612,12 @@ function eatFood(now) {
       playSound(soundWallWarning);
       haptics.wallShrink();
 
-      // Check if snake is now inside wall
+      // Clamp snake segments into new arena bounds
       for (const seg of snake.segments) {
-        if (seg.x < state.arenaMin || seg.x > state.arenaMax ||
-            seg.y < state.arenaMin || seg.y > state.arenaMax) {
-          die();
-          return;
-        }
+        if (seg.x < state.arenaMin) seg.x = state.arenaMin;
+        if (seg.x > state.arenaMax) seg.x = state.arenaMax;
+        if (seg.y < state.arenaMin) seg.y = state.arenaMin;
+        if (seg.y > state.arenaMax) seg.y = state.arenaMax;
       }
     }
   }
