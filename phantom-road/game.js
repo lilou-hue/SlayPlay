@@ -212,7 +212,7 @@ const audio = (() => {
 })();
 
 // ── Constants ────────────────────────────────────────────
-const ROAD_WIDTH = 210;
+const ROAD_WIDTH = 240;
 const CAR_W = 36;
 const CAR_H = 62;
 const LANE_COUNT = 3;
@@ -254,8 +254,8 @@ function initState() {
     currentRoadWidth: ROAD_WIDTH,
 
     // Scrolling
-    scrollSpeed: 180,
-    baseSpeed: 180,
+    scrollSpeed: 160,
+    baseSpeed: 160,
     distance: 0,
 
     // Traffic
@@ -268,7 +268,7 @@ function initState() {
 
     // Road hazards
     hazards: [],
-    hazardTimer: 3,
+    hazardTimer: 6,
 
     // Roadside posts (speed sensation)
     posts: [],
@@ -280,7 +280,7 @@ function initState() {
     nearMissText: "",
 
     // Nitro
-    nitro: 0.3,
+    nitro: 0.5,
     nitroActive: false,
     nitroCooldown: 0,
 
@@ -314,7 +314,7 @@ function initState() {
 
     // Power-ups
     powerUps: [],
-    powerUpTimer: 12,
+    powerUpTimer: 8,
     activeShield: false,
     shieldTimer: 0,
     shieldHits: 0,
@@ -339,7 +339,7 @@ function initState() {
     policeSiren: 0,
     policeChaseTimer: 0,
     policeSurviveTime: 10,
-    nextPoliceAt: 350,
+    nextPoliceAt: 600,
     policeEvaded: 0,
 
     // Streak
@@ -351,7 +351,7 @@ function initState() {
     // Road events
     roadEvent: null,
     roadEventTimer: 0,
-    nextEventAt: 200,
+    nextEventAt: 400,
 
     // Mobile touch
     touchL: false,
@@ -497,6 +497,9 @@ function startGame() {
   initState();
   state.phase = "playing";
   audio.startEngine();
+  // Free starting shield so first mistake doesn't kill you
+  state.activeShield = true;
+  state.shieldTimer = 10;
   // Seed initial roadside posts
   for (let y = 0; y < H; y += 80) {
     state.posts.push({ y, side: -1 });
@@ -728,8 +731,8 @@ function update(dt) {
   // ── Streak display ──
   if (state.streakDisplay > 0) state.streakDisplay -= dt;
 
-  // ── Speed ramp (faster progression) ──
-  state.baseSpeed = 180 + state.distance * 0.08;
+  // ── Speed ramp (gradual) ──
+  state.baseSpeed = 160 + state.distance * 0.05;
   state.scrollSpeed = state.baseSpeed;
 
   // ── Nitro ──
@@ -768,24 +771,24 @@ function update(dt) {
     state.scrollSpeed *= 0.45;
   }
 
-  // ── Road width narrows ──
+  // ── Road width narrows (gently) ──
   let roadNarrowExtra = 0;
   if (state.roadEvent === "narrow") {
-    roadNarrowExtra = 40;
+    roadNarrowExtra = 25;
   }
-  state.currentRoadWidth = Math.max(100, ROAD_WIDTH - state.distance * 0.007 - roadNarrowExtra);
+  state.currentRoadWidth = Math.max(150, ROAD_WIDTH - state.distance * 0.004 - roadNarrowExtra);
   const rw = state.currentRoadWidth;
 
-  // ── Road curving (more aggressive) ──
+  // ── Road curving (gentler early, ramps with distance) ──
   state.segTimer -= dt;
   if (state.segTimer <= 0) {
-    state.segTimer = 1.0 + Math.random() * 1.5;
-    const maxDrift = 70 + Math.min(state.distance * 0.02, 100);
+    state.segTimer = 1.5 + Math.random() * 2.0;
+    const maxDrift = 50 + Math.min(state.distance * 0.015, 80);
     state.roadTargetX = W / 2 + (Math.random() * 2 - 1) * maxDrift;
-    // Keep road on screen
-    state.roadTargetX = Math.max(rw / 2 + 20, Math.min(W - rw / 2 - 20, state.roadTargetX));
+    // Keep road on screen with more margin
+    state.roadTargetX = Math.max(rw / 2 + 30, Math.min(W - rw / 2 - 30, state.roadTargetX));
   }
-  const curveLerp = 1.8 * dt;
+  const curveLerp = 1.4 * dt;
   state.roadCenterX += (state.roadTargetX - state.roadCenterX) * curveLerp;
 
   // ── Input grace period (prevent start-tap from steering) ──
@@ -811,10 +814,10 @@ function update(dt) {
   state.carX = Math.max(CAR_W / 2 + 4, Math.min(W - CAR_W / 2 - 4, state.carX));
   state.steerAngle += (state.steerInput * 0.25 - state.steerAngle) * 8 * dt;
 
-  // ── On-road check ──
+  // ── On-road check (forgiving: 8px buffer so edge feels fair) ──
   const roadLeft = state.roadCenterX - rw / 2;
   const roadRight = state.roadCenterX + rw / 2;
-  const onRoad = state.carX > roadLeft + CAR_W / 2 - 2 && state.carX < roadRight - CAR_W / 2 + 2;
+  const onRoad = state.carX > roadLeft + CAR_W / 2 - 8 && state.carX < roadRight - CAR_W / 2 + 8;
 
   // Edge drifting charges nitro and builds combo
   if (onRoad) {
@@ -894,15 +897,15 @@ function update(dt) {
     if (state.posts[i].y > H + 20) state.posts.splice(i, 1);
   }
 
-  // ── Spawn traffic ──
-  const spawnRate = Math.max(0.25, 1.2 - state.distance * 0.0004);
+  // ── Spawn traffic (gentler ramp) ──
+  const spawnRate = Math.max(0.6, 1.5 - state.distance * 0.0003);
   state.trafficTimer -= dt;
   if (state.trafficTimer <= 0) {
-    state.trafficTimer = spawnRate * (0.4 + Math.random() * 0.6);
+    state.trafficTimer = spawnRate * (0.5 + Math.random() * 0.5);
     spawnTraffic();
-    // Sometimes spawn pairs
-    if (Math.random() < 0.25 && state.distance > 200) {
-      setTimeout(() => { if (state.phase === "playing") spawnTraffic(); }, 200);
+    // Sometimes spawn pairs (only later in the game)
+    if (Math.random() < 0.2 && state.distance > 600) {
+      setTimeout(() => { if (state.phase === "playing") spawnTraffic(); }, 350);
     }
   }
 
@@ -920,10 +923,10 @@ function update(dt) {
     spawnCoinPattern(pattern);
   }
 
-  // ── Spawn hazards ──
+  // ── Spawn hazards (less frequent, ramps slowly) ──
   state.hazardTimer -= dt;
   if (state.hazardTimer <= 0) {
-    state.hazardTimer = 2.5 + Math.random() * 3 - Math.min(state.distance * 0.0005, 1.5);
+    state.hazardTimer = 3.5 + Math.random() * 3 - Math.min(state.distance * 0.0003, 1.0);
     spawnHazard();
   }
 
@@ -951,9 +954,9 @@ function update(dt) {
       state.scrollSpeed *= 1.3;
       state.nitro = Math.min(1, state.nitro + dt * 0.3);
     }
-    // Sandstorm: flicker visibility & buffet
+    // Sandstorm: flicker visibility & gentle buffet
     if (state.roadEvent === "sandstorm") {
-      state.carVelX += (Math.random() - 0.5) * 60 * dt;
+      state.carVelX += (Math.random() - 0.5) * 30 * dt;
       if (Math.random() < 0.3) {
         spawnParticle(
           Math.random() * W, Math.random() * H,
@@ -962,8 +965,8 @@ function update(dt) {
         );
       }
     }
-    // Rockfall: random obstacles from top
-    if (state.roadEvent === "rockfall" && Math.random() < dt * 2) {
+    // Rockfall: random obstacles from top (less frequent)
+    if (state.roadEvent === "rockfall" && Math.random() < dt * 1) {
       const rx = state.roadCenterX - rw / 2 + 20 + Math.random() * (rw - 40);
       state.hazards.push({ x: rx, y: -30, type: "rock", w: 22, h: 22 });
     }
@@ -980,18 +983,18 @@ function update(dt) {
   if (state.policeActive) {
     state.policeChaseTimer -= dt;
     state.policeSiren += dt * 8;
-    // Police approaches player
-    const targetY = state.carY + 100;
-    state.policeY += (targetY - state.policeY) * 1.5 * dt;
-    state.policeX += (state.carX - state.policeX) * 0.8 * dt;
+    // Police approaches player (slowly, giving you time to react)
+    const targetY = state.carY + 120;
+    state.policeY += (targetY - state.policeY) * 0.8 * dt;
+    state.policeX += (state.carX - state.policeX) * 0.5 * dt;
     // Siren sound periodically
     if (Math.floor(state.policeSiren) % 3 === 0 && state.policeSiren - Math.floor(state.policeSiren) < dt * 8) {
       audio.policeSiren();
     }
-    // Collision with police
+    // Collision with police (forgiving hitbox)
     const pdx = Math.abs(state.policeX - state.carX);
     const pdy = Math.abs(state.policeY - state.carY);
-    if (pdx < (CAR_W + 28) / 2 && pdy < (CAR_H + 50) / 2) {
+    if (pdx < (CAR_W + 22) / 2 * 0.65 && pdy < (CAR_H + 44) / 2 * 0.65) {
       if (state.activeShield) {
         state.activeShield = false;
         state.shieldTimer = 0;
@@ -1024,10 +1027,10 @@ function update(dt) {
     const t = state.traffic[i];
     t.y += (t.speed + state.scrollSpeed) * dt;
 
-    // Collision + near-miss detection
-    if (!t.nearMissChecked && t.y + t.h / 2 > state.carY - CAR_H / 2 && t.y - t.h / 2 < state.carY + CAR_H / 2) {
+    // Collision + near-miss detection (hitbox is 70% of visual for fairness)
+    if (!t.nearMissChecked && t.y + t.h / 2 - 6 > state.carY - CAR_H / 2 && t.y - t.h / 2 + 6 < state.carY + CAR_H / 2) {
       const dist = Math.abs(t.x - state.carX);
-      const hitDist = (CAR_W + t.w) / 2;
+      const hitDist = (CAR_W + t.w) / 2 * 0.7;
       if (dist < hitDist) {
         if (state.activeShield) {
           state.activeShield = false;
@@ -1052,8 +1055,8 @@ function update(dt) {
           return;
         }
       }
-      // Near-miss: generous window
-      if (dist < hitDist + 28 && !t.nearMissChecked) {
+      // Near-miss: generous window (wider since hitbox is smaller)
+      if (dist < hitDist + 35 && !t.nearMissChecked) {
         t.nearMissChecked = true;
         t.passed = true;
         state.nearMissCombo++;
@@ -1150,14 +1153,14 @@ function update(dt) {
   for (let i = state.hazards.length - 1; i >= 0; i--) {
     const hz = state.hazards[i];
     hz.y += state.scrollSpeed * dt;
-    // Rock type falls faster
-    if (hz.type === "rock") hz.y += 120 * dt;
-    // Collision
+    // Rock type falls a bit faster
+    if (hz.type === "rock") hz.y += 60 * dt;
+    // Collision (forgiving: 60% of visual hitbox)
     const dx = Math.abs(hz.x - state.carX);
     const dy = Math.abs(hz.y - state.carY);
-    if (dx < (CAR_W + hz.w) / 2 - 4 && dy < (CAR_H + hz.h) / 2 - 4) {
+    if (dx < (CAR_W + hz.w) / 2 * 0.6 && dy < (CAR_H + hz.h) / 2 * 0.6) {
       if (hz.type === "oil") {
-        state.carVelX += (Math.random() - 0.5) * 400;
+        state.carVelX += (Math.random() - 0.5) * 200;
         state.shakeTime = 0.15;
         state.shakeIntensity = 5;
         haptic(25);
@@ -1328,11 +1331,11 @@ function draw() {
   }
   ctx.globalAlpha = 1;
 
-  // ── Road edges (glow) ──
+  // ── Road edges (brighter glow so player can see boundaries) ──
   ctx.strokeStyle = zoneBlend.lineColor;
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = 3.5;
   ctx.shadowColor = zoneBlend.lineColor;
-  ctx.shadowBlur = 14;
+  ctx.shadowBlur = 20;
   ctx.beginPath();
   ctx.moveTo(rcx - rw / 2, 0); ctx.lineTo(rcx - rw / 2, H);
   ctx.stroke();
@@ -1405,28 +1408,60 @@ function draw() {
     ctx.stroke();
   }
 
-  // ── Hazards ──
+  // ── Hazards (all have warning glow so they're visible in the dark) ──
   for (const hz of state.hazards) {
     if (hz.type === "cone") {
-      ctx.fillStyle = "#ff6622";
+      // Warning glow
+      ctx.fillStyle = "rgba(255,100,0,0.15)";
+      ctx.shadowColor = "#ff6622";
+      ctx.shadowBlur = 18;
       ctx.beginPath();
-      ctx.moveTo(hz.x, hz.y - 10);
-      ctx.lineTo(hz.x - 7, hz.y + 8);
-      ctx.lineTo(hz.x + 7, hz.y + 8);
+      ctx.arc(hz.x, hz.y, 14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      // Cone body
+      ctx.fillStyle = "#ff8833";
+      ctx.beginPath();
+      ctx.moveTo(hz.x, hz.y - 12);
+      ctx.lineTo(hz.x - 8, hz.y + 9);
+      ctx.lineTo(hz.x + 8, hz.y + 9);
       ctx.closePath();
       ctx.fill();
       ctx.fillStyle = "#fff";
-      ctx.fillRect(hz.x - 5, hz.y - 2, 10, 3);
+      ctx.fillRect(hz.x - 6, hz.y - 2, 12, 3);
     } else if (hz.type === "pothole") {
-      ctx.fillStyle = "rgba(0,0,0,0.5)";
+      // Warning glow ring
+      ctx.strokeStyle = "rgba(255,200,80,0.35)";
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = "#ffcc44";
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.ellipse(hz.x, hz.y, 14, 10, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      // Pothole
+      ctx.fillStyle = "rgba(0,0,0,0.6)";
       ctx.beginPath();
       ctx.ellipse(hz.x, hz.y, 12, 8, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = "rgba(80,80,80,0.5)";
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
+      // Danger marking
+      ctx.fillStyle = "rgba(255,180,50,0.5)";
+      ctx.font = "bold 12px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("!", hz.x, hz.y);
+      ctx.textBaseline = "alphabetic";
     } else if (hz.type === "rock") {
-      ctx.fillStyle = "#665544";
+      // Warning glow
+      ctx.fillStyle = "rgba(200,150,80,0.12)";
+      ctx.shadowColor = "#aa8855";
+      ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.arc(hz.x, hz.y, 16, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      // Rock body (brighter)
+      ctx.fillStyle = "#998866";
       ctx.beginPath();
       ctx.moveTo(hz.x, hz.y - 12);
       ctx.lineTo(hz.x - 10, hz.y - 3);
@@ -1435,22 +1470,31 @@ function draw() {
       ctx.lineTo(hz.x + 11, hz.y - 5);
       ctx.closePath();
       ctx.fill();
-      ctx.fillStyle = "rgba(100,85,70,0.5)";
+      ctx.fillStyle = "rgba(180,160,120,0.4)";
       ctx.beginPath();
       ctx.moveTo(hz.x - 2, hz.y - 10);
       ctx.lineTo(hz.x + 8, hz.y - 3);
       ctx.lineTo(hz.x + 2, hz.y + 5);
       ctx.fill();
     } else if (hz.type === "oil") {
-      ctx.fillStyle = "rgba(40,20,60,0.5)";
+      // Warning shimmer
+      ctx.fillStyle = "rgba(150,80,255,0.12)";
+      ctx.shadowColor = "#aa44ff";
+      ctx.shadowBlur = 16;
+      ctx.beginPath();
+      ctx.ellipse(hz.x, hz.y, 20, 14, 0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      // Oil slick
+      ctx.fillStyle = "rgba(60,30,90,0.6)";
       ctx.beginPath();
       ctx.ellipse(hz.x, hz.y, 16, 10, 0.3, 0, Math.PI * 2);
       ctx.fill();
-      // Rainbow sheen
-      const oilGrad = ctx.createLinearGradient(hz.x - 12, hz.y, hz.x + 12, hz.y);
-      oilGrad.addColorStop(0, "rgba(100,0,200,0.15)");
-      oilGrad.addColorStop(0.5, "rgba(0,200,100,0.15)");
-      oilGrad.addColorStop(1, "rgba(200,100,0,0.15)");
+      // Rainbow sheen (brighter)
+      const oilGrad = ctx.createLinearGradient(hz.x - 14, hz.y, hz.x + 14, hz.y);
+      oilGrad.addColorStop(0, "rgba(150,50,255,0.3)");
+      oilGrad.addColorStop(0.5, "rgba(50,255,150,0.3)");
+      oilGrad.addColorStop(1, "rgba(255,150,50,0.3)");
       ctx.fillStyle = oilGrad;
       ctx.fill();
     }
@@ -1905,8 +1949,8 @@ function drawTrafficCar(t) {
 function drawHeadlights() {
   ctx.save();
 
-  // Darkness layer (heavier during sandstorm)
-  const darkOpacity = state.roadEvent === "sandstorm" ? 0.82 : 0.72;
+  // Darkness layer (slightly lighter for playability, heavier during sandstorm)
+  const darkOpacity = state.roadEvent === "sandstorm" ? 0.78 : 0.65;
   ctx.fillStyle = `rgba(0,0,0,${darkOpacity})`;
   ctx.fillRect(0, 0, W, H);
 
@@ -1916,37 +1960,37 @@ function drawHeadlights() {
   // Cone follows steering slightly
   const coneOffsetX = state.steerAngle * 40;
 
-  // Main headlight cone
+  // Main headlight cone (wider for better visibility)
   const coneGrad = ctx.createRadialGradient(
     state.carX + coneOffsetX * 0.3, state.carY - 60,
-    15,
+    20,
     state.carX + coneOffsetX, state.carY - 220,
-    240
+    280
   );
   coneGrad.addColorStop(0, "rgba(255,255,255,0.98)");
-  coneGrad.addColorStop(0.35, "rgba(255,255,255,0.75)");
-  coneGrad.addColorStop(0.65, "rgba(255,255,255,0.35)");
+  coneGrad.addColorStop(0.3, "rgba(255,255,255,0.8)");
+  coneGrad.addColorStop(0.6, "rgba(255,255,255,0.4)");
   coneGrad.addColorStop(1, "rgba(255,255,255,0)");
 
   ctx.fillStyle = coneGrad;
   ctx.beginPath();
-  ctx.moveTo(state.carX - 16, state.carY - CAR_H / 2);
-  ctx.lineTo(state.carX - 160 + coneOffsetX, -30);
-  ctx.lineTo(state.carX + 160 + coneOffsetX, -30);
+  ctx.moveTo(state.carX - 20, state.carY - CAR_H / 2);
+  ctx.lineTo(state.carX - 190 + coneOffsetX, -30);
+  ctx.lineTo(state.carX + 190 + coneOffsetX, -30);
   ctx.lineTo(state.carX + 16, state.carY - CAR_H / 2);
   ctx.fill();
 
-  // Glow around car position (so the road near car is visible)
+  // Glow around car position (wider so you can see edges better)
   const carGlow = ctx.createRadialGradient(
-    state.carX, state.carY, 20,
-    state.carX, state.carY, 110
+    state.carX, state.carY, 25,
+    state.carX, state.carY, 140
   );
-  carGlow.addColorStop(0, "rgba(255,255,255,0.9)");
-  carGlow.addColorStop(0.35, "rgba(255,255,255,0.5)");
-  carGlow.addColorStop(0.7, "rgba(255,255,255,0.15)");
+  carGlow.addColorStop(0, "rgba(255,255,255,0.95)");
+  carGlow.addColorStop(0.3, "rgba(255,255,255,0.6)");
+  carGlow.addColorStop(0.6, "rgba(255,255,255,0.2)");
   carGlow.addColorStop(1, "rgba(255,255,255,0)");
   ctx.fillStyle = carGlow;
-  ctx.fillRect(state.carX - 110, state.carY - 110, 220, 220);
+  ctx.fillRect(state.carX - 140, state.carY - 140, 280, 280);
 
   // Rear tail-light glow (see behind a little)
   const rearGlow = ctx.createRadialGradient(
