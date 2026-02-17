@@ -893,7 +893,7 @@ const update = (deltaSeconds) => {
   bird.trail.push({ x: bird.x, y: bird.y });
   if (bird.trail.length > 8) bird.trail.shift();
 
-  if (bird.y + bird.radius >= canvas.height || bird.y - bird.radius <= 0) {
+  if (bird.y + bird.radius >= canvas.height - 90 || bird.y - bird.radius <= 0) {
     gameState.isGameOver = true;
     gameState.shakeTimer = 12;
     gameState.shakeIntensity = 6;

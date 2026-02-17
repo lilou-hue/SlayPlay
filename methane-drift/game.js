@@ -106,7 +106,7 @@ I18N.createSelector(document.querySelector('.hud-panel'));
 I18N.applyDOM();
 
 /* Density key → i18n key mapping */
-const DENSITY_I18N = { Buoyant: 'buoyant', Dense: 'dense', Crushing: 'crushing' };
+const DENSITY_I18N = { Light: 'buoyant', Normal: 'dense', Heavy: 'crushing' };
 
 /* Zone name i18n keys */
 const ZONE_I18N = ['upperAtmosphere', 'midTurbulence', 'pressureLayer', 'coreProximity', 'unstableCore'];
@@ -175,6 +175,7 @@ const defaultProgress = {
   selectedTrailColor: null,
   unlockedSkins: ['default'],
   bestGhostTrail: [],
+  noSymbiosisRecord: 0,
 };
 
 let progress = { ...defaultProgress };
@@ -1285,6 +1286,7 @@ function update(dt, rawDt) {
         const pullForce = CONFIG.stormPullStrength * (1 - sDist / CONFIG.stormPullRadius) * dt;
         glider.vy += (sdy / sDist) * pullForce;
         if (Audio.stormPull && sDist < CONFIG.stormPullRadius * 0.7) {
+          Audio.stormPull();
           /* Visual indicator of pull */
           if (Math.random() < 0.3) {
             spawnParticle(glider.x, glider.y, sdx * 0.5, sdy * 0.5, 0.3, 220, 1.5);
