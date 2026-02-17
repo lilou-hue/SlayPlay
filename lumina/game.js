@@ -782,6 +782,8 @@
       return;
     }
 
+    if (state === STATE.GAMEOVER) return;
+
     // ─ Time dilation recovery ─
     timeDilation = Math.min(1, timeDilation + dt * 3);
     const adt = dt * timeDilation;
