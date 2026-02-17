@@ -727,25 +727,46 @@
     ctx.closePath();
     ctx.fill();
 
-    // ── Mane (fluffy filled volumes) ──
-    for (let i = 0; i < 7; i++) {
-      const hue = (i * 45 + gameTime * 50) % 360;
-      const mx = -8 * S + i * 3 * S;
-      const my = headY - headR * 0.7 - Math.sin(gameTime * 2.5 + i * 0.8) * 4;
-      const mr = (7 - i * 0.3) * S;
-      // Filled puff
-      ctx.fillStyle = `hsl(${hue}, 78%, 58%)`;
+    // ── Mane (flowing pastel locks draped over head) ──
+    const maneColors = [
+      {h: 350, s: 70, l: 75}, // pink
+      {h: 20,  s: 80, l: 75}, // peach
+      {h: 50,  s: 75, l: 72}, // gold
+      {h: 140, s: 55, l: 70}, // mint
+      {h: 210, s: 65, l: 75}, // sky
+      {h: 270, s: 60, l: 78}, // lavender
+    ];
+    // Draw locks from back to front, each a soft tapered shape
+    for (let i = maneColors.length - 1; i >= 0; i--) {
+      const mc = maneColors[i];
+      const wave = Math.sin(gameTime * 2 + i * 0.9) * 3;
+      const lockX = -headR * 0.55 - 2 * S + i * 2.5 * S;
+      const lockTopY = headY - headR * 0.65 + i * 1.5 * S;
+      const lockBotY = headY + headR * 0.3 + i * 5 * S + wave;
+      const lockW = (6.5 - i * 0.3) * S;
+
+      // Lock body (tapered rounded shape)
+      ctx.fillStyle = `hsl(${mc.h}, ${mc.s}%, ${mc.l}%)`;
       ctx.beginPath();
-      ctx.arc(mx - 6, my + i * 4 * S, mr, 0, Math.PI * 2);
+      ctx.moveTo(lockX - lockW * 0.4, lockTopY);
+      ctx.quadraticCurveTo(lockX - lockW * 0.7, (lockTopY + lockBotY) * 0.5 + wave, lockX - lockW * 0.2 + wave * 0.5, lockBotY);
+      ctx.quadraticCurveTo(lockX + lockW * 0.3, lockBotY - 2, lockX + lockW * 0.5 + wave * 0.3, lockBotY - 4);
+      ctx.quadraticCurveTo(lockX + lockW * 0.8, (lockTopY + lockBotY) * 0.5 - wave * 0.5, lockX + lockW * 0.5, lockTopY);
+      ctx.closePath();
       ctx.fill();
-      // Outline
-      ctx.strokeStyle = `hsl(${hue}, 55%, 38%)`;
-      ctx.lineWidth = 1.5;
+
+      // Soft outline
+      ctx.strokeStyle = `hsl(${mc.h}, ${mc.s - 15}%, ${mc.l - 20}%)`;
+      ctx.lineWidth = 1.2;
       ctx.stroke();
-      // Highlight
-      ctx.fillStyle = `hsla(${hue}, 90%, 80%, 0.5)`;
+
+      // Inner highlight streak
+      ctx.fillStyle = `hsla(${mc.h}, ${mc.s + 10}%, ${mc.l + 12}%, 0.5)`;
       ctx.beginPath();
-      ctx.arc(mx - 6 - mr * 0.2, my + i * 4 * S - mr * 0.3, mr * 0.35, 0, Math.PI * 2);
+      ctx.moveTo(lockX, lockTopY + 3);
+      ctx.quadraticCurveTo(lockX - lockW * 0.15, (lockTopY + lockBotY) * 0.45 + wave * 0.5, lockX + wave * 0.3, lockBotY - 6);
+      ctx.quadraticCurveTo(lockX + lockW * 0.2, (lockTopY + lockBotY) * 0.45, lockX + lockW * 0.15, lockTopY + 3);
+      ctx.closePath();
       ctx.fill();
     }
 
