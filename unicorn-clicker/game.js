@@ -126,6 +126,8 @@
   let shakeAmount = 0;
   let sparkleTimer = 0;
   let shopOpen = false;
+  let skinsOpen = false;
+  let shopScroll = 0;
 
   /* ────────────────── Restart confirm state ────────────────── */
   let confirmRestart = false;
@@ -215,8 +217,6 @@
       }
     } catch(e) {}
   }
-
-  let saveTimer = 0;
 
   function resetGame() {
     state = defaultState();
@@ -498,24 +498,10 @@
     ctx.restore();
   }
 
-  /* ────────────────── Drawing: Unicorn (Chibi) ────────────────── */
-  function drawUnicorn() {
-    const evo = state.evolution;
-    const cx = UNICORN_X;
-    const cy = UNICORN_Y + Math.sin(gameTime * 2) * 6;
-    const OL = '#9e70a8'; // soft outline color
-
-    const sq = squash > 0 ? squash : 0;
-    const scaleX = 1 + sq * 0.15;
-    const scaleY = 1 - sq * 0.12;
-
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.scale(scaleX, scaleY);
-
-    const S = 1 + evo * 0.1; // overall scale per evolution
-
-    // ── Aura (evo 3+) ──
+  /* ────────────────── Evolution pre-effects (aura, throne) ────────────────── */
+  function drawEvoPreEffects(evo, bs) {
+    const S = 1 + evo * 0.1;
+    // Aura (evo 3+)
     if (evo >= 3) {
       const ag = ctx.createRadialGradient(0, -10 * S, 5, 0, -10 * S, 90 * S);
       ag.addColorStop(0, evo >= 4 ? 'rgba(255,215,0,0.15)' : 'rgba(200,160,255,0.15)');
@@ -526,8 +512,7 @@
       ctx.arc(0, -10 * S, 90 * S, 0, Math.PI * 2);
       ctx.fill();
     }
-
-    // ── Fart God cloud throne ──
+    // Fart God cloud throne (evo 4+)
     if (evo >= 4) {
       for (let i = 0; i < 5; i++) {
         const angle = (i / 5) * Math.PI * 2 + gameTime * 0.3;
@@ -583,6 +568,10 @@
       }
     }
   }
+
+  /* ── Skin: Unicorn (Chibi) ── */
+  function drawSkinUnicorn(bs, evo) {
+    const S = 1 + evo * 0.1;
 
     // ── Tail (chunky flowing sections matching mane style) ──
     const tailX = -24 * S, tailY = 6 * S;
@@ -1199,6 +1188,24 @@
         drawStar4(sx, sy, ss, gameTime * 2 + i);
       }
     }
+  }
+
+  /* ── Skin: Tuna ── */
+  function drawSkinTuna(bs, evo) {
+    // Placeholder — tuna skin not yet implemented, fall back to unicorn
+    drawSkinUnicorn(bs, evo);
+  }
+
+  /* ── Skin: Volleyball ── */
+  function drawSkinVolleyball(bs, evo) {
+    // Ball body
+    const ballGrad = ctx.createRadialGradient(-5*bs, -8*bs, 2, 0, 0, 28*bs);
+    ballGrad.addColorStop(0, '#fff');
+    ballGrad.addColorStop(1, '#e8e0d0');
+    ctx.fillStyle = ballGrad;
+    ctx.beginPath(); ctx.arc(0, 0, 26*bs, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#bbb'; ctx.lineWidth = 1.5;
+    ctx.stroke();
     // Face (cute eyes on the ball)
     const ey = -4*bs;
     ctx.fillStyle='#333'; ctx.beginPath(); ctx.arc(-8*bs,ey,3.5*bs,0,Math.PI*2); ctx.fill();
@@ -1831,6 +1838,7 @@
     drawUI();
     ctx.restore();
     drawShop();
+    drawSkinsPanel();
     drawConfirmRestart();
 
     requestAnimationFrame(loop);
@@ -1906,14 +1914,6 @@
     const rstX = W - 38, rstY = 12, rstS = 24;
     if (pos.x >= rstX && pos.x <= rstX + rstS && pos.y >= rstY && pos.y <= rstY + rstS) {
       confirmRestart = true;
-      return;
-    }
-
-    // Shop button
-    const btnY = H - 55;
-    const shopBtnX = W * 0.25 - 60, shopBtnW = 120, btnH = 40;
-    if (pos.x >= shopBtnX && pos.x <= shopBtnX + shopBtnW && pos.y >= btnY && pos.y <= btnY + btnH) {
-      shopOpen = true;
       return;
     }
 
