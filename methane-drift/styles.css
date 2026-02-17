@@ -244,6 +244,38 @@ body {
   background: #000;
 }
 
+.lang-switcher {
+  margin-bottom: 0.5rem;
+}
+
+.lang-switcher select {
+  background: rgba(3, 8, 20, 0.5);
+  border: 1px solid rgba(160, 210, 245, 0.2);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  padding: 0.35rem 0.7rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.3s ease, color 0.3s ease;
+}
+
+.lang-switcher select:hover {
+  border-color: rgba(160, 210, 245, 0.4);
+  color: var(--text-primary);
+}
+
+.lang-switcher select:focus-visible {
+  outline: 2px solid rgba(160, 240, 255, 0.8);
+  outline-offset: 2px;
+}
+
+.lang-switcher select option {
+  background: var(--bg-mid);
+  color: var(--text-primary);
+}
+
 @media (max-width: 980px) {
   .layout {
     grid-template-columns: 1fr;

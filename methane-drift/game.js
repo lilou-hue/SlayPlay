@@ -53,6 +53,44 @@ const bestNode = document.getElementById('best');
 const muteBtn = document.getElementById('muteBtn');
 const comboNode = document.getElementById('combo');
 
+/* --- i18n setup --- */
+const _t = (key) => I18N.t(key);
+I18N.createSelector(document.querySelector('.hud-panel'));
+I18N.applyDOM();
+
+/* Density key → i18n key mapping */
+const DENSITY_I18N = { Buoyant: 'buoyant', Dense: 'dense', Crushing: 'crushing' };
+
+/* Zone name i18n keys */
+const ZONE_I18N = ['upperAtmosphere', 'midTurbulence', 'pressureLayer', 'coreProximity', 'unstableCore'];
+
+/* Achievement i18n key mapping */
+const ACH_I18N = {
+  first_drift: { name: 'achFirstDrift', desc: 'achFirstDriftDesc' },
+  deep_diver: { name: 'achDeepDiver', desc: 'achDeepDiverDesc' },
+  pressure_veteran: { name: 'achPressureVet', desc: 'achPressureVetDesc' },
+  core_runner: { name: 'achCoreRunner', desc: 'achCoreRunnerDesc' },
+  symbiont: { name: 'achSymbiont', desc: 'achSymbiontDesc' },
+  untouchable: { name: 'achUntouchable', desc: 'achUntouchableDesc' },
+  density_master: { name: 'achDensityMaster', desc: 'achDensityMasterDesc' },
+  near_miss_expert: { name: 'achNearMissExpert', desc: 'achNearMissExpertDesc' },
+};
+
+window.addEventListener('langchange', () => {
+  I18N.applyDOM();
+  /* Re-translate mute button based on current state */
+  if (muteBtn) {
+    const isMuted = muteBtn.textContent.includes('OFF') || muteBtn.textContent.includes('꺼') || muteBtn.textContent.includes('オフ') || muteBtn.textContent.includes('关') || muteBtn.textContent.includes('AV') || muteBtn.textContent.includes('KAPALI');
+    muteBtn.textContent = isMuted ? _t('soundOff') : _t('soundOn');
+  }
+  /* Re-translate density label in sidebar */
+  if (densityNode) densityNode.textContent = _t(DENSITY_I18N[world.densityLabel] || 'buoyant');
+  /* Re-translate symbiosis status in sidebar */
+  if (symbiosisNode) {
+    symbiosisNode.textContent = glider.symbiosisTimer > 0 ? _t('phasing') : glider.symbiosisCharge >= 1 ? _t('ready') : _t('charging');
+  }
+});
+
 /* --- Accessibility: reduced motion --- */
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -538,7 +576,7 @@ function updateAtmosphere(dt) {
     }
     if (prevLabel !== world.densityLabel) {
       world.ambientFlash = 0.25;
-      world.atmosphereAnnounce = { text: world.densityLabel.toUpperCase(), timer: 1.5 };
+      world.atmosphereAnnounce = { densityKey: world.densityLabel, timer: 1.5 };
       Audio.atmosphereShift(world.densityLabel);
       Audio.updateDrone(world.density);
     }
@@ -572,7 +610,7 @@ function updateZone() {
     world.prevZone = world.zone;
     world.zone = newZone;
     world.zoneTransition = 1.0;
-    world.zoneAnnounce = { text: `Zone ${newZone}: ${CONFIG.zoneColors[newZone - 1].name}`, timer: 2.5 };
+    world.zoneAnnounce = { zoneNum: newZone, timer: 2.5 };
     Audio.zoneChange();
   }
 }
@@ -714,8 +752,8 @@ function update(dt, rawDt) {
 
   /* HUD */
   scoreNode.textContent = String(world.score);
-  densityNode.textContent = world.densityLabel;
-  symbiosisNode.textContent = glider.symbiosisTimer > 0 ? 'Phasing' : glider.symbiosisCharge >= 1 ? 'Ready' : 'Charging';
+  densityNode.textContent = _t(DENSITY_I18N[world.densityLabel] || 'buoyant');
+  symbiosisNode.textContent = glider.symbiosisTimer > 0 ? _t('phasing') : glider.symbiosisCharge >= 1 ? _t('ready') : _t('charging');
 }
 
 function updateParticles(dt) {
@@ -1097,12 +1135,12 @@ function drawAnnouncements(dt) {
   if (world.atmosphereAnnounce && world.atmosphereAnnounce.timer > 0) {
     const a = world.atmosphereAnnounce;
     const alpha = Math.min(1, a.timer) * 0.7;
-    const densityColor = world.densityLabel === 'Buoyant' ? '130, 230, 200' :
-                         world.densityLabel === 'Dense' ? '180, 180, 255' : '255, 140, 140';
+    const densityColor = a.densityKey === 'Buoyant' ? '130, 230, 200' :
+                         a.densityKey === 'Dense' ? '180, 180, 255' : '255, 140, 140';
     ctx.fillStyle = `rgba(${densityColor}, ${alpha})`;
     ctx.font = '600 26px Inter, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(a.text, world.width / 2, world.height * 0.28);
+    ctx.fillText(_t(DENSITY_I18N[a.densityKey] || 'buoyant').toUpperCase(), world.width / 2, world.height * 0.28);
     a.timer -= dt;
   }
 
@@ -1113,7 +1151,8 @@ function drawAnnouncements(dt) {
     ctx.fillStyle = `rgba(220, 240, 255, ${alpha})`;
     ctx.font = '600 22px Inter, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(z.text, world.width / 2, world.height * 0.20);
+    const zoneName = _t(ZONE_I18N[z.zoneNum - 1] || 'upperAtmosphere');
+    ctx.fillText(`${_t('zone')} ${z.zoneNum}: ${zoneName}`, world.width / 2, world.height * 0.20);
     z.timer -= dt;
   }
 
@@ -1130,7 +1169,9 @@ function drawAnnouncements(dt) {
       ctx.fillStyle = `rgba(180, 255, 230, ${alpha})`;
       ctx.font = '500 14px Inter, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(`Achievement: ${ach.name}`, world.width / 2, yOff + 4);
+      const achI18n = ACH_I18N[ach.id];
+      const achName = achI18n ? _t(achI18n.name) : ach.name;
+      ctx.fillText(`${_t('achievement')}: ${achName}`, world.width / 2, yOff + 4);
       yOff += 38;
     }
     toast.timer -= dt;
@@ -1149,29 +1190,26 @@ function drawText(dt) {
     if (!tutorialDone) {
       /* Tutorial panels */
       ctx.font = '600 30px Inter, sans-serif';
-      const msgs = [
-        ['Pulse Upward', 'Tap Space or Click to pulse the glider upward'],
-        ['Avoid Hazards', 'Navigate through spires, schools, geysers, and storms'],
-        ['Symbiosis', 'Press Shift when charged to phase through obstacles'],
-      ];
+      const tutTitles = [_t('tutPulseTitle'), _t('tutAvoidTitle'), _t('tutSymbTitle')];
+      const tutDescs = [_t('tutPulseDesc'), _t('tutAvoidDesc'), _t('tutSymbDesc')];
       const step = Math.min(tutorialStep, 2);
-      ctx.fillText(msgs[step][0], world.width / 2, world.height / 2 - 20 + float);
+      ctx.fillText(tutTitles[step], world.width / 2, world.height / 2 - 20 + float);
       ctx.fillStyle = 'rgba(180, 210, 255, 0.7)';
       ctx.font = '500 17px Inter, sans-serif';
-      ctx.fillText(msgs[step][1], world.width / 2, world.height / 2 + 16 + float);
+      ctx.fillText(tutDescs[step], world.width / 2, world.height / 2 + 16 + float);
       ctx.font = '400 14px Inter, sans-serif';
       ctx.fillStyle = 'rgba(160, 200, 240, 0.5)';
-      ctx.fillText(`(${step + 1}/3) Tap to continue`, world.width / 2, world.height / 2 + 48 + float);
+      ctx.fillText(`(${step + 1}/3) ${_t('tutTapContinue')}`, world.width / 2, world.height / 2 + 48 + float);
     } else {
       ctx.font = '600 42px Inter, sans-serif';
-      ctx.fillText('METHANE DRIFT', world.width / 2, world.height / 2 - 24 + float);
+      ctx.fillText(_t('methaneDriftLogo'), world.width / 2, world.height / 2 - 24 + float);
       ctx.fillStyle = 'rgba(180, 210, 255, 0.7)';
       ctx.font = '500 18px Inter, sans-serif';
-      ctx.fillText('Space / Click to Begin', world.width / 2, world.height / 2 + 14 + float);
+      ctx.fillText(_t('spaceClickBegin'), world.width / 2, world.height / 2 + 14 + float);
       if (world.best > 0) {
         ctx.font = '500 15px Inter, sans-serif';
         ctx.fillStyle = 'rgba(160, 200, 240, 0.5)';
-        ctx.fillText(`Best: ${world.best}`, world.width / 2, world.height / 2 + 42 + float);
+        ctx.fillText(`${_t('best')}: ${world.best}`, world.width / 2, world.height / 2 + 42 + float);
       }
     }
   }
@@ -1181,10 +1219,10 @@ function drawText(dt) {
     ctx.fillStyle = '#d8eaff';
     ctx.textAlign = 'center';
     ctx.font = '600 34px Inter, sans-serif';
-    ctx.fillText('Paused', world.width / 2, world.height / 2 - 10);
+    ctx.fillText(_t('paused'), world.width / 2, world.height / 2 - 10);
     ctx.fillStyle = 'rgba(180, 210, 255, 0.7)';
     ctx.font = '500 17px Inter, sans-serif';
-    ctx.fillText('Press Escape to resume', world.width / 2, world.height / 2 + 24);
+    ctx.fillText(_t('pressEscResume'), world.width / 2, world.height / 2 + 24);
   }
 
   if (world.state === STATE.GAMEOVER) {
@@ -1192,19 +1230,19 @@ function drawText(dt) {
     ctx.fillStyle = '#d8eaff';
     ctx.textAlign = 'center';
     ctx.font = '600 38px Inter, sans-serif';
-    ctx.fillText('Signal Lost', world.width / 2, world.height / 2 - 40);
+    ctx.fillText(_t('signalLost'), world.width / 2, world.height / 2 - 40);
 
     ctx.fillStyle = 'rgba(180, 210, 255, 0.7)';
     ctx.font = '500 20px Inter, sans-serif';
-    ctx.fillText(`Distance: ${world.score}`, world.width / 2, world.height / 2);
+    ctx.fillText(`${_t('distance')}: ${world.score}`, world.width / 2, world.height / 2);
 
     ctx.font = '500 16px Inter, sans-serif';
-    ctx.fillText(`Best: ${world.best}`, world.width / 2, world.height / 2 + 28);
+    ctx.fillText(`${_t('best')}: ${world.best}`, world.width / 2, world.height / 2 + 28);
 
     if (world.score === world.best && world.score > 0) {
       ctx.fillStyle = 'rgba(255, 220, 120, 0.9)';
       ctx.font = '700 16px Inter, sans-serif';
-      ctx.fillText('NEW RECORD', world.width / 2, world.height / 2 + 52);
+      ctx.fillText(_t('newRecord'), world.width / 2, world.height / 2 + 52);
     }
 
     /* Quick stats */
@@ -1212,13 +1250,13 @@ function drawText(dt) {
     ctx.font = '400 13px Inter, sans-serif';
     const statsY = world.height / 2 + 76;
     ctx.fillText(
-      `Dodged: ${world.runStats.obstaclesDodged}  |  Near-misses: ${world.runStats.nearMisses}  |  Time: ${world.runStats.timeAlive.toFixed(1)}s`,
+      `${_t('dodged')}: ${world.runStats.obstaclesDodged}  |  ${_t('nearMisses')}: ${world.runStats.nearMisses}  |  ${_t('time')}: ${world.runStats.timeAlive.toFixed(1)}s`,
       world.width / 2, statsY
     );
 
     ctx.fillStyle = 'rgba(150, 190, 230, 0.45)';
     ctx.font = '400 14px Inter, sans-serif';
-    ctx.fillText('Tap or press Space to restart', world.width / 2, statsY + 28);
+    ctx.fillText(_t('tapOrSpaceRestart'), world.width / 2, statsY + 28);
   }
 }
 
@@ -1237,11 +1275,11 @@ function drawCanvasHUD() {
                        world.densityLabel === 'Dense' ? 'rgba(180, 180, 255, 0.7)' : 'rgba(255, 140, 140, 0.7)';
   ctx.font = '500 14px Inter, sans-serif';
   ctx.fillStyle = densityColor;
-  ctx.fillText(world.densityLabel, 20, 56);
+  ctx.fillText(_t(DENSITY_I18N[world.densityLabel] || 'buoyant'), 20, 56);
 
   /* Symbiosis status — top right */
   ctx.textAlign = 'right';
-  const symLabel = glider.symbiosisTimer > 0 ? 'Phasing' : glider.symbiosisCharge >= 1 ? 'Symbiosis Ready' : 'Charging';
+  const symLabel = glider.symbiosisTimer > 0 ? _t('phasing') : glider.symbiosisCharge >= 1 ? _t('symbiosisReady') : _t('charging');
   const symColor = glider.symbiosisTimer > 0 ? 'rgba(130, 255, 240, 0.8)' :
                    glider.symbiosisCharge >= 1 ? 'rgba(130, 255, 200, 0.7)' : 'rgba(180, 200, 230, 0.4)';
   ctx.fillStyle = symColor;
@@ -1251,7 +1289,7 @@ function drawCanvasHUD() {
   if (world.combo > 0) {
     ctx.fillStyle = 'rgba(180, 255, 230, 0.8)';
     ctx.font = '600 16px Inter, sans-serif';
-    ctx.fillText(`Combo x${world.combo}`, world.width - 20, 56);
+    ctx.fillText(`${_t('combo')} x${world.combo}`, world.width - 20, 56);
   }
 
   ctx.restore();
@@ -1360,7 +1398,7 @@ restartBtn.addEventListener('click', resetGame);
 if (muteBtn) {
   muteBtn.addEventListener('click', () => {
     const muted = Audio.toggle();
-    muteBtn.textContent = muted ? 'Sound: OFF' : 'Sound: ON';
+    muteBtn.textContent = muted ? _t('soundOff') : _t('soundOn');
   });
 }
 

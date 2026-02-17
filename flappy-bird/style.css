@@ -141,6 +141,31 @@ canvas {
   font-style: italic;
 }
 
+.lang-switcher {
+  margin-bottom: 8px;
+}
+
+.lang-switcher select {
+  background: rgba(21, 50, 75, 0.08);
+  border: 1px solid rgba(21, 50, 75, 0.2);
+  border-radius: 8px;
+  color: #15324b;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.lang-switcher select:hover {
+  border-color: rgba(21, 50, 75, 0.4);
+}
+
+.lang-switcher select:focus-visible {
+  border-color: #1a4060;
+}
+
 @media (min-width: 768px) and (max-width: 1194px) {
   body {
     padding: 40px 24px;
