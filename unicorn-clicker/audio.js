@@ -1,5 +1,5 @@
 /* ── Unicorn Fart Clicker — Procedural Audio ── */
-const Audio = (() => {
+const SFX = (() => {
   let ctx = null;
 
   function ensure() {
