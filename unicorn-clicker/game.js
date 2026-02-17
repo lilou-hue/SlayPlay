@@ -98,6 +98,9 @@
   /* ────────────────── Shop state ────────────────── */
   let shopOpen = false;
 
+  /* ────────────────── Restart confirm state ────────────────── */
+  let confirmRestart = false;
+
   /* ────────────────── Unicorn animation ────────────────── */
   let squash = 0; // 0 = idle, positive = squashing
   const UNICORN_X = W * 0.48;
@@ -187,6 +190,20 @@
   }
 
   let saveTimer = 0;
+
+  function resetGame() {
+    state = defaultState();
+    try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
+    particles = [];
+    floatingTexts = [];
+    shootingStars = [];
+    squash = 0;
+    shakeAmount = 0;
+    shopOpen = false;
+    confirmRestart = false;
+    sparkleTimer = 0;
+    spawnFloatingText(W / 2, H * 0.4, 'Fresh start!');
+  }
 
   /* ────────────────── Number formatting ────────────────── */
   function formatNum(n) {
@@ -925,6 +942,25 @@
     ctx.fillStyle = '#c4b5fd';
     ctx.fillText(EVOLUTIONS[state.evolution].name, W / 2, H * 0.18);
 
+    // Restart button (top-right corner, small)
+    const rstX = W - 38, rstY = 12, rstS = 24;
+    ctx.globalAlpha = 0.5;
+    ctx.strokeStyle = '#c4b5fd';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(rstX + rstS / 2, rstY + rstS / 2, 8, -0.5, Math.PI * 1.6);
+    ctx.stroke();
+    // Arrow tip
+    const tipAngle = Math.PI * 1.6 - 0.5;
+    const tipX = rstX + rstS / 2 + Math.cos(tipAngle) * 8;
+    const tipY = rstY + rstS / 2 + Math.sin(tipAngle) * 8;
+    ctx.beginPath();
+    ctx.moveTo(tipX + 4, tipY - 1);
+    ctx.lineTo(tipX, tipY + 4);
+    ctx.lineTo(tipX - 3, tipY - 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
     // ── Bottom Buttons ──
     const btnY = H - 55;
     const btnH = 40;
@@ -1042,6 +1078,66 @@
     }
   }
 
+  /* ────────────────── Drawing: Restart confirm dialog ────────────────── */
+  function drawConfirmRestart() {
+    if (!confirmRestart) return;
+
+    // Backdrop
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(0, 0, W, H);
+
+    // Dialog box
+    const dw = 300, dh = 180;
+    const dx = (W - dw) / 2, dy = (H - dh) / 2;
+    ctx.fillStyle = 'rgba(20,10,50,0.97)';
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(dx, dy, dw, dh, 16);
+    else ctx.rect(dx, dy, dw, dh);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,80,80,0.5)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Title
+    ctx.fillStyle = '#ff6b6b';
+    ctx.font = 'bold 20px "Segoe UI", system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Restart Game?', W / 2, dy + 40);
+
+    // Warning text
+    ctx.fillStyle = '#ccc';
+    ctx.font = '14px "Segoe UI", system-ui, sans-serif';
+    ctx.fillText('All progress will be lost!', W / 2, dy + 70);
+
+    // Yes button
+    const yBtnX = dx + 30, yBtnY = dy + dh - 60, yBtnW = 110, yBtnH = 38;
+    ctx.fillStyle = 'rgba(255,80,80,0.25)';
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(yBtnX, yBtnY, yBtnW, yBtnH, 10);
+    else ctx.rect(yBtnX, yBtnY, yBtnW, yBtnH);
+    ctx.fill();
+    ctx.strokeStyle = '#ff6b6b';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = '#ff6b6b';
+    ctx.font = 'bold 16px "Segoe UI", system-ui, sans-serif';
+    ctx.fillText('Yes, restart', yBtnX + yBtnW / 2, yBtnY + 25);
+
+    // No button
+    const nBtnX = dx + dw - 140, nBtnY = yBtnY, nBtnW = 110, nBtnH = 38;
+    ctx.fillStyle = 'rgba(100,200,100,0.25)';
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(nBtnX, nBtnY, nBtnW, nBtnH, 10);
+    else ctx.rect(nBtnX, nBtnY, nBtnW, nBtnH);
+    ctx.fill();
+    ctx.strokeStyle = '#6bd66b';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = '#6bd66b';
+    ctx.font = 'bold 16px "Segoe UI", system-ui, sans-serif';
+    ctx.fillText('Cancel', nBtnX + nBtnW / 2, nBtnY + 25);
+  }
+
   /* ────────────────── Update ────────────────── */
   function update(dt) {
     gameTime += dt;
@@ -1136,6 +1232,7 @@
     drawUI();
     ctx.restore();
     drawShop();
+    drawConfirmRestart();
 
     requestAnimationFrame(loop);
   }
@@ -1156,6 +1253,28 @@
   function handleTap(e) {
     e.preventDefault();
     const pos = getCanvasPos(e);
+
+    // Confirm restart dialog — handle first (blocks all other input)
+    if (confirmRestart) {
+      const dw = 300, dh = 180;
+      const dx = (W - dw) / 2, dy = (H - dh) / 2;
+      const yBtnX = dx + 30, yBtnY = dy + dh - 60, yBtnW = 110, yBtnH = 38;
+      const nBtnX = dx + dw - 140, nBtnY = yBtnY, nBtnW = 110, nBtnH = 38;
+
+      if (pos.x >= yBtnX && pos.x <= yBtnX + yBtnW && pos.y >= yBtnY && pos.y <= yBtnY + yBtnH) {
+        resetGame();
+        return;
+      }
+      if (pos.x >= nBtnX && pos.x <= nBtnX + nBtnW && pos.y >= nBtnY && pos.y <= nBtnY + nBtnH) {
+        confirmRestart = false;
+        return;
+      }
+      // Click outside dialog also cancels
+      if (pos.x < dx || pos.x > dx + dw || pos.y < dy || pos.y > dy + dh) {
+        confirmRestart = false;
+      }
+      return;
+    }
 
     // Shop open — handle shop clicks
     if (shopOpen) {
@@ -1195,6 +1314,13 @@
           return;
         }
       }
+      return;
+    }
+
+    // Restart button (top-right corner)
+    const rstX = W - 38, rstY = 12, rstS = 24;
+    if (pos.x >= rstX && pos.x <= rstX + rstS && pos.y >= rstY && pos.y <= rstY + rstS) {
+      confirmRestart = true;
       return;
     }
 
