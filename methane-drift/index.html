@@ -9,23 +9,24 @@
   <body>
     <main class="layout">
       <section class="hud-panel">
-        <a href="/" class="back-link" data-i18n="backToGames">&larr; Back to Games</a>
-        <h1 data-i18n="mdTitle">Methane Drift</h1>
-        <p data-i18n-html="mdInstructions">
-          Drift through an alien methane sky. Tap <strong>Space / Click</strong> to pulse upward.
-          Press <strong>Shift</strong> to trigger Symbiosis when charged.
-          Press <strong>Escape</strong> to pause.
+        <a href="/" class="back-link">&larr; Back to Games</a>
+        <h1>Methane Drift</h1>
+        <p>
+          Fly through an alien sky. <strong>Space / Tap</strong> = go up.
+          <strong>Shift</strong> = shield. Fly close to obstacles for <strong>bonus points</strong>.
+          Press <strong>Esc</strong> to pause (shows all controls).
         </p>
         <div class="stats">
-          <div><span data-i18n="distance">Distance</span><strong id="score" aria-live="polite" role="status">0</strong></div>
-          <div><span data-i18n="best">Best</span><strong id="best">0</strong></div>
-          <div><span data-i18n="atmosphere">Atmosphere</span><strong id="density" data-i18n="buoyant">Buoyant</strong></div>
-          <div><span data-i18n="symbiosis">Symbiosis</span><strong id="symbiosis" data-i18n="ready">Ready</strong></div>
-          <div><span data-i18n="combo">Combo</span><strong id="combo">0</strong></div>
+          <div><span>Score</span><strong id="score" aria-live="polite" role="status">0</strong></div>
+          <div><span>Best</span><strong id="best">0</strong></div>
+          <div><span>Air Type</span><strong id="density">Light</strong></div>
+          <div><span>Shield</span><strong id="symbiosis">Ready</strong></div>
+          <div><span>Combo</span><strong id="combo">0</strong></div>
         </div>
-        <button id="muteBtn" class="mute-btn" type="button" aria-label="Toggle sound" data-i18n="soundOn">Sound: ON</button>
-        <button id="restartBtn" class="restart-btn" hidden data-i18n="restartDrift">Restart Drift</button>
-        <button id="symbiosisBtn" class="symbiosis-action-btn" hidden aria-label="Activate Symbiosis" data-i18n="symbiosisBtn">Symbiosis</button>
+        <button id="muteBtn" class="mute-btn" type="button" aria-label="Toggle sound">Sound: ON</button>
+        <button id="fullscreenBtn" class="fullscreen-btn" type="button" aria-label="Toggle fullscreen">Fullscreen</button>
+        <button id="restartBtn" class="restart-btn" hidden>Play Again</button>
+        <button id="symbiosisBtn" class="symbiosis-action-btn" hidden aria-label="Activate Shield">Shield</button>
       </section>
       <canvas id="game" class="game-canvas" width="960" height="540" aria-label="Methane Drift game"></canvas>
     </main>
