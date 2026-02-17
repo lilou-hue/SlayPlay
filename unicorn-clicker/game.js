@@ -519,25 +519,54 @@
       }
     }
 
-    // ── Tail (fluffy filled rainbow puffs) ──
-    const tailX = -22 * S, tailY = 8 * S;
+    // ── Tail (chunky flowing sections matching mane style) ──
+    const tailX = -24 * S, tailY = 6 * S;
+    const tailSections = [
+      { off: 0, h: 300, s: 65, l: 78 },  // lavender-pink
+      { off: 1, h: 340, s: 60, l: 80 },  // pink
+      { off: 2, h: 30,  s: 70, l: 78 },  // peach
+      { off: 3, h: 180, s: 50, l: 76 },  // mint
+    ];
+    ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
-    for (let i = 0; i < 6; i++) {
-      const hue = (i * 50 + gameTime * 60) % 360;
-      const tx = tailX - 12 * i - Math.sin(gameTime * 2.5 + i * 0.7) * 6;
-      const ty = tailY - 8 + Math.cos(gameTime * 2 + i * 0.5) * 8 + i * 2;
-      const tr = (8 - i * 0.5) * S;
-      // Fluffy puff
-      ctx.fillStyle = `hsla(${hue}, 80%, 62%, 0.85)`;
-      ctx.beginPath(); ctx.arc(tx, ty, tr, 0, Math.PI * 2); ctx.fill();
-      // Outline
-      ctx.strokeStyle = `hsla(${hue}, 60%, 40%, 0.5)`;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.arc(tx, ty, tr, 0, Math.PI * 2); ctx.stroke();
+    for (let i = 0; i < tailSections.length; i++) {
+      const ts = tailSections[i];
+      const wave = Math.sin(gameTime * 2 + ts.off * 0.8) * 5;
+      const tx = tailX - i * 6 * S + wave;
+      const ty = tailY - 4 * S + i * 3 * S + wave * 0.4;
+      const tw = 7 * S;
+      const tl = (22 - i * 2) * S;
+
+      ctx.beginPath();
+      ctx.moveTo(tailX, tailY + i * 2 * S);
+      ctx.bezierCurveTo(
+        tx - tw, ty - tl * 0.1 + wave * 0.3,
+        tx - tw * 0.8, ty + tl * 0.4 + wave,
+        tx - tw * 0.1, ty + tl * 0.5 + wave
+      );
+      ctx.bezierCurveTo(
+        tx + tw * 0.6, ty + tl * 0.35 - wave * 0.3,
+        tx + tw * 0.4, ty - tl * 0.2,
+        tailX, tailY + i * 2 * S
+      );
+      ctx.closePath();
+
+      const tGrad = ctx.createLinearGradient(tailX, tailY, tx, ty + tl * 0.5);
+      tGrad.addColorStop(0, `hsl(${ts.h}, ${ts.s}%, ${ts.l}%)`);
+      tGrad.addColorStop(1, `hsl(${(ts.h + 25) % 360}, ${ts.s + 5}%, ${ts.l - 5}%)`);
+      ctx.fillStyle = tGrad;
+      ctx.fill();
+      ctx.strokeStyle = `hsl(${ts.h}, ${ts.s - 10}%, ${ts.l - 25}%)`;
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+
       // Highlight
-      ctx.fillStyle = `hsla(${hue}, 90%, 85%, 0.5)`;
-      ctx.beginPath(); ctx.arc(tx - tr * 0.25, ty - tr * 0.3, tr * 0.35, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = `hsla(${ts.h}, ${ts.s + 15}%, ${ts.l + 14}%, 0.4)`;
+      ctx.beginPath();
+      ctx.ellipse(tx - tw * 0.2, ty + tl * 0.1, tw * 0.25, tl * 0.12, -0.4, 0, Math.PI * 2);
+      ctx.fill();
     }
+    ctx.lineJoin = 'miter';
     ctx.lineCap = 'butt';
 
     // ── Back legs (stubby chibi) ──
@@ -727,48 +756,75 @@
     ctx.closePath();
     ctx.fill();
 
-    // ── Mane (flowing pastel locks draped over head) ──
-    const maneColors = [
-      {h: 350, s: 70, l: 75}, // pink
-      {h: 20,  s: 80, l: 75}, // peach
-      {h: 50,  s: 75, l: 72}, // gold
-      {h: 140, s: 55, l: 70}, // mint
-      {h: 210, s: 65, l: 75}, // sky
-      {h: 270, s: 60, l: 78}, // lavender
+    // ── Mane (chunky chibi hair sections — naomilord style) ──
+    // 5 large leaf/teardrop-shaped sections, pastel rainbow, bold outlines
+    const maneSections = [
+      // {startAngle on head, length, width, hue, sway offset}
+      { ax: -0.85, ay: -0.3, len: 38, w: 16, h: 300, s: 65, l: 78, sOff: 0 },    // back — lavender-pink
+      { ax: -0.7,  ay: -0.55, len: 34, w: 15, h: 340, s: 60, l: 80, sOff: 0.7 },  // pink
+      { ax: -0.45, ay: -0.75, len: 30, w: 14, h: 30,  s: 70, l: 78, sOff: 1.4 },  // peach
+      { ax: -0.15, ay: -0.85, len: 26, w: 13, h: 180, s: 50, l: 76, sOff: 2.1 },  // mint
+      { ax: 0.1,   ay: -0.82, len: 22, w: 12, h: 260, s: 55, l: 80, sOff: 2.8 },  // periwinkle
     ];
-    // Draw locks from back to front, each a soft tapered shape
-    for (let i = maneColors.length - 1; i >= 0; i--) {
-      const mc = maneColors[i];
-      const wave = Math.sin(gameTime * 2 + i * 0.9) * 3;
-      const lockX = -headR * 0.55 - 2 * S + i * 2.5 * S;
-      const lockTopY = headY - headR * 0.65 + i * 1.5 * S;
-      const lockBotY = headY + headR * 0.3 + i * 5 * S + wave;
-      const lockW = (6.5 - i * 0.3) * S;
 
-      // Lock body (tapered rounded shape)
-      ctx.fillStyle = `hsl(${mc.h}, ${mc.s}%, ${mc.l}%)`;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+
+    for (let i = 0; i < maneSections.length; i++) {
+      const sec = maneSections[i];
+      const wave = Math.sin(gameTime * 1.8 + sec.sOff) * 4;
+
+      // Anchor point on head edge
+      const ancX = sec.ax * headR;
+      const ancY = headY + sec.ay * headR * 0.92;
+
+      // Tip of the section (flows downward-left with wave)
+      const tipX = ancX - sec.len * 0.4 * S + wave;
+      const tipY = ancY + sec.len * S * 0.9 + wave * 0.5;
+
+      const hw = sec.w * S * 0.5; // half-width at widest point
+
+      // Draw chunky leaf shape using bezier curves
       ctx.beginPath();
-      ctx.moveTo(lockX - lockW * 0.4, lockTopY);
-      ctx.quadraticCurveTo(lockX - lockW * 0.7, (lockTopY + lockBotY) * 0.5 + wave, lockX - lockW * 0.2 + wave * 0.5, lockBotY);
-      ctx.quadraticCurveTo(lockX + lockW * 0.3, lockBotY - 2, lockX + lockW * 0.5 + wave * 0.3, lockBotY - 4);
-      ctx.quadraticCurveTo(lockX + lockW * 0.8, (lockTopY + lockBotY) * 0.5 - wave * 0.5, lockX + lockW * 0.5, lockTopY);
+      // Start at anchor
+      ctx.moveTo(ancX, ancY);
+      // Left edge — curves out then tapers to tip
+      ctx.bezierCurveTo(
+        ancX - hw * 1.3, ancY + sec.len * S * 0.25 + wave * 0.3,
+        tipX - hw * 0.9, tipY - sec.len * S * 0.3 + wave * 0.5,
+        tipX, tipY
+      );
+      // Right edge — curves back to anchor (mirror)
+      ctx.bezierCurveTo(
+        tipX + hw * 1.0, tipY - sec.len * S * 0.3 - wave * 0.3,
+        ancX + hw * 1.2, ancY + sec.len * S * 0.2 - wave * 0.2,
+        ancX, ancY
+      );
       ctx.closePath();
+
+      // Fill with soft pastel gradient
+      const grad = ctx.createLinearGradient(ancX, ancY, tipX, tipY);
+      grad.addColorStop(0, `hsl(${sec.h}, ${sec.s}%, ${sec.l}%)`);
+      grad.addColorStop(1, `hsl(${(sec.h + 25) % 360}, ${sec.s + 5}%, ${sec.l - 5}%)`);
+      ctx.fillStyle = grad;
       ctx.fill();
 
-      // Soft outline
-      ctx.strokeStyle = `hsl(${mc.h}, ${mc.s - 15}%, ${mc.l - 20}%)`;
-      ctx.lineWidth = 1.2;
+      // Bold soft outline (naomilord style)
+      ctx.strokeStyle = `hsl(${sec.h}, ${sec.s - 10}%, ${sec.l - 25}%)`;
+      ctx.lineWidth = 2.5;
       ctx.stroke();
 
-      // Inner highlight streak
-      ctx.fillStyle = `hsla(${mc.h}, ${mc.s + 10}%, ${mc.l + 12}%, 0.5)`;
+      // Highlight — soft ellipse near top of section
+      const hlX = ancX - hw * 0.15;
+      const hlY = ancY + sec.len * S * 0.2;
+      ctx.fillStyle = `hsla(${sec.h}, ${sec.s + 15}%, ${sec.l + 14}%, 0.45)`;
       ctx.beginPath();
-      ctx.moveTo(lockX, lockTopY + 3);
-      ctx.quadraticCurveTo(lockX - lockW * 0.15, (lockTopY + lockBotY) * 0.45 + wave * 0.5, lockX + wave * 0.3, lockBotY - 6);
-      ctx.quadraticCurveTo(lockX + lockW * 0.2, (lockTopY + lockBotY) * 0.45, lockX + lockW * 0.15, lockTopY + 3);
-      ctx.closePath();
+      ctx.ellipse(hlX, hlY, hw * 0.35, sec.len * S * 0.18, -0.3, 0, Math.PI * 2);
       ctx.fill();
     }
+
+    ctx.lineJoin = 'miter';
+    ctx.lineCap = 'butt';
 
     // ── Horn (ornate with spiral) ──
     const hornX = 6 * S, hornY = headY - headR * 0.85;
