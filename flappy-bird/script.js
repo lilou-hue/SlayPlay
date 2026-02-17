@@ -3,110 +3,6 @@ const context = canvas.getContext("2d");
 const scoreLabel = document.getElementById("score");
 const bestScoreLabel = document.getElementById("bestScore");
 const restartButton = document.getElementById("restartButton");
-const muteButton = document.getElementById("muteButton");
-
-/* --- Sound system (Web Audio API) --- */
-const sound = (() => {
-  let ctx = null;
-  let muted = false;
-
-  const getCtx = () => {
-    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
-    return ctx;
-  };
-
-  const play = (fn) => {
-    if (muted) return;
-    try { fn(getCtx()); } catch (_) { /* silent fail */ }
-  };
-
-  return {
-    get muted() { return muted; },
-    toggleMute() {
-      muted = !muted;
-      muteButton.textContent = muted ? "🔇" : "🔊";
-    },
-
-    flap() {
-      play((ac) => {
-        const osc = ac.createOscillator();
-        const gain = ac.createGain();
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(400, ac.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(600, ac.currentTime + 0.08);
-        gain.gain.setValueAtTime(0.18, ac.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.12);
-        osc.connect(gain).connect(ac.destination);
-        osc.start(ac.currentTime);
-        osc.stop(ac.currentTime + 0.12);
-      });
-    },
-
-    score() {
-      play((ac) => {
-        const t = ac.currentTime;
-        [520, 680, 830].forEach((freq, i) => {
-          const osc = ac.createOscillator();
-          const gain = ac.createGain();
-          osc.type = "sine";
-          osc.frequency.value = freq;
-          gain.gain.setValueAtTime(0, t + i * 0.07);
-          gain.gain.linearRampToValueAtTime(0.15, t + i * 0.07 + 0.02);
-          gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.07 + 0.15);
-          osc.connect(gain).connect(ac.destination);
-          osc.start(t + i * 0.07);
-          osc.stop(t + i * 0.07 + 0.15);
-        });
-      });
-    },
-
-    hit() {
-      play((ac) => {
-        const t = ac.currentTime;
-        /* Thud */
-        const osc = ac.createOscillator();
-        const gain = ac.createGain();
-        osc.type = "square";
-        osc.frequency.setValueAtTime(150, t);
-        osc.frequency.exponentialRampToValueAtTime(40, t + 0.2);
-        gain.gain.setValueAtTime(0.2, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-        osc.connect(gain).connect(ac.destination);
-        osc.start(t);
-        osc.stop(t + 0.25);
-        /* Noise burst */
-        const bufLen = ac.sampleRate * 0.12;
-        const buf = ac.createBuffer(1, bufLen, ac.sampleRate);
-        const data = buf.getChannelData(0);
-        for (let i = 0; i < bufLen; i++) data[i] = (Math.random() * 2 - 1) * 0.3;
-        const noise = ac.createBufferSource();
-        const ng = ac.createGain();
-        noise.buffer = buf;
-        ng.gain.setValueAtTime(0.18, t);
-        ng.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
-        noise.connect(ng).connect(ac.destination);
-        noise.start(t);
-      });
-    },
-
-    swoosh() {
-      play((ac) => {
-        const t = ac.currentTime;
-        const osc = ac.createOscillator();
-        const gain = ac.createGain();
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(300, t);
-        osc.frequency.exponentialRampToValueAtTime(500, t + 0.08);
-        osc.frequency.exponentialRampToValueAtTime(200, t + 0.18);
-        gain.gain.setValueAtTime(0.12, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
-        osc.connect(gain).connect(ac.destination);
-        osc.start(t);
-        osc.stop(t + 0.2);
-      });
-    },
-  };
-})();
 
 const gameState = {
   gravity: 1800,
@@ -299,13 +195,13 @@ const resetGame = () => {
   gameState.lastScore = 0;
   scoreLabel.textContent = gameState.score;
   initClouds();
-  Audio.stopDrone();
   initHills();
   initTrees();
   initGrass();
   initLeaves();
   initFlowers();
   initButterflies();
+  Audio.stopDrone();
   draw();
 };
 
@@ -949,7 +845,6 @@ const updateScore = () => {
       scoreLabel.textContent = gameState.score;
       gameState.scorePop = 1;
       Audio.score();
-      sound.score();
     }
   });
 };
@@ -993,7 +888,6 @@ const update = (deltaSeconds) => {
     gameState.isGameOver = true;
     gameState.shakeTimer = 12;
     gameState.shakeIntensity = 6;
-    sound.hit();
   }
 
   pipes.forEach((pipe) => {
@@ -1006,20 +900,19 @@ const update = (deltaSeconds) => {
     gameState.isGameOver = true;
     gameState.shakeTimer = 12;
     gameState.shakeIntensity = 6;
-    sound.hit();
   }
 
   if (gameState.isGameOver) {
     const wasNewBest = gameState.score > gameState.best;
     saveBestScore();
+    if (!feathersSpawned) {
+      spawnFeatherParticles();
+      feathersSpawned = true;
+    }
     Audio.crash();
     Audio.stopDrone();
     if (wasNewBest && gameState.score > 0) {
       Audio.newHighScore();
-    }
-    if (!feathersSpawned) {
-      spawnFeatherParticles();
-      feathersSpawned = true;
     }
   }
 
@@ -1141,15 +1034,12 @@ const flap = () => {
   if (gameState.isGameOver) {
     resetGame();
     startGame();
-    sound.swoosh();
   } else if (!gameState.isRunning) {
     startGame();
-    sound.swoosh();
   }
 
   bird.velocity = gameState.lift;
   Audio.flap();
-  sound.flap();
 };
 
 window.addEventListener("keydown", (event) => {
@@ -1172,9 +1062,19 @@ restartButton.addEventListener("click", () => {
   resetGame();
 });
 
-muteButton.addEventListener("click", () => {
-  sound.toggleMute();
-});
+/* --- Mute toggle --- */
+const muteButton = document.getElementById("muteButton");
+if (muteButton) {
+  const updateMuteLabel = () => {
+    muteButton.textContent = Audio.isMuted() ? "Unmute" : "Mute";
+  };
+  muteButton.addEventListener("click", () => {
+    Audio.init();
+    Audio.toggle();
+    updateMuteLabel();
+  });
+  updateMuteLabel();
+}
 
 loadBestScore();
 resetGame();

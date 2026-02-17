@@ -170,6 +170,16 @@
         border: 1px solid rgba(255, 140, 50, 0.3);
       }
 
+      .unicorn-preview {
+        background: linear-gradient(180deg, #2d1b69, #1a0f40, #0f0a2a);
+      }
+
+      .unicorn-tag {
+        background: rgba(255, 105, 180, 0.15);
+        color: #ff69b4;
+        border: 1px solid rgba(255, 105, 180, 0.3);
+      }
+
       /* Hover glow borders */
       .game-card::before {
         content: "";
@@ -196,6 +206,7 @@
       .game-card:nth-child(3)::before { border-color: rgba(57, 255, 20, 0.5); box-shadow: 0 0 20px rgba(57, 255, 20, 0.15); }
       .game-card:nth-child(4)::before { border-color: rgba(77, 201, 246, 0.5); box-shadow: 0 0 20px rgba(77, 201, 246, 0.15); }
       .game-card:nth-child(5)::before { border-color: rgba(255, 140, 50, 0.5); box-shadow: 0 0 20px rgba(255, 140, 50, 0.15); }
+      .game-card:nth-child(6)::before { border-color: rgba(255, 105, 180, 0.5); box-shadow: 0 0 20px rgba(255, 105, 180, 0.15); }
 
       /* Floating background stars */
       body::before {
@@ -293,6 +304,17 @@
           <h2>Phantom Road</h2>
           <p>Race through the dark on a winding road. Only your headlights reveal what lies ahead.</p>
           <span class="card-tag phantom-tag">Racing</span>
+        </div>
+      </a>
+
+      <a href="/unicorn-clicker/" class="game-card">
+        <div class="card-preview unicorn-preview">
+          <canvas id="unicornCanvas" width="360" height="200"></canvas>
+        </div>
+        <div class="card-body">
+          <h2>Unicorn Fart Clicker</h2>
+          <p>Tap a majestic unicorn to unleash rainbow farts. Earn Sparkle Points and evolve!</p>
+          <span class="card-tag unicorn-tag">Idle</span>
         </div>
       </a>
     </div>
@@ -577,6 +599,122 @@
           const vg = x.createRadialGradient(W/2,H/2,H*0.2,W/2,H/2,H*0.8);
           vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,0.6)');
           x.fillStyle = vg; x.fillRect(0,0,W,H);
+
+          requestAnimationFrame(draw);
+        }
+        requestAnimationFrame(draw);
+      })();
+
+      /* ─ Unicorn Fart Clicker Preview ─ */
+      (function() {
+        const c = document.getElementById('unicornCanvas');
+        if (!c) return;
+        const x = c.getContext('2d');
+        let t = 0;
+        const puffs = [];
+
+        function draw() {
+          t += 0.016;
+          /* Background */
+          const bg = x.createLinearGradient(0,0,0,H);
+          bg.addColorStop(0,'#2d1b69'); bg.addColorStop(0.6,'#1a0f40'); bg.addColorStop(1,'#0f0a2a');
+          x.fillStyle = bg; x.fillRect(0,0,W,H);
+
+          /* Stars */
+          for (let i = 0; i < 15; i++) {
+            const sx = (i*47+20) % W, sy = (i*31+10) % (H*0.6);
+            const a = 0.3 + Math.sin(t*2+i)*0.2;
+            x.fillStyle = `rgba(255,255,255,${a})`;
+            x.beginPath(); x.arc(sx, sy, 1, 0, Math.PI*2); x.fill();
+          }
+
+          /* Ground */
+          x.fillStyle = '#2ecc71';
+          x.fillRect(0, H*0.78, W, H*0.22);
+
+          /* Flowers */
+          for (let i = 0; i < 6; i++) {
+            const fx = 30+i*60, fy = H*0.82 + Math.sin(t+i)*2;
+            x.fillStyle = `hsl(${i*60},80%,65%)`;
+            x.beginPath(); x.arc(fx,fy,3,0,Math.PI*2); x.fill();
+          }
+
+          /* Spawn puffs periodically */
+          if (Math.sin(t*2.5) > 0.95 && puffs.length < 8) {
+            puffs.push({x:130, y:95+Math.random()*10, vx:-1-Math.random()*2, vy:-0.5-Math.random(),
+              size:6+Math.random()*8, hue:Math.random()*360, life:1});
+          }
+
+          /* Puffs */
+          for (let i = puffs.length-1; i >= 0; i--) {
+            const p = puffs[i];
+            p.x += p.vx*0.5; p.y += p.vy*0.3;
+            p.life -= 0.015;
+            if (p.life <= 0) { puffs.splice(i,1); continue; }
+            x.fillStyle = `hsla(${p.hue},80%,65%,${p.life*0.5})`;
+            x.beginPath(); x.ellipse(p.x,p.y,p.size*p.life,p.size*p.life*0.7,0,0,Math.PI*2); x.fill();
+          }
+
+          /* Unicorn */
+          const ux = 180, uy = 90 + Math.sin(t*2)*5;
+          x.save(); x.translate(ux, uy);
+
+          /* Body */
+          const ubg = x.createRadialGradient(-2,-2,2,0,0,22);
+          ubg.addColorStop(0,'#fff0f5'); ubg.addColorStop(1,'#f8b4c8');
+          x.fillStyle = ubg;
+          x.beginPath(); x.ellipse(0,4,22,15,0,0,Math.PI*2); x.fill();
+
+          /* Legs */
+          x.fillStyle = '#f0c0d0';
+          x.fillRect(-14,14,4,14); x.fillRect(-6,14,4,14);
+          x.fillRect(5,14,4,14); x.fillRect(12,14,4,14);
+
+          /* Head */
+          const hg = x.createRadialGradient(16,-10,2,16,-10,10);
+          hg.addColorStop(0,'#fff5f8'); hg.addColorStop(1,'#f0b0c8');
+          x.fillStyle = hg;
+          x.beginPath(); x.ellipse(16,-10,10,9,0,0,Math.PI*2); x.fill();
+
+          /* Horn */
+          const hrn = x.createLinearGradient(22,-18,22,-32);
+          hrn.addColorStop(0,'#ffd700'); hrn.addColorStop(1,'#fff8dc');
+          x.fillStyle = hrn;
+          x.beginPath(); x.moveTo(19,-18); x.lineTo(22,-32); x.lineTo(25,-18); x.closePath(); x.fill();
+
+          /* Eye */
+          x.fillStyle = '#fff';
+          x.beginPath(); x.arc(20,-11,3,0,Math.PI*2); x.fill();
+          x.fillStyle = '#2d1b69';
+          x.beginPath(); x.arc(21,-11,1.5,0,Math.PI*2); x.fill();
+
+          /* Mane */
+          for (let i = 0; i < 4; i++) {
+            x.strokeStyle = `hsl(${(i*70+t*50)%360},80%,55%)`;
+            x.lineWidth = 2;
+            x.beginPath();
+            x.moveTo(10+i*2, -16);
+            x.bezierCurveTo(6-i*2,-24+Math.sin(t*3+i)*4, 2+i,-12+Math.cos(t*2+i)*3, -2+i*2,-8+Math.sin(t*2.5+i)*5);
+            x.stroke();
+          }
+
+          /* Tail */
+          for (let i = 0; i < 3; i++) {
+            x.strokeStyle = `hsl(${(i*80+t*60)%360},85%,60%)`;
+            x.lineWidth = 2;
+            x.beginPath();
+            x.moveTo(-22, 2+i*2);
+            x.bezierCurveTo(-30,-8+Math.sin(t*3+i)*5, -36,6+Math.cos(t*2+i)*4, -38,-2+Math.sin(t*2.5+i)*6);
+            x.stroke();
+          }
+
+          x.restore();
+
+          /* SP label */
+          x.fillStyle = '#ffd700';
+          x.font = 'bold 14px "Segoe UI", system-ui, sans-serif';
+          x.textAlign = 'center';
+          x.fillText('Tap to Fart!', W/2, 26);
 
           requestAnimationFrame(draw);
         }

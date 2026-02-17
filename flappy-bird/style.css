@@ -135,10 +135,15 @@ canvas {
   box-shadow: 0 2px 6px rgba(255, 183, 3, 0.2);
 }
 
-.hud__mute {
-  padding: 10px 12px;
-  font-size: 1.1rem;
-  line-height: 1;
+.hud__button--mute {
+  background: linear-gradient(135deg, #a8d8ea, #7ec8e3);
+  box-shadow: 0 4px 10px rgba(126, 200, 227, 0.3);
+  font-size: 0.8rem;
+  padding: 10px 14px;
+}
+
+.hud__button--mute:hover {
+  box-shadow: 0 8px 20px rgba(126, 200, 227, 0.4);
 }
 
 .game__footer p {
