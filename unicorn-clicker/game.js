@@ -756,67 +756,48 @@
     ctx.closePath();
     ctx.fill();
 
-    // ── Mane (chunky chibi hair sections — naomilord style) ──
-    // Hair cap — thick arc covering the entire top of the head (no bald spots)
+    // ── Mane (chunky chibi hair — naomilord style) ──
     const headVR = headR * 0.92; // vertical radius of head ellipse
-    const capPuff = 5 * S; // extra puffiness beyond head edge
 
-    const capGrad = ctx.createLinearGradient(-headR, headY - headVR, headR * 0.5, headY + headVR * 0.3);
-    capGrad.addColorStop(0, 'hsl(300, 65%, 78%)');
-    capGrad.addColorStop(0.35, 'hsl(340, 60%, 80%)');
-    capGrad.addColorStop(0.65, 'hsl(30, 70%, 78%)');
-    capGrad.addColorStop(1, 'hsl(260, 55%, 80%)');
+    // STEP 1: Solid hair cap — ellipse arc that fully covers the top of the head
+    // Slightly larger than head so it puffs out (chibi volume)
+    const capRx = headR + 4 * S;
+    const capRy = headVR + 4 * S;
+    const capGrad = ctx.createLinearGradient(-capRx, headY - capRy, capRx, headY);
+    capGrad.addColorStop(0, 'hsl(300, 60%, 76%)');
+    capGrad.addColorStop(0.5, 'hsl(340, 55%, 80%)');
+    capGrad.addColorStop(1, 'hsl(270, 50%, 80%)');
     ctx.fillStyle = capGrad;
-
     ctx.beginPath();
-    // Bottom-right of the hair line (just past the right eye area)
-    const capR = headR + capPuff;
-    const capVR = headVR + capPuff;
-    // Start at right forehead — just above the eye line
-    ctx.moveTo(headR * 0.75, headY + headVR * 0.1);
-    // Arc across the ENTIRE top of the head (from right to left), puffed outward
-    // Use the ellipse path covering the top ~240 degrees
-    // Right side up
-    ctx.quadraticCurveTo(capR * 0.95, headY - headVR * 0.3, capR * 0.7, headY - capVR * 0.8);
-    // Top-right to top
-    ctx.quadraticCurveTo(capR * 0.3, headY - capVR * 1.08, 0, headY - capVR * 1.1);
-    // Top to top-left
-    ctx.quadraticCurveTo(-capR * 0.35, headY - capVR * 1.08, -capR * 0.7, headY - capVR * 0.85);
-    // Top-left down left side
-    ctx.quadraticCurveTo(-capR * 1.0, headY - capVR * 0.5, -capR * 0.95, headY + headVR * 0.15);
-    // Bottom edge — sweeps right across forehead as a wavy bangs line
-    // Left bang dip
-    ctx.quadraticCurveTo(-headR * 0.75, headY + headVR * 0.35, -headR * 0.55, headY + headVR * 0.05);
-    // Center-left bang dip
-    ctx.quadraticCurveTo(-headR * 0.35, headY + headVR * 0.3, -headR * 0.15, headY + headVR * 0.0);
-    // Center bang dip
-    ctx.quadraticCurveTo(headR * 0.05, headY + headVR * 0.25, headR * 0.25, headY + headVR * 0.0);
-    // Right bang dip
-    ctx.quadraticCurveTo(headR * 0.5, headY + headVR * 0.2, headR * 0.75, headY + headVR * 0.1);
+    // Draw a large arc from right side over top to left side
+    // Angles: from ~30deg below horizontal-right to ~30deg below horizontal-left
+    // (in canvas angles: from -0.5 rad to PI+0.5 rad, going counter-clockwise covers the top)
+    ctx.ellipse(0, headY, capRx, capRy, 0, Math.PI + 0.45, -0.45);
     ctx.closePath();
     ctx.fill();
-
-    // Cap outline — only draw the outer edge, not the bangs bottom
-    ctx.strokeStyle = 'hsl(310, 50%, 55%)';
+    ctx.strokeStyle = 'hsl(310, 45%, 55%)';
     ctx.lineWidth = 2.5;
     ctx.stroke();
 
-    // Bang tips — pointy chibi bang sections hanging over the forehead
+    // STEP 2: Bangs — 5 chunky pointed sections hanging over the forehead
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
+    const bangY = headY + headVR * 0.15; // where bangs start (hair line)
     const bangSections = [
-      { bx: -headR * 0.65, topY: headY + headVR * 0.2,  tipY: headY + headVR * 0.55, bw: 12, h: 300, s: 65, l: 76 },
-      { bx: -headR * 0.25, topY: headY + headVR * 0.15, tipY: headY + headVR * 0.52, bw: 13, h: 340, s: 60, l: 78 },
-      { bx:  headR * 0.12, topY: headY + headVR * 0.12, tipY: headY + headVR * 0.48, bw: 12, h: 30,  s: 70, l: 78 },
-      { bx:  headR * 0.5,  topY: headY + headVR * 0.15, tipY: headY + headVR * 0.42, bw: 11, h: 260, s: 55, l: 80 },
+      { x: -headR * 0.72, tipLen: 16, w: 14, h: 300, s: 65, l: 76 },
+      { x: -headR * 0.38, tipLen: 18, w: 15, h: 340, s: 60, l: 78 },
+      { x: -headR * 0.02, tipLen: 17, w: 14, h: 30,  s: 70, l: 78 },
+      { x:  headR * 0.32, tipLen: 15, w: 14, h: 180, s: 50, l: 78 },
+      { x:  headR * 0.62, tipLen: 12, w: 12, h: 260, s: 55, l: 80 },
     ];
 
     for (const b of bangSections) {
-      const bw = b.bw * S * 0.5;
+      const bw = b.w * S * 0.5;
+      const tipY = bangY + b.tipLen * S;
       ctx.beginPath();
-      ctx.moveTo(b.bx - bw, b.topY);
-      ctx.quadraticCurveTo(b.bx - bw * 0.3, (b.topY + b.tipY) * 0.55, b.bx, b.tipY);
-      ctx.quadraticCurveTo(b.bx + bw * 0.3, (b.topY + b.tipY) * 0.55, b.bx + bw, b.topY);
+      ctx.moveTo(b.x - bw, bangY);
+      ctx.quadraticCurveTo(b.x - bw * 0.2, bangY + b.tipLen * S * 0.6, b.x, tipY);
+      ctx.quadraticCurveTo(b.x + bw * 0.2, bangY + b.tipLen * S * 0.6, b.x + bw, bangY);
       ctx.closePath();
       ctx.fillStyle = `hsl(${b.h}, ${b.s}%, ${b.l}%)`;
       ctx.fill();
@@ -825,7 +806,7 @@
       ctx.stroke();
     }
 
-    // 5 large leaf/teardrop-shaped flowing sections, pastel rainbow, bold outlines
+    // STEP 3: Flowing mane sections (off the left/back of head)
     const maneSections = [
       // {startAngle on head, length, width, hue, sway offset}
       { ax: -0.85, ay: -0.3, len: 38, w: 18, h: 300, s: 65, l: 78, sOff: 0 },    // back — lavender-pink
