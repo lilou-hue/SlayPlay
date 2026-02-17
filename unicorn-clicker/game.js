@@ -1194,8 +1194,55 @@
 
   /* ── Skin: Tuna ── */
   function drawSkinTuna(bs, evo) {
-    // Placeholder — tuna skin not yet implemented, fall back to unicorn
-    drawSkinUnicorn(bs, evo);
+    const S = 1 + evo * 0.1;
+    // Tail fin
+    ctx.fillStyle = evo >= 3 ? '#6a5acd' : '#708090';
+    ctx.beginPath();
+    ctx.moveTo(-30*S, 0);
+    ctx.lineTo(-48*S, -18*S);
+    ctx.lineTo(-48*S, 18*S);
+    ctx.closePath();
+    ctx.fill();
+    // Body
+    const bodyGrad = ctx.createRadialGradient(-4*S, -4*S, 4, 0, 0, 32*S);
+    bodyGrad.addColorStop(0, evo >= 3 ? '#9370db' : '#4682b4');
+    bodyGrad.addColorStop(1, evo >= 3 ? '#483d8b' : '#1e3a5f');
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 32*S, 18*S, 0, 0, Math.PI*2);
+    ctx.fill();
+    // Belly
+    ctx.fillStyle = evo >= 3 ? 'rgba(200,180,255,0.4)' : 'rgba(200,220,240,0.5)';
+    ctx.beginPath();
+    ctx.ellipse(2*S, 6*S, 22*S, 10*S, 0, 0, Math.PI*2);
+    ctx.fill();
+    // Dorsal fin
+    ctx.fillStyle = evo >= 3 ? '#7b68ee' : '#5f8fad';
+    ctx.beginPath();
+    ctx.moveTo(-6*S, -17*S);
+    ctx.quadraticCurveTo(4*S, -38*S, 14*S, -17*S);
+    ctx.closePath();
+    ctx.fill();
+    // Pectoral fin
+    ctx.fillStyle = evo >= 3 ? '#8878ce' : '#5a7f9a';
+    ctx.beginPath();
+    ctx.moveTo(10*S, 6*S);
+    ctx.quadraticCurveTo(22*S, 20*S, 8*S, 18*S);
+    ctx.closePath();
+    ctx.fill();
+    // Eye
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(16*S, -4*S, 5*S, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#222';
+    ctx.beginPath(); ctx.arc(17.5*S, -4*S, 2.8*S, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(18.5*S, -5.5*S, 1.2*S, 0, Math.PI*2); ctx.fill();
+    // Mouth
+    ctx.strokeStyle = evo >= 3 ? '#6a5acd' : '#2c5a7a';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(26*S, 2*S, 5*S, -0.3, 0.5);
+    ctx.stroke();
   }
 
   /* ── Skin: Volleyball ── */
