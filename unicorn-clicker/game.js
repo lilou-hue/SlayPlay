@@ -444,13 +444,44 @@
     }
   }
 
-  /* ────────────────── Drawing: Unicorn ────────────────── */
+  /* ────────────────── Drawing helpers ────────────────── */
+  // Draw a filled + outlined ellipse
+  function chibiEllipse(x, y, rx, ry, fill, outline, lw) {
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (outline) {
+      ctx.strokeStyle = outline;
+      ctx.lineWidth = lw || 2.5;
+      ctx.stroke();
+    }
+  }
+
+  // 4-point star helper for sparkles
+  function drawStar4(x, y, r, rot) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot || 0);
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      const d = i % 2 === 0 ? r : r * 0.3;
+      if (i === 0) ctx.moveTo(Math.cos(a) * d, Math.sin(a) * d);
+      else ctx.lineTo(Math.cos(a) * d, Math.sin(a) * d);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  /* ────────────────── Drawing: Unicorn (Chibi) ────────────────── */
   function drawUnicorn() {
     const evo = state.evolution;
     const cx = UNICORN_X;
-    const cy = UNICORN_Y + Math.sin(gameTime * 2) * 6; // idle bob
+    const cy = UNICORN_Y + Math.sin(gameTime * 2) * 6;
+    const OL = '#3d2244'; // main outline color
 
-    // Squash-and-stretch
     const sq = squash > 0 ? squash : 0;
     const scaleX = 1 + sq * 0.15;
     const scaleY = 1 - sq * 0.12;
@@ -459,387 +490,441 @@
     ctx.translate(cx, cy);
     ctx.scale(scaleX, scaleY);
 
-    const bodyScale = 1 + evo * 0.12;
+    const S = 1 + evo * 0.1; // overall scale per evolution
 
-    // Aura for high evolutions
+    // ── Aura (evo 3+) ──
     if (evo >= 3) {
-      const ag = ctx.createRadialGradient(0, 0, 10, 0, 0, 80 * bodyScale);
-      ag.addColorStop(0, 'rgba(255,200,255,0.15)');
-      ag.addColorStop(0.5, `rgba(${evo >= 4 ? '255,215,0' : '180,100,255'},0.07)`);
-      ag.addColorStop(1, 'rgba(255,200,255,0)');
+      const ag = ctx.createRadialGradient(0, -10 * S, 5, 0, -10 * S, 90 * S);
+      ag.addColorStop(0, evo >= 4 ? 'rgba(255,215,0,0.15)' : 'rgba(200,160,255,0.15)');
+      ag.addColorStop(0.6, evo >= 4 ? 'rgba(255,215,0,0.05)' : 'rgba(180,100,255,0.05)');
+      ag.addColorStop(1, 'transparent');
       ctx.fillStyle = ag;
       ctx.beginPath();
-      ctx.arc(0, 0, 80 * bodyScale, 0, Math.PI * 2);
+      ctx.arc(0, -10 * S, 90 * S, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    // Fart God cloud throne (fluffy layered clouds)
+    // ── Fart God cloud throne ──
     if (evo >= 4) {
       for (let i = 0; i < 5; i++) {
         const angle = (i / 5) * Math.PI * 2 + gameTime * 0.3;
-        const r = 60 + Math.sin(gameTime + i) * 10;
-        const cx = Math.cos(angle) * r;
-        const cy = Math.sin(angle) * r * 0.5 + 30;
+        const r = 65 + Math.sin(gameTime + i) * 10;
+        const ccx = Math.cos(angle) * r;
+        const ccy = Math.sin(angle) * r * 0.4 + 25;
         const hue = (gameTime * 40 + i * 72) % 360;
-        // Fluffy cloud made of overlapping circles
-        const puffs = [
-          { dx: 0, dy: 0, rx: 16, ry: 10 },
-          { dx: -10, dy: 2, rx: 12, ry: 9 },
-          { dx: 10, dy: 2, rx: 12, ry: 9 },
-          { dx: -5, dy: -4, rx: 10, ry: 8 },
-          { dx: 5, dy: -4, rx: 10, ry: 8 },
-        ];
-        for (const pf of puffs) {
-          ctx.fillStyle = `hsla(${hue}, 80%, 75%, 0.15)`;
-          ctx.beginPath();
-          ctx.ellipse(cx + pf.dx, cy + pf.dy, pf.rx, pf.ry, 0, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        // Inner glow
-        ctx.fillStyle = `hsla(${hue}, 90%, 85%, 0.1)`;
-        ctx.beginPath();
-        ctx.ellipse(cx, cy - 2, 8, 5, 0, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.fillStyle = `hsla(${hue}, 75%, 80%, 0.2)`;
+        ctx.beginPath(); ctx.arc(ccx, ccy, 14, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(ccx - 9, ccy + 3, 11, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(ccx + 9, ccy + 3, 11, 0, Math.PI * 2); ctx.fill();
       }
     }
 
-    // Legs (rounded with shading)
-    const legColor = evo >= 3 ? '#c4b5fd' : '#f0c0d0';
-    const legDark = evo >= 3 ? '#9b8ae0' : '#daa0b8';
-    const hoofColor = evo >= 3 ? '#a78bfa' : '#d4a0b0';
-    const legW = 8 * bodyScale, legH = 30 * bodyScale;
-    const legY = 22 * bodyScale;
-    const legPositions = [-25, -12, 8, 20];
-    for (const lx of legPositions) {
-      const x = lx * bodyScale;
-      // Leg body (rounded rect)
-      const lg = ctx.createLinearGradient(x, legY, x + legW, legY);
-      lg.addColorStop(0, legColor);
-      lg.addColorStop(0.6, legColor);
-      lg.addColorStop(1, legDark);
-      ctx.fillStyle = lg;
-      ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(x, legY, legW, legH, [2, 2, 4, 4]);
-      else ctx.rect(x, legY, legW, legH);
-      ctx.fill();
-      // Hoof (rounded bottom)
-      ctx.fillStyle = hoofColor;
-      ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(x - 1, legY + legH - 6, legW + 2, 7, [0, 0, 4, 4]);
-      else ctx.rect(x - 1, legY + legH - 6, legW + 2, 7);
-      ctx.fill();
-      // Hoof shine
-      ctx.fillStyle = 'rgba(255,255,255,0.15)';
-      ctx.fillRect(x, legY + legH - 5, legW * 0.4, 3);
+    // ── Tail (fluffy filled rainbow puffs) ──
+    const tailX = -22 * S, tailY = 8 * S;
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 6; i++) {
+      const hue = (i * 50 + gameTime * 60) % 360;
+      const tx = tailX - 12 * i - Math.sin(gameTime * 2.5 + i * 0.7) * 6;
+      const ty = tailY - 8 + Math.cos(gameTime * 2 + i * 0.5) * 8 + i * 2;
+      const tr = (8 - i * 0.5) * S;
+      // Fluffy puff
+      ctx.fillStyle = `hsla(${hue}, 80%, 62%, 0.85)`;
+      ctx.beginPath(); ctx.arc(tx, ty, tr, 0, Math.PI * 2); ctx.fill();
+      // Outline
+      ctx.strokeStyle = `hsla(${hue}, 60%, 40%, 0.5)`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(tx, ty, tr, 0, Math.PI * 2); ctx.stroke();
+      // Highlight
+      ctx.fillStyle = `hsla(${hue}, 90%, 85%, 0.5)`;
+      ctx.beginPath(); ctx.arc(tx - tr * 0.25, ty - tr * 0.3, tr * 0.35, 0, Math.PI * 2); ctx.fill();
     }
+    ctx.lineCap = 'butt';
 
-    // Body
-    const bodyW = 45 * bodyScale, bodyH = 30 * bodyScale;
+    // ── Back legs (stubby chibi) ──
+    const legCol = evo >= 3 ? '#c8b8f8' : '#f5c8d8';
+    const legShade = evo >= 3 ? '#a890d8' : '#e0a8c0';
+    const legOL = evo >= 3 ? '#6b50a0' : OL;
+    const legW = 10 * S, legH = 16 * S;
+    // Back-left
+    chibiEllipse(-15 * S, 26 * S, legW / 2, legH / 2, legShade, legOL, 2);
+    // Back-right
+    chibiEllipse(10 * S, 26 * S, legW / 2, legH / 2, legShade, legOL, 2);
+
+    // ── Body (small round chibi body) ──
+    const bodyW = 28 * S, bodyH = 22 * S;
+    const bodyY = 12 * S;
     if (evo >= 3) {
-      // Cosmic body — starfield fill
-      const bg = ctx.createRadialGradient(-5, -5, 5, 0, 0, bodyW);
-      bg.addColorStop(0, '#1a0533');
-      bg.addColorStop(0.5, '#2d1b69');
-      bg.addColorStop(1, '#0f0a2a');
+      const bg = ctx.createRadialGradient(-3 * S, bodyY - 4 * S, 3, 0, bodyY, bodyW);
+      bg.addColorStop(0, '#2a1060');
+      bg.addColorStop(0.6, '#1a0840');
+      bg.addColorStop(1, '#0f0528');
       ctx.fillStyle = bg;
     } else {
-      const bg = ctx.createRadialGradient(-5, -5, 5, 0, 0, bodyW);
-      bg.addColorStop(0, '#fff0f5');
-      bg.addColorStop(1, '#f8b4c8');
+      const bg = ctx.createRadialGradient(-4 * S, bodyY - 5 * S, 3, 0, bodyY, bodyW);
+      bg.addColorStop(0, '#fff5f9');
+      bg.addColorStop(0.5, '#ffd8e8');
+      bg.addColorStop(1, '#f0a8c0');
       ctx.fillStyle = bg;
     }
     ctx.beginPath();
-    ctx.ellipse(0, 5, bodyW, bodyH, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, bodyY, bodyW, bodyH, 0, 0, Math.PI * 2);
     ctx.fill();
-
-    // Body highlight (top-left shimmer)
-    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    // Body outline
+    ctx.strokeStyle = evo >= 3 ? '#5030a0' : OL;
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.ellipse(-bodyW * 0.25, 5 - bodyH * 0.3, bodyW * 0.5, bodyH * 0.35, -0.3, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Body outline glow
-    ctx.strokeStyle = evo >= 3 ? 'rgba(180,150,255,0.15)' : 'rgba(255,200,220,0.2)';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.ellipse(0, 5, bodyW, bodyH, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, bodyY, bodyW, bodyH, 0, 0, Math.PI * 2);
     ctx.stroke();
+    // Body shading highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.beginPath();
+    ctx.ellipse(-bodyW * 0.2, bodyY - bodyH * 0.35, bodyW * 0.5, bodyH * 0.3, -0.3, 0, Math.PI * 2);
+    ctx.fill();
+    // Body bottom shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.06)';
+    ctx.beginPath();
+    ctx.ellipse(0, bodyY + bodyH * 0.5, bodyW * 0.7, bodyH * 0.2, 0, 0, Math.PI * 2);
+    ctx.fill();
 
-    // Body stars for cosmic+
+    // Body stars (cosmic evo)
     if (evo >= 3) {
-      for (let i = 0; i < 12; i++) {
-        const a = (i / 12) * Math.PI * 2 + gameTime * 0.5;
-        const r = 10 + (i % 3) * 10;
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * Math.PI * 2 + gameTime * 0.5;
+        const r = 6 + (i % 3) * 6;
         const sx = Math.cos(a) * r;
-        const sy = Math.sin(a) * r * 0.6 + 5;
+        const sy = bodyY + Math.sin(a) * r * 0.6;
         ctx.fillStyle = `rgba(255,255,255,${0.4 + Math.sin(gameTime * 3 + i) * 0.3})`;
         ctx.beginPath();
-        ctx.arc(sx, sy, 1 + Math.random(), 0, Math.PI * 2);
+        ctx.arc(sx, sy, 1.2, 0, Math.PI * 2);
         ctx.fill();
       }
     }
 
-    // Wings (evolution 2+) with feather detail
+    // ── Front legs (stubby chibi, drawn on top of body) ──
+    // Front-left
+    chibiEllipse(-10 * S, 28 * S, legW / 2, legH / 2, legCol, legOL, 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.beginPath(); ctx.ellipse(-10 * S - 1, 26 * S, legW * 0.25, legH * 0.25, 0, 0, Math.PI * 2); ctx.fill();
+    // Front-right
+    chibiEllipse(15 * S, 28 * S, legW / 2, legH / 2, legCol, legOL, 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.beginPath(); ctx.ellipse(15 * S - 1, 26 * S, legW * 0.25, legH * 0.25, 0, 0, Math.PI * 2); ctx.fill();
+
+    // ── Wings (evo 2+) — cute angel wings ──
     if (evo >= 2) {
-      const wingFlap = Math.sin(gameTime * 4) * 15;
-      const wingBase = evo >= 3 ? [180,150,255] : [255,220,240];
+      const wingFlap = Math.sin(gameTime * 3.5) * 20;
+      const wc = evo >= 3 ? [190, 170, 255] : [255, 220, 240];
 
       // Left wing
       ctx.save();
-      ctx.translate(-10, -20 * bodyScale);
-      ctx.rotate((-30 + wingFlap) * Math.PI / 180);
-      // Wing fill
-      ctx.fillStyle = `rgba(${wingBase},0.5)`;
-      ctx.beginPath();
-      ctx.ellipse(0, -15, 15 * bodyScale, 35 * bodyScale, -0.2, 0, Math.PI * 2);
-      ctx.fill();
-      // Feather lines
-      ctx.strokeStyle = `rgba(${wingBase},0.35)`;
-      ctx.lineWidth = 1;
-      for (let f = 0; f < 5; f++) {
-        const fy = -15 - 20 * bodyScale + f * (12 * bodyScale);
+      ctx.translate(-18 * S, -8 * S);
+      ctx.rotate((-40 + wingFlap) * Math.PI / 180);
+      // Feathers (3 layered ellipses)
+      for (let f = 0; f < 3; f++) {
+        ctx.fillStyle = `rgba(${wc[0]},${wc[1]},${wc[2]},${0.7 - f * 0.15})`;
         ctx.beginPath();
-        ctx.moveTo(0, fy);
-        ctx.quadraticCurveTo(-10 * bodyScale, fy + 6 * bodyScale, -14 * bodyScale, fy + 3 * bodyScale);
+        ctx.ellipse(-6 * S - f * 5, -12 * S + f * 4, 8 * S, 18 * S - f * 3, -0.5 + f * 0.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = `rgba(${wc[0] - 40},${wc[1] - 40},${wc[2] - 20},0.3)`;
+        ctx.lineWidth = 1.5;
         ctx.stroke();
       }
-      // Wing edge highlight
-      ctx.strokeStyle = `rgba(255,255,255,0.15)`;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.ellipse(0, -15, 15 * bodyScale, 35 * bodyScale, -0.2, 0, Math.PI * 2);
-      ctx.stroke();
+      // Wing highlight
+      ctx.fillStyle = 'rgba(255,255,255,0.2)';
+      ctx.beginPath(); ctx.ellipse(-8 * S, -16 * S, 5 * S, 8 * S, -0.3, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
 
       // Right wing
       ctx.save();
-      ctx.translate(10, -20 * bodyScale);
-      ctx.rotate((30 - wingFlap) * Math.PI / 180);
-      ctx.fillStyle = `rgba(${wingBase},0.4)`;
-      ctx.beginPath();
-      ctx.ellipse(0, -15, 12 * bodyScale, 30 * bodyScale, 0.2, 0, Math.PI * 2);
-      ctx.fill();
-      // Feather lines
-      ctx.strokeStyle = `rgba(${wingBase},0.3)`;
-      ctx.lineWidth = 1;
-      for (let f = 0; f < 4; f++) {
-        const fy = -15 - 16 * bodyScale + f * (10 * bodyScale);
+      ctx.translate(18 * S, -8 * S);
+      ctx.rotate((40 - wingFlap) * Math.PI / 180);
+      for (let f = 0; f < 3; f++) {
+        ctx.fillStyle = `rgba(${wc[0]},${wc[1]},${wc[2]},${0.6 - f * 0.12})`;
         ctx.beginPath();
-        ctx.moveTo(0, fy);
-        ctx.quadraticCurveTo(8 * bodyScale, fy + 5 * bodyScale, 11 * bodyScale, fy + 2 * bodyScale);
+        ctx.ellipse(6 * S + f * 5, -12 * S + f * 4, 8 * S, 18 * S - f * 3, 0.5 - f * 0.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = `rgba(${wc[0] - 40},${wc[1] - 40},${wc[2] - 20},0.3)`;
+        ctx.lineWidth = 1.5;
         ctx.stroke();
       }
-      ctx.strokeStyle = `rgba(255,255,255,0.12)`;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.ellipse(0, -15, 12 * bodyScale, 30 * bodyScale, 0.2, 0, Math.PI * 2);
-      ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.15)';
+      ctx.beginPath(); ctx.ellipse(8 * S, -16 * S, 5 * S, 8 * S, 0.3, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     }
 
-    // Tail (rainbow, thicker with rounded caps and glow)
-    const tailBaseX = -bodyW + 5;
-    const tailBaseY = 5;
-    ctx.lineCap = 'round';
-    for (let i = 0; i < 6; i++) {
-      const hue = (i * 50 + gameTime * 60) % 360;
-      ctx.strokeStyle = `hsl(${hue}, 85%, 60%)`;
-      ctx.lineWidth = 4 - i * 0.3;
-      ctx.shadowColor = `hsl(${hue}, 90%, 60%)`;
-      ctx.shadowBlur = 4;
-      ctx.beginPath();
-      ctx.moveTo(tailBaseX, tailBaseY + i * 3 - 7);
-      ctx.bezierCurveTo(
-        tailBaseX - 20 - i * 3, tailBaseY - 20 + Math.sin(gameTime * 3 + i) * 8,
-        tailBaseX - 35 - i * 2, tailBaseY + 10 + Math.cos(gameTime * 2 + i) * 10,
-        tailBaseX - 42 - i * 4, tailBaseY - 5 + Math.sin(gameTime * 2.5 + i * 0.5) * 15
-      );
-      ctx.stroke();
-    }
-    ctx.shadowBlur = 0;
-    ctx.lineCap = 'butt';
+    // ── Head (HUGE chibi head — ~55% of character) ──
+    const headR = 36 * S;
+    const headY = -20 * S;
+    // Head shadow on body
+    ctx.fillStyle = 'rgba(0,0,0,0.05)';
+    ctx.beginPath();
+    ctx.ellipse(0, bodyY - bodyH * 0.2, headR * 0.8, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
 
-    // Head
-    const headX = 30 * bodyScale, headY = -18 * bodyScale;
     if (evo >= 3) {
-      ctx.fillStyle = '#1a0533';
+      const hg = ctx.createRadialGradient(-5 * S, headY - 6 * S, 5, 0, headY, headR);
+      hg.addColorStop(0, '#2a1268');
+      hg.addColorStop(0.6, '#1a0a48');
+      hg.addColorStop(1, '#10062a');
+      ctx.fillStyle = hg;
     } else {
-      const hg = ctx.createRadialGradient(headX - 3, headY - 3, 3, headX, headY, 18 * bodyScale);
-      hg.addColorStop(0, '#fff5f8');
+      const hg = ctx.createRadialGradient(-5 * S, headY - 8 * S, 5, 0, headY, headR);
+      hg.addColorStop(0, '#fff8fa');
+      hg.addColorStop(0.4, '#ffe8f0');
       hg.addColorStop(1, '#f0b0c8');
       ctx.fillStyle = hg;
     }
     ctx.beginPath();
-    ctx.ellipse(headX, headY, 18 * bodyScale, 16 * bodyScale, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, headY, headR, headR * 0.92, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Head outline
+    ctx.strokeStyle = evo >= 3 ? '#4020a0' : OL;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(0, headY, headR, headR * 0.92, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    // Head highlight (top-left soft glow)
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.beginPath();
+    ctx.ellipse(-headR * 0.25, headY - headR * 0.35, headR * 0.45, headR * 0.25, -0.3, 0, Math.PI * 2);
+    ctx.fill();
+    // Head lower shadow
+    ctx.fillStyle = evo >= 3 ? 'rgba(20,0,60,0.08)' : 'rgba(200,120,160,0.08)';
+    ctx.beginPath();
+    ctx.ellipse(0, headY + headR * 0.5, headR * 0.7, headR * 0.2, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Mane (rainbow, thicker with glow and rounded caps)
-    ctx.lineCap = 'round';
+    // Head stars (cosmic)
+    if (evo >= 3) {
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2 + gameTime * 0.6;
+        const r = 12 + (i % 2) * 10;
+        ctx.fillStyle = `rgba(255,255,255,${0.35 + Math.sin(gameTime * 3 + i) * 0.25})`;
+        ctx.beginPath();
+        ctx.arc(Math.cos(a) * r, headY + Math.sin(a) * r * 0.7, 1.3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // ── Ear ──
+    const earX = -14 * S, earY = headY - 26 * S;
+    ctx.fillStyle = evo >= 3 ? '#1a0a48' : '#f5c0d5';
+    ctx.beginPath();
+    ctx.moveTo(earX + 8 * S, headY - 20 * S);
+    ctx.quadraticCurveTo(earX - 2 * S, earY - 10 * S, earX + 4 * S, earY);
+    ctx.quadraticCurveTo(earX + 14 * S, earY - 6 * S, earX + 12 * S, headY - 16 * S);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = evo >= 3 ? '#4020a0' : OL;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // Inner ear
+    ctx.fillStyle = evo >= 3 ? '#3820a0' : '#ffc0d8';
+    ctx.beginPath();
+    ctx.moveTo(earX + 9 * S, headY - 20 * S);
+    ctx.quadraticCurveTo(earX + 2 * S, earY - 4 * S, earX + 6 * S, earY + 4 * S);
+    ctx.quadraticCurveTo(earX + 12 * S, earY, earX + 11 * S, headY - 17 * S);
+    ctx.closePath();
+    ctx.fill();
+
+    // ── Mane (fluffy filled volumes) ──
     for (let i = 0; i < 7; i++) {
       const hue = (i * 45 + gameTime * 50) % 360;
-      ctx.strokeStyle = `hsl(${hue}, 80%, 55%)`;
-      ctx.lineWidth = 4.5 - i * 0.3;
-      ctx.shadowColor = `hsl(${hue}, 90%, 60%)`;
-      ctx.shadowBlur = 3;
-      const mx = headX - 10 + i * 2;
-      const my = headY - 14 * bodyScale;
+      const mx = -8 * S + i * 3 * S;
+      const my = headY - headR * 0.7 - Math.sin(gameTime * 2.5 + i * 0.8) * 4;
+      const mr = (7 - i * 0.3) * S;
+      // Filled puff
+      ctx.fillStyle = `hsl(${hue}, 78%, 58%)`;
       ctx.beginPath();
-      ctx.moveTo(mx, my);
-      ctx.bezierCurveTo(
-        mx - 8, my - 15 - Math.sin(gameTime * 3 + i * 0.8) * 8,
-        mx - 15 + i * 2, my - 5 + Math.cos(gameTime * 2.5 + i) * 6,
-        mx - 20 + i * 3, my + 5 + Math.sin(gameTime * 2 + i * 0.5) * 10
-      );
+      ctx.arc(mx - 6, my + i * 4 * S, mr, 0, Math.PI * 2);
+      ctx.fill();
+      // Outline
+      ctx.strokeStyle = `hsl(${hue}, 55%, 38%)`;
+      ctx.lineWidth = 1.5;
       ctx.stroke();
+      // Highlight
+      ctx.fillStyle = `hsla(${hue}, 90%, 80%, 0.5)`;
+      ctx.beginPath();
+      ctx.arc(mx - 6 - mr * 0.2, my + i * 4 * S - mr * 0.3, mr * 0.35, 0, Math.PI * 2);
+      ctx.fill();
     }
-    ctx.shadowBlur = 0;
-    ctx.lineCap = 'butt';
 
-    // Horn (with spiral grooves)
-    const hornX = headX + 8 * bodyScale, hornY = headY - 14 * bodyScale;
-    const hornLen = 22 * bodyScale;
-    const hg2 = ctx.createLinearGradient(hornX, hornY, hornX, hornY - hornLen);
-    hg2.addColorStop(0, '#ffd700');
-    hg2.addColorStop(0.5, evo >= 3 ? '#ffaa44' : '#ffe680');
-    hg2.addColorStop(1, evo >= 3 ? '#ff69b4' : '#fff8dc');
-    ctx.fillStyle = hg2;
+    // ── Horn (ornate with spiral) ──
+    const hornX = 6 * S, hornY = headY - headR * 0.85;
+    const hornLen = 28 * S;
+    const hornW = 7 * S;
+    // Horn shape
+    const hGrad = ctx.createLinearGradient(hornX, hornY, hornX, hornY - hornLen);
+    hGrad.addColorStop(0, '#ffd700');
+    hGrad.addColorStop(0.4, evo >= 3 ? '#ffaa44' : '#ffe680');
+    hGrad.addColorStop(1, evo >= 3 ? '#ff88cc' : '#fffae0');
+    ctx.fillStyle = hGrad;
     ctx.beginPath();
-    ctx.moveTo(hornX - 5, hornY);
-    ctx.lineTo(hornX + 1, hornY - hornLen);
-    ctx.lineTo(hornX + 5, hornY);
+    ctx.moveTo(hornX - hornW / 2, hornY);
+    ctx.quadraticCurveTo(hornX - hornW / 4, hornY - hornLen * 0.5, hornX, hornY - hornLen);
+    ctx.quadraticCurveTo(hornX + hornW / 4, hornY - hornLen * 0.5, hornX + hornW / 2, hornY);
     ctx.closePath();
     ctx.fill();
-    // Spiral grooves on horn
-    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-    ctx.lineWidth = 0.8;
+    // Horn outline
+    ctx.strokeStyle = '#b8860b';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // Spiral grooves
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 1;
     for (let g = 0; g < 5; g++) {
-      const t = (g + 0.5) / 5.5;
+      const t = (g + 0.5) / 6;
       const gy = hornY - hornLen * t;
-      const gw = 5 * (1 - t) + 1;
+      const gw = (hornW / 2) * (1 - t) + 1;
       ctx.beginPath();
       ctx.moveTo(hornX - gw, gy);
-      ctx.quadraticCurveTo(hornX, gy - 2.5, hornX + gw, gy);
+      ctx.quadraticCurveTo(hornX, gy - 3, hornX + gw, gy);
       ctx.stroke();
     }
-    // Horn edge highlight
-    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-    ctx.lineWidth = 0.8;
-    ctx.beginPath();
-    ctx.moveTo(hornX - 4, hornY);
-    ctx.lineTo(hornX + 1, hornY - hornLen + 1);
-    ctx.stroke();
     // Horn sparkle
-    const sparkleR = 2 + Math.sin(gameTime * 5) * 1;
+    const spkR = 3 + Math.sin(gameTime * 5) * 1.5;
     ctx.fillStyle = '#fff';
-    ctx.shadowColor = '#fff';
-    ctx.shadowBlur = 6;
-    ctx.beginPath();
-    ctx.arc(hornX + 1, hornY - hornLen + 4, sparkleR, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.shadowColor = '#ffd700';
+    ctx.shadowBlur = 10;
+    drawStar4(hornX, hornY - hornLen + 2, spkR, gameTime * 3);
     ctx.shadowBlur = 0;
 
-    // Glow on horn for evo 3+
+    // Glow ring (evo 3+)
     if (evo >= 3) {
-      ctx.save();
-      ctx.shadowBlur = 20;
-      ctx.shadowColor = '#ffd700';
-      ctx.fillStyle = 'rgba(255,215,0,0.3)';
+      const ringR = 12 + Math.sin(gameTime * 3) * 3;
+      ctx.strokeStyle = `rgba(255,215,0,${0.2 + Math.sin(gameTime * 4) * 0.1})`;
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.arc(hornX + 1, hornY - hornLen + 4, 8, 0, Math.PI * 2);
-      ctx.fill();
-      // Animated magic ring around horn tip
-      const ringR = 10 + Math.sin(gameTime * 3) * 3;
-      ctx.strokeStyle = `rgba(255,215,0,${0.15 + Math.sin(gameTime * 4) * 0.1})`;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(hornX + 1, hornY - hornLen + 4, ringR, 0, Math.PI * 2);
+      ctx.arc(hornX, hornY - hornLen + 2, ringR, 0, Math.PI * 2);
       ctx.stroke();
-      ctx.restore();
     }
 
-    // Ear
-    ctx.fillStyle = evo >= 3 ? '#2a1050' : '#f0b8cc';
-    ctx.beginPath();
-    ctx.moveTo(headX + 2 * bodyScale, headY - 12 * bodyScale);
-    ctx.lineTo(headX - 3 * bodyScale, headY - 22 * bodyScale);
-    ctx.lineTo(headX + 7 * bodyScale, headY - 16 * bodyScale);
-    ctx.closePath();
-    ctx.fill();
-    // Inner ear
-    ctx.fillStyle = evo >= 3 ? '#4a2080' : '#ffc8d8';
-    ctx.beginPath();
-    ctx.moveTo(headX + 2 * bodyScale, headY - 13 * bodyScale);
-    ctx.lineTo(headX - 1 * bodyScale, headY - 20 * bodyScale);
-    ctx.lineTo(headX + 5 * bodyScale, headY - 16 * bodyScale);
-    ctx.closePath();
-    ctx.fill();
-
-    // Eye (with blink animation)
-    const eyeX = headX + 8 * bodyScale, eyeY = headY - 2;
-    const blinkCycle = gameTime % 4; // blink every ~4 seconds
+    // ── Eyes (BIG anime chibi eyes) ──
+    const eyeSpacing = 13 * S;
+    const eyeY = headY + 2 * S;
+    const eyeRx = 11 * S, eyeRy = 13 * S;
+    const blinkCycle = gameTime % 4;
     const isBlinking = blinkCycle > 3.85 && blinkCycle < 3.95;
-    const eyeOpenness = isBlinking ? 0.15 : 1;
-    // Sclera
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.ellipse(eyeX, eyeY, 6, 7 * eyeOpenness, 0, 0, Math.PI * 2);
-    ctx.fill();
-    if (!isBlinking) {
-      // Iris
-      ctx.fillStyle = evo >= 3 ? '#7c3aed' : '#2d1b69';
-      ctx.beginPath();
-      ctx.arc(eyeX + 1.5, eyeY, 3.5, 0, Math.PI * 2);
-      ctx.fill();
-      // Highlight
+    const eyeOpen = isBlinking ? 0.08 : 1;
+
+    for (let side = -1; side <= 1; side += 2) {
+      const ex = side * eyeSpacing;
+
+      // Sclera (white)
       ctx.fillStyle = '#fff';
       ctx.beginPath();
-      ctx.arc(eyeX + 3, eyeY - 2, 1.5, 0, Math.PI * 2);
+      ctx.ellipse(ex, eyeY, eyeRx, eyeRy * eyeOpen, 0, 0, Math.PI * 2);
       ctx.fill();
-      // Small secondary highlight
-      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      // Eye outline
+      ctx.strokeStyle = OL;
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.arc(eyeX, eyeY + 1.5, 0.8, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.ellipse(ex, eyeY, eyeRx, eyeRy * eyeOpen, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      if (!isBlinking) {
+        // Iris (gradient)
+        const irisR = 8 * S;
+        const irisY = eyeY + 1 * S;
+        const irisGrad = ctx.createRadialGradient(ex, irisY - irisR * 0.3, 1, ex, irisY, irisR);
+        if (evo >= 3) {
+          irisGrad.addColorStop(0, '#c084fc');
+          irisGrad.addColorStop(0.5, '#7c3aed');
+          irisGrad.addColorStop(1, '#4c1d95');
+        } else {
+          irisGrad.addColorStop(0, '#a080e0');
+          irisGrad.addColorStop(0.5, '#6040b0');
+          irisGrad.addColorStop(1, '#2d1b69');
+        }
+        ctx.fillStyle = irisGrad;
+        ctx.beginPath();
+        ctx.arc(ex, irisY, irisR, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Pupil
+        ctx.fillStyle = '#0a0018';
+        ctx.beginPath();
+        ctx.arc(ex, irisY + 1, irisR * 0.55, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Main highlight (large, top-right)
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.ellipse(ex + 3 * S * side * 0.5, irisY - 3.5 * S, 3.5 * S, 4 * S, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Secondary highlight (small, bottom-left)
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.beginPath();
+        ctx.arc(ex - 2 * S * side * 0.5, irisY + 3 * S, 2 * S, 0, Math.PI * 2);
+        ctx.fill();
+        // Tiny sparkle highlight
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(ex + 1.5 * S, irisY - 5 * S, 1.2 * S, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Upper eyelash (thick arc)
+        ctx.strokeStyle = OL;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(ex, eyeY, eyeRx, Math.PI + 0.3, Math.PI * 2 - 0.3);
+        ctx.stroke();
+        // Lash tips (little spikes at corners)
+        const lashLen = 4 * S;
+        ctx.lineWidth = 2;
+        // Outer lash
+        const lx1 = ex + eyeRx * Math.cos(-0.3);
+        const ly1 = eyeY + eyeRy * Math.sin(-0.3);
+        ctx.beginPath();
+        ctx.moveTo(lx1, ly1);
+        ctx.lineTo(lx1 + side * lashLen * 0.7, ly1 - lashLen);
+        ctx.stroke();
+        // Middle lash
+        const lx2 = ex + eyeRx * 0.7 * side;
+        const ly2 = eyeY - eyeRy * 0.8;
+        ctx.beginPath();
+        ctx.moveTo(lx2, ly2);
+        ctx.lineTo(lx2 + side * lashLen * 0.3, ly2 - lashLen * 0.9);
+        ctx.stroke();
+      }
     }
 
-    // Nose/nostril
-    ctx.fillStyle = evo >= 3 ? 'rgba(160,100,200,0.3)' : 'rgba(200,120,140,0.35)';
+    // ── Blush (rosy circles on cheeks) ──
+    ctx.fillStyle = 'rgba(255,130,170,0.3)';
+    chibiEllipse(-eyeSpacing - 6 * S, eyeY + 10 * S, 8 * S, 5 * S, 'rgba(255,130,170,0.3)', null);
+    chibiEllipse(eyeSpacing + 6 * S, eyeY + 10 * S, 8 * S, 5 * S, 'rgba(255,130,170,0.3)', null);
+
+    // ── Mouth (tiny cute w-shape) ──
+    const mouthY = eyeY + 14 * S;
+    ctx.strokeStyle = evo >= 3 ? '#6040a0' : '#c06080';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.ellipse(headX + 16 * bodyScale, headY + 3, 2.5, 1.8, 0, 0, Math.PI * 2);
+    ctx.moveTo(-4 * S, mouthY);
+    ctx.quadraticCurveTo(-2 * S, mouthY + 3 * S, 0, mouthY + 1 * S);
+    ctx.quadraticCurveTo(2 * S, mouthY + 3 * S, 4 * S, mouthY);
+    ctx.stroke();
+    ctx.lineCap = 'butt';
+
+    // ── Nose (tiny dot) ──
+    ctx.fillStyle = evo >= 3 ? 'rgba(160,100,220,0.4)' : 'rgba(220,140,170,0.5)';
+    ctx.beginPath();
+    ctx.arc(0, mouthY - 4 * S, 1.5 * S, 0, Math.PI * 2);
     ctx.fill();
 
-    // Blush
-    ctx.fillStyle = 'rgba(255,150,180,0.35)';
-    ctx.beginPath();
-    ctx.ellipse(headX + 14 * bodyScale, headY + 6, 7, 4, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Sparkle Pony+ glitter (4-point star shapes)
+    // ── Sparkle Pony+ glitter (orbiting 4-point stars) ──
     if (evo >= 1) {
-      for (let i = 0; i < 4 + evo * 2; i++) {
-        const angle = gameTime * 2 + (i / (4 + evo * 2)) * Math.PI * 2;
-        const dist = 40 + Math.sin(gameTime + i) * 15;
+      const count = 4 + evo * 2;
+      for (let i = 0; i < count; i++) {
+        const angle = gameTime * 1.8 + (i / count) * Math.PI * 2;
+        const dist = 50 * S + Math.sin(gameTime + i) * 10;
         const sx = Math.cos(angle) * dist;
-        const sy = Math.sin(angle) * dist * 0.6;
-        const sparkleSize = 2.5 + Math.sin(gameTime * 4 + i * 2) * 1.5;
+        const sy = headY + Math.sin(angle) * dist * 0.5;
+        const ss = 3 + Math.sin(gameTime * 4 + i * 2) * 1.5;
         const hue = (i * 60 + gameTime * 30) % 360;
-        const alpha = 0.5 + Math.sin(gameTime * 3 + i) * 0.3;
+        const alpha = 0.6 + Math.sin(gameTime * 3 + i) * 0.3;
         ctx.fillStyle = `hsla(${hue}, 90%, 75%, ${alpha})`;
-        // Draw 4-point star
-        const rot = gameTime * 2 + i;
-        ctx.save();
-        ctx.translate(sx, sy);
-        ctx.rotate(rot);
-        ctx.beginPath();
-        for (let p = 0; p < 8; p++) {
-          const a = (p / 8) * Math.PI * 2;
-          const r = p % 2 === 0 ? sparkleSize : sparkleSize * 0.3;
-          if (p === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
-          else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
-        }
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
+        drawStar4(sx, sy, ss, gameTime * 2 + i);
       }
     }
 
