@@ -145,6 +145,8 @@ let hills = [];
 let trees = [];
 let grassBlades = [];
 let feathersSpawned = false;
+let flowers = [];
+let butterflies = [];
 
 /* --- Drip state for top-pipe water drops --- */
 let dripState = {
@@ -189,6 +191,41 @@ function initGrass() {
       x: x,
       height: 4 + Math.random() * 8,
       lean: (Math.random() - 0.5) * 3,
+    });
+  }
+}
+
+/* --- Init flowers/mushrooms on ground edge --- */
+function initFlowers() {
+  flowers = [];
+  const groundTop = canvas.height - 90;
+  const count = 5 + Math.floor(Math.random() * 4);
+  for (let i = 0; i < count; i++) {
+    flowers.push({
+      x: 20 + Math.random() * (canvas.width - 40),
+      y: groundTop,
+      type: Math.random() > 0.3 ? "flower" : "mushroom",
+      size: 3 + Math.random() * 3,
+      color: Math.random() > 0.5 ? "#ff6b8a" : "#ffcc4d",
+      stemHeight: 6 + Math.random() * 8,
+    });
+  }
+}
+
+/* --- Init butterflies --- */
+function initButterflies() {
+  butterflies = [];
+  for (let i = 0; i < 3; i++) {
+    butterflies.push({
+      x: 50 + Math.random() * (canvas.width - 100),
+      y: 80 + Math.random() * (canvas.height * 0.35),
+      phase: Math.random() * Math.PI * 2,
+      wingPhase: Math.random() * Math.PI * 2,
+      speedX: 8 + Math.random() * 15,
+      speedY: 5 + Math.random() * 10,
+      size: 2.5 + Math.random() * 1.5,
+      color1: ["#ff6b8a", "#b388ff", "#64b5f6", "#ffcc4d"][Math.floor(Math.random() * 4)],
+      color2: ["#ffa4b8", "#d1c4e9", "#90caf9", "#ffe082"][Math.floor(Math.random() * 4)],
     });
   }
 }
@@ -267,6 +304,8 @@ const resetGame = () => {
   initTrees();
   initGrass();
   initLeaves();
+  initFlowers();
+  initButterflies();
   draw();
 };
 
@@ -467,6 +506,78 @@ const drawBackground = () => {
     context.moveTo(g.x + 1.5, groundTop);
     context.lineTo(g.x + g.lean + 2, groundTop - g.height * 0.7);
     context.stroke();
+  }
+
+  /* Flowers and mushrooms on ground */
+  for (const fl of flowers) {
+    if (fl.type === "flower") {
+      /* Stem */
+      context.strokeStyle = "#3aad55";
+      context.lineWidth = 1.5;
+      context.beginPath();
+      context.moveTo(fl.x, fl.y);
+      context.lineTo(fl.x, fl.y - fl.stemHeight);
+      context.stroke();
+      /* Petals */
+      context.fillStyle = fl.color;
+      const petalR = fl.size * 0.6;
+      for (let p = 0; p < 5; p++) {
+        const angle = (p / 5) * Math.PI * 2;
+        const px = fl.x + Math.cos(angle) * fl.size * 0.5;
+        const py = (fl.y - fl.stemHeight) + Math.sin(angle) * fl.size * 0.5;
+        context.beginPath();
+        context.arc(px, py, petalR, 0, Math.PI * 2);
+        context.fill();
+      }
+      /* Center */
+      context.fillStyle = "#ffee88";
+      context.beginPath();
+      context.arc(fl.x, fl.y - fl.stemHeight, fl.size * 0.3, 0, Math.PI * 2);
+      context.fill();
+    } else {
+      /* Mushroom stem */
+      context.fillStyle = "#e8dcc8";
+      context.fillRect(fl.x - 1.5, fl.y - fl.stemHeight * 0.5, 3, fl.stemHeight * 0.5);
+      /* Mushroom cap */
+      context.fillStyle = "#cc4444";
+      context.beginPath();
+      context.ellipse(fl.x, fl.y - fl.stemHeight * 0.5, fl.size * 1.2, fl.size * 0.8, 0, Math.PI, Math.PI * 2);
+      context.fill();
+      /* Dots on cap */
+      context.fillStyle = "rgba(255,255,255,0.6)";
+      context.beginPath();
+      context.arc(fl.x - 1, fl.y - fl.stemHeight * 0.5 - fl.size * 0.3, 1, 0, Math.PI * 2);
+      context.fill();
+      context.beginPath();
+      context.arc(fl.x + 1.5, fl.y - fl.stemHeight * 0.5 - fl.size * 0.5, 0.8, 0, Math.PI * 2);
+      context.fill();
+    }
+  }
+
+  /* Butterflies */
+  for (const bf of butterflies) {
+    context.save();
+    context.translate(bf.x, bf.y);
+    const wingFlap = Math.sin(bf.wingPhase) * 0.6;
+    /* Left wing */
+    context.fillStyle = bf.color1;
+    context.globalAlpha = 0.7;
+    context.beginPath();
+    context.ellipse(-bf.size * 0.6, 0, bf.size, bf.size * 0.6 * (0.4 + Math.abs(wingFlap)), 0.3 + wingFlap, 0, Math.PI * 2);
+    context.fill();
+    /* Right wing */
+    context.fillStyle = bf.color2;
+    context.beginPath();
+    context.ellipse(bf.size * 0.6, 0, bf.size, bf.size * 0.6 * (0.4 + Math.abs(wingFlap)), -0.3 - wingFlap, 0, Math.PI * 2);
+    context.fill();
+    /* Body */
+    context.globalAlpha = 0.8;
+    context.fillStyle = "#333";
+    context.beginPath();
+    context.ellipse(0, 0, 1, bf.size * 0.5, 0, 0, Math.PI * 2);
+    context.fill();
+    context.globalAlpha = 1;
+    context.restore();
   }
 };
 
@@ -939,6 +1050,19 @@ const update = (deltaSeconds) => {
       leaf.x = canvas.width + 10;
       leaf.y = 60 + Math.random() * (canvas.height - 160);
     }
+  }
+
+  /* Update butterflies */
+  for (const bf of butterflies) {
+    bf.phase += deltaSeconds * 1.5;
+    bf.wingPhase += deltaSeconds * 12;
+    bf.x += Math.sin(bf.phase) * bf.speedX * deltaSeconds;
+    bf.y += Math.cos(bf.phase * 0.7) * bf.speedY * deltaSeconds;
+    /* Wrap around */
+    if (bf.x < -20) bf.x = canvas.width + 20;
+    if (bf.x > canvas.width + 20) bf.x = -20;
+    if (bf.y < 40) bf.y = 40;
+    if (bf.y > canvas.height * 0.45) bf.y = canvas.height * 0.45;
   }
 
   /* Update drip animation */

@@ -170,6 +170,61 @@
         border: 1px solid rgba(255, 140, 50, 0.3);
       }
 
+      /* Hover glow borders */
+      .game-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 16px;
+        border: 2px solid transparent;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      .game-card:hover::before {
+        opacity: 1;
+      }
+
+      .game-card:hover .card-preview canvas {
+        filter: brightness(1.15);
+      }
+
+      .game-card:nth-child(1)::before { border-color: rgba(123, 228, 149, 0.5); box-shadow: 0 0 20px rgba(123, 228, 149, 0.15); }
+      .game-card:nth-child(2)::before { border-color: rgba(23, 205, 211, 0.5); box-shadow: 0 0 20px rgba(23, 205, 211, 0.15); }
+      .game-card:nth-child(3)::before { border-color: rgba(57, 255, 20, 0.5); box-shadow: 0 0 20px rgba(57, 255, 20, 0.15); }
+      .game-card:nth-child(4)::before { border-color: rgba(77, 201, 246, 0.5); box-shadow: 0 0 20px rgba(77, 201, 246, 0.15); }
+      .game-card:nth-child(5)::before { border-color: rgba(255, 140, 50, 0.5); box-shadow: 0 0 20px rgba(255, 140, 50, 0.15); }
+
+      /* Floating background stars */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+          radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.3), transparent),
+          radial-gradient(1px 1px at 25% 80%, rgba(255,255,255,0.2), transparent),
+          radial-gradient(1.5px 1.5px at 50% 30%, rgba(255,255,255,0.25), transparent),
+          radial-gradient(1px 1px at 70% 65%, rgba(255,255,255,0.2), transparent),
+          radial-gradient(1px 1px at 85% 10%, rgba(255,255,255,0.15), transparent),
+          radial-gradient(1.5px 1.5px at 35% 50%, rgba(255,255,255,0.2), transparent),
+          radial-gradient(1px 1px at 60% 90%, rgba(255,255,255,0.25), transparent),
+          radial-gradient(1px 1px at 90% 45%, rgba(255,255,255,0.15), transparent),
+          radial-gradient(1px 1px at 5% 55%, rgba(255,255,255,0.2), transparent),
+          radial-gradient(1px 1px at 45% 5%, rgba(255,255,255,0.2), transparent),
+          radial-gradient(1px 1px at 78% 88%, rgba(255,255,255,0.15), transparent),
+          radial-gradient(1px 1px at 15% 38%, rgba(255,255,255,0.2), transparent);
+        animation: starTwinkle 8s ease-in-out infinite alternate;
+      }
+
+      @keyframes starTwinkle {
+        0% { opacity: 0.6; }
+        50% { opacity: 1; }
+        100% { opacity: 0.7; }
+      }
+
       @media (max-width: 680px) {
         .games-grid {
           grid-template-columns: 1fr;
@@ -232,7 +287,7 @@
 
       <a href="/phantom-road/" class="game-card">
         <div class="card-preview phantom-preview">
-          <span>&#x1F3CE;</span>
+          <canvas id="phantomCanvas" width="360" height="200"></canvas>
         </div>
         <div class="card-body">
           <h2>Phantom Road</h2>
@@ -522,6 +577,135 @@
           const vg = x.createRadialGradient(W/2,H/2,H*0.2,W/2,H/2,H*0.8);
           vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,0.6)');
           x.fillStyle = vg; x.fillRect(0,0,W,H);
+
+          requestAnimationFrame(draw);
+        }
+        requestAnimationFrame(draw);
+      })();
+    })();
+
+      /* ─ Phantom Road Preview ─ */
+      (function() {
+        const c = document.getElementById('phantomCanvas');
+        if (!c) return;
+        const x = c.getContext('2d');
+        let t = 0;
+        const rainDrops = Array.from({length:40}, () => ({
+          x: Math.random()*W, y: Math.random()*H, speed: 3+Math.random()*4, len: 4+Math.random()*6
+        }));
+
+        function draw() {
+          t += 0.016;
+
+          /* Dark background */
+          const bg = x.createLinearGradient(0,0,0,H);
+          bg.addColorStop(0,'#0c0810'); bg.addColorStop(1,'#060408');
+          x.fillStyle = bg; x.fillRect(0,0,W,H);
+
+          /* Road */
+          const roadW = 130;
+          const rcx = W/2 + Math.sin(t*0.8)*30;
+          x.fillStyle = '#2a2a38';
+          x.fillRect(rcx - roadW/2, 0, roadW, H);
+
+          /* Road edge glow lines */
+          x.strokeStyle = '#ff8c32';
+          x.lineWidth = 2;
+          x.shadowColor = '#ff8c32';
+          x.shadowBlur = 10;
+          x.beginPath(); x.moveTo(rcx - roadW/2, 0); x.lineTo(rcx - roadW/2, H); x.stroke();
+          x.beginPath(); x.moveTo(rcx + roadW/2, 0); x.lineTo(rcx + roadW/2, H); x.stroke();
+          x.shadowBlur = 0;
+
+          /* Lane dashes */
+          x.setLineDash([10, 20]);
+          x.strokeStyle = 'rgba(255,140,50,0.25)';
+          x.lineWidth = 1.5;
+          const offset = (t * 80) % 30;
+          x.beginPath(); x.moveTo(rcx, -offset); x.lineTo(rcx, H); x.stroke();
+          x.setLineDash([]);
+
+          /* Oncoming traffic */
+          for (let i = 0; i < 2; i++) {
+            const ty = ((t * 100 + i * 140) % (H + 80)) - 40;
+            const tx = rcx + (i === 0 ? -25 : 22);
+            const colors = ['#44aaff','#ff4444'];
+            x.fillStyle = colors[i];
+            x.beginPath();
+            if (x.roundRect) { x.roundRect(tx-10, ty-18, 20, 36, 4); }
+            else { x.rect(tx-10, ty-18, 20, 36); }
+            x.fill();
+            /* Headlights */
+            x.fillStyle = '#ffe8a0';
+            x.shadowColor = '#ffe8a0';
+            x.shadowBlur = 6;
+            x.fillRect(tx-8, ty+14, 4, 3);
+            x.fillRect(tx+4, ty+14, 4, 3);
+            x.shadowBlur = 0;
+          }
+
+          /* Player car */
+          const carY = H * 0.7;
+          const carX = rcx + Math.sin(t*1.5)*15;
+          x.save(); x.translate(carX, carY);
+          /* Body */
+          const cg = x.createLinearGradient(-11, -20, 11, 20);
+          cg.addColorStop(0, '#ff6633'); cg.addColorStop(1, '#cc3311');
+          x.fillStyle = cg;
+          x.beginPath();
+          if (x.roundRect) { x.roundRect(-11, -20, 22, 40, 5); }
+          else { x.rect(-11, -20, 22, 40); }
+          x.fill();
+          /* Windshield */
+          x.fillStyle = 'rgba(100,180,255,0.4)';
+          x.fillRect(-8, -17, 16, 10);
+          /* Headlights */
+          x.fillStyle = '#ffe8a0';
+          x.shadowColor = '#ffe8a0'; x.shadowBlur = 8;
+          x.fillRect(-9, -20, 5, 3);
+          x.fillRect(4, -20, 5, 3);
+          x.shadowBlur = 0;
+          /* Rear lights */
+          x.fillStyle = '#ff2200';
+          x.shadowColor = '#ff2200'; x.shadowBlur = 6;
+          x.fillRect(-9, 17, 5, 3);
+          x.fillRect(4, 17, 5, 3);
+          x.shadowBlur = 0;
+          x.restore();
+
+          /* Headlight cone darkness overlay */
+          x.fillStyle = 'rgba(0,0,0,0.7)';
+          x.fillRect(0, 0, W, H);
+          x.save();
+          x.globalCompositeOperation = 'destination-out';
+          const cone = x.createRadialGradient(carX, carY - 20, 8, carX, carY - 80, 120);
+          cone.addColorStop(0, 'rgba(255,255,255,0.9)');
+          cone.addColorStop(0.5, 'rgba(255,255,255,0.5)');
+          cone.addColorStop(1, 'rgba(255,255,255,0)');
+          x.fillStyle = cone;
+          x.beginPath();
+          x.moveTo(carX - 10, carY - 20);
+          x.lineTo(carX - 80, -10);
+          x.lineTo(carX + 80, -10);
+          x.lineTo(carX + 10, carY - 20);
+          x.fill();
+          /* Car glow */
+          const cGlow = x.createRadialGradient(carX, carY, 8, carX, carY, 50);
+          cGlow.addColorStop(0, 'rgba(255,255,255,0.85)');
+          cGlow.addColorStop(1, 'rgba(255,255,255,0)');
+          x.fillStyle = cGlow;
+          x.fillRect(carX-50, carY-50, 100, 100);
+          x.globalCompositeOperation = 'source-over';
+          x.restore();
+
+          /* Rain */
+          x.strokeStyle = 'rgba(180,200,255,0.25)';
+          x.lineWidth = 1;
+          for (const d of rainDrops) {
+            d.y += d.speed;
+            if (d.y > H) { d.y = -d.len; d.x = Math.random()*W; }
+            x.beginPath(); x.moveTo(d.x, d.y); x.lineTo(d.x-0.5, d.y+d.len); x.stroke();
+          }
 
           requestAnimationFrame(draw);
         }
