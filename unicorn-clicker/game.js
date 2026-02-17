@@ -227,6 +227,8 @@
     squash = 0;
     shakeAmount = 0;
     shopOpen = false;
+    skinsOpen = false;
+    shopScroll = 0;
     confirmRestart = false;
     sparkleTimer = 0;
     spawnFloatingText(W / 2, H * 0.4, 'Fresh start!');
