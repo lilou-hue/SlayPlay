@@ -870,14 +870,14 @@
       ctx.stroke();
     }
 
-    // Front bangs — leaf-shaped sections hanging down over the forehead
-    const bangY = headY + headVR * 0.1;
+    // Front bangs — short leaf-shaped sections just below the hairline
+    const bangY = headY - headVR * 0.35; // start well above the eyes
     const bangs = [
-      { x: -headR * 0.68, len: 18, w: 16, pi: 0 },
-      { x: -headR * 0.35, len: 20, w: 17, pi: 1 },
-      { x:  headR * 0.0,  len: 19, w: 16, pi: 2 },
-      { x:  headR * 0.35, len: 17, w: 16, pi: 3 },
-      { x:  headR * 0.62, len: 14, w: 14, pi: 4 },
+      { x: -headR * 0.68, len: 8,  w: 16, pi: 0 },
+      { x: -headR * 0.35, len: 10, w: 17, pi: 1 },
+      { x:  headR * 0.0,  len: 9,  w: 16, pi: 2 },
+      { x:  headR * 0.35, len: 8,  w: 16, pi: 3 },
+      { x:  headR * 0.62, len: 6,  w: 14, pi: 4 },
     ];
 
     for (const b of bangs) {
