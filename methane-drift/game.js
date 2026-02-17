@@ -176,6 +176,10 @@ const defaultProgress = {
   unlockedSkins: ['default'],
   bestGhostTrail: [],
   noSymbiosisRecord: 0,
+  crushingPhasesThisRun: 0,
+  nearMissesThisRun: 0,
+  densitySurfsThisRun: 0,
+  bossesDefeatedThisRun: 0,
 };
 
 let progress = { ...defaultProgress };
