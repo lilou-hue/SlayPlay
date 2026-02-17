@@ -135,6 +135,9 @@
   const UNICORN_X = W * 0.48;
   const UNICORN_Y = H * 0.47;
   const UNICORN_RADIUS = 70 + 10; // hitbox
+  const CHAR_X = UNICORN_X;
+  const CHAR_Y = UNICORN_Y;
+  const CHAR_RADIUS = UNICORN_RADIUS;
 
   /* ────────────────── Background stars ────────────────── */
   const stars = Array.from({ length: 80 }, () => ({
