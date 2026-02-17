@@ -45,6 +45,8 @@ const state = {
   tongueVisible: true,     // tongue flicker toggle
   tongueTimer: 0,          // tongue flicker timer (ms)
   tongueWobble: 0,         // random wobble offset for tongue
+  undulationTime: 0,       // continuous time for body undulation
+  headEnlargeTimer: 0,     // timer for head enlarge on eat
   deathTime: 0,            // timestamp when death occurred
   deathPos: null,           // {x,y} pixel position of death (head)
   deathRingRadius: 0,      // expanding flash ring radius
@@ -457,6 +459,8 @@ function resetGame() {
   state.tongueVisible = true;
   state.tongueTimer = 0;
   state.tongueWobble = 0;
+  state.undulationTime = 0;
+  state.headEnlargeTimer = 0;
 
   initDustMotes();
 
@@ -587,6 +591,7 @@ function eatFood(now) {
   }
 
   state.scorePop = 1.0;
+  state.headEnlargeTimer = 0.2; // 200ms head enlarge on eat
   scoreLabel.textContent = state.score;
 
   // Arena shrink check
@@ -813,6 +818,17 @@ function drawSnake(movePhase) {
     let cx = (rx + 0.5) * CELL;
     let cy = (ry + 0.5) * CELL;
 
+    // Body undulation: sine-wave offset perpendicular to travel direction
+    if (i > 0 && !isDead) {
+      const dir = snake.direction;
+      const undulationAmp = 2.0;
+      const undulationFreq = 1.2;
+      const wave = Math.sin(state.undulationTime + i * undulationFreq) * undulationAmp;
+      // Offset perpendicular to direction of travel
+      cx += -dir.y * wave;
+      cy += dir.x * wave;
+    }
+
     // Death scatter: segments fly apart from center
     if (isDead && deathElapsed > 0 && state.deathPos) {
       const dx = cx - state.deathPos.x;
@@ -853,8 +869,9 @@ function drawSnake(movePhase) {
     if (isDead && (cx < -50 || cx > canvas.width + 50 || cy < -50 || cy > canvas.height + 50)) continue;
 
     if (i === 0) {
-      // Head
-      const headSize = 18;
+      // Head — briefly enlarges on eat
+      const enlargeScale = state.headEnlargeTimer > 0 ? 1 + state.headEnlargeTimer * 2.5 : 1;
+      const headSize = Math.round(18 * enlargeScale);
       const half = headSize / 2;
 
       ctx.save();
@@ -1219,6 +1236,12 @@ function gameLoop(timestamp) {
 
   // Update dust motes
   updateDustMotes(dt);
+
+  // Update undulation time + head enlarge
+  state.undulationTime += rawDelta * 0.004; // smooth continuous timer
+  if (state.headEnlargeTimer > 0) {
+    state.headEnlargeTimer = Math.max(0, state.headEnlargeTimer - dt);
+  }
 
   // Update tongue flicker (~300ms toggle)
   state.tongueTimer += rawDelta;

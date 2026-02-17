@@ -3,110 +3,6 @@ const context = canvas.getContext("2d");
 const scoreLabel = document.getElementById("score");
 const bestScoreLabel = document.getElementById("bestScore");
 const restartButton = document.getElementById("restartButton");
-const muteButton = document.getElementById("muteButton");
-
-/* --- Sound system (Web Audio API) --- */
-const sound = (() => {
-  let ctx = null;
-  let muted = false;
-
-  const getCtx = () => {
-    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
-    return ctx;
-  };
-
-  const play = (fn) => {
-    if (muted) return;
-    try { fn(getCtx()); } catch (_) { /* silent fail */ }
-  };
-
-  return {
-    get muted() { return muted; },
-    toggleMute() {
-      muted = !muted;
-      muteButton.textContent = muted ? "🔇" : "🔊";
-    },
-
-    flap() {
-      play((ac) => {
-        const osc = ac.createOscillator();
-        const gain = ac.createGain();
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(400, ac.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(600, ac.currentTime + 0.08);
-        gain.gain.setValueAtTime(0.18, ac.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.12);
-        osc.connect(gain).connect(ac.destination);
-        osc.start(ac.currentTime);
-        osc.stop(ac.currentTime + 0.12);
-      });
-    },
-
-    score() {
-      play((ac) => {
-        const t = ac.currentTime;
-        [520, 680, 830].forEach((freq, i) => {
-          const osc = ac.createOscillator();
-          const gain = ac.createGain();
-          osc.type = "sine";
-          osc.frequency.value = freq;
-          gain.gain.setValueAtTime(0, t + i * 0.07);
-          gain.gain.linearRampToValueAtTime(0.15, t + i * 0.07 + 0.02);
-          gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.07 + 0.15);
-          osc.connect(gain).connect(ac.destination);
-          osc.start(t + i * 0.07);
-          osc.stop(t + i * 0.07 + 0.15);
-        });
-      });
-    },
-
-    hit() {
-      play((ac) => {
-        const t = ac.currentTime;
-        /* Thud */
-        const osc = ac.createOscillator();
-        const gain = ac.createGain();
-        osc.type = "square";
-        osc.frequency.setValueAtTime(150, t);
-        osc.frequency.exponentialRampToValueAtTime(40, t + 0.2);
-        gain.gain.setValueAtTime(0.2, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-        osc.connect(gain).connect(ac.destination);
-        osc.start(t);
-        osc.stop(t + 0.25);
-        /* Noise burst */
-        const bufLen = ac.sampleRate * 0.12;
-        const buf = ac.createBuffer(1, bufLen, ac.sampleRate);
-        const data = buf.getChannelData(0);
-        for (let i = 0; i < bufLen; i++) data[i] = (Math.random() * 2 - 1) * 0.3;
-        const noise = ac.createBufferSource();
-        const ng = ac.createGain();
-        noise.buffer = buf;
-        ng.gain.setValueAtTime(0.18, t);
-        ng.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
-        noise.connect(ng).connect(ac.destination);
-        noise.start(t);
-      });
-    },
-
-    swoosh() {
-      play((ac) => {
-        const t = ac.currentTime;
-        const osc = ac.createOscillator();
-        const gain = ac.createGain();
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(300, t);
-        osc.frequency.exponentialRampToValueAtTime(500, t + 0.08);
-        osc.frequency.exponentialRampToValueAtTime(200, t + 0.18);
-        gain.gain.setValueAtTime(0.12, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
-        osc.connect(gain).connect(ac.destination);
-        osc.start(t);
-        osc.stop(t + 0.2);
-      });
-    },
-  };
-})();
 
 const gameState = {
   gravity: 1800,
@@ -145,6 +41,8 @@ let hills = [];
 let trees = [];
 let grassBlades = [];
 let feathersSpawned = false;
+let flowers = [];
+let butterflies = [];
 
 /* --- Drip state for top-pipe water drops --- */
 let dripState = {
@@ -189,6 +87,41 @@ function initGrass() {
       x: x,
       height: 4 + Math.random() * 8,
       lean: (Math.random() - 0.5) * 3,
+    });
+  }
+}
+
+/* --- Init flowers/mushrooms on ground edge --- */
+function initFlowers() {
+  flowers = [];
+  const groundTop = canvas.height - 90;
+  const count = 5 + Math.floor(Math.random() * 4);
+  for (let i = 0; i < count; i++) {
+    flowers.push({
+      x: 20 + Math.random() * (canvas.width - 40),
+      y: groundTop,
+      type: Math.random() > 0.3 ? "flower" : "mushroom",
+      size: 3 + Math.random() * 3,
+      color: Math.random() > 0.5 ? "#ff6b8a" : "#ffcc4d",
+      stemHeight: 6 + Math.random() * 8,
+    });
+  }
+}
+
+/* --- Init butterflies --- */
+function initButterflies() {
+  butterflies = [];
+  for (let i = 0; i < 3; i++) {
+    butterflies.push({
+      x: 50 + Math.random() * (canvas.width - 100),
+      y: 80 + Math.random() * (canvas.height * 0.35),
+      phase: Math.random() * Math.PI * 2,
+      wingPhase: Math.random() * Math.PI * 2,
+      speedX: 8 + Math.random() * 15,
+      speedY: 5 + Math.random() * 10,
+      size: 2.5 + Math.random() * 1.5,
+      color1: ["#ff6b8a", "#b388ff", "#64b5f6", "#ffcc4d"][Math.floor(Math.random() * 4)],
+      color2: ["#ffa4b8", "#d1c4e9", "#90caf9", "#ffe082"][Math.floor(Math.random() * 4)],
     });
   }
 }
@@ -262,11 +195,13 @@ const resetGame = () => {
   gameState.lastScore = 0;
   scoreLabel.textContent = gameState.score;
   initClouds();
-  Audio.stopDrone();
   initHills();
   initTrees();
   initGrass();
   initLeaves();
+  initFlowers();
+  initButterflies();
+  Audio.stopDrone();
   draw();
 };
 
@@ -467,6 +402,78 @@ const drawBackground = () => {
     context.moveTo(g.x + 1.5, groundTop);
     context.lineTo(g.x + g.lean + 2, groundTop - g.height * 0.7);
     context.stroke();
+  }
+
+  /* Flowers and mushrooms on ground */
+  for (const fl of flowers) {
+    if (fl.type === "flower") {
+      /* Stem */
+      context.strokeStyle = "#3aad55";
+      context.lineWidth = 1.5;
+      context.beginPath();
+      context.moveTo(fl.x, fl.y);
+      context.lineTo(fl.x, fl.y - fl.stemHeight);
+      context.stroke();
+      /* Petals */
+      context.fillStyle = fl.color;
+      const petalR = fl.size * 0.6;
+      for (let p = 0; p < 5; p++) {
+        const angle = (p / 5) * Math.PI * 2;
+        const px = fl.x + Math.cos(angle) * fl.size * 0.5;
+        const py = (fl.y - fl.stemHeight) + Math.sin(angle) * fl.size * 0.5;
+        context.beginPath();
+        context.arc(px, py, petalR, 0, Math.PI * 2);
+        context.fill();
+      }
+      /* Center */
+      context.fillStyle = "#ffee88";
+      context.beginPath();
+      context.arc(fl.x, fl.y - fl.stemHeight, fl.size * 0.3, 0, Math.PI * 2);
+      context.fill();
+    } else {
+      /* Mushroom stem */
+      context.fillStyle = "#e8dcc8";
+      context.fillRect(fl.x - 1.5, fl.y - fl.stemHeight * 0.5, 3, fl.stemHeight * 0.5);
+      /* Mushroom cap */
+      context.fillStyle = "#cc4444";
+      context.beginPath();
+      context.ellipse(fl.x, fl.y - fl.stemHeight * 0.5, fl.size * 1.2, fl.size * 0.8, 0, Math.PI, Math.PI * 2);
+      context.fill();
+      /* Dots on cap */
+      context.fillStyle = "rgba(255,255,255,0.6)";
+      context.beginPath();
+      context.arc(fl.x - 1, fl.y - fl.stemHeight * 0.5 - fl.size * 0.3, 1, 0, Math.PI * 2);
+      context.fill();
+      context.beginPath();
+      context.arc(fl.x + 1.5, fl.y - fl.stemHeight * 0.5 - fl.size * 0.5, 0.8, 0, Math.PI * 2);
+      context.fill();
+    }
+  }
+
+  /* Butterflies */
+  for (const bf of butterflies) {
+    context.save();
+    context.translate(bf.x, bf.y);
+    const wingFlap = Math.sin(bf.wingPhase) * 0.6;
+    /* Left wing */
+    context.fillStyle = bf.color1;
+    context.globalAlpha = 0.7;
+    context.beginPath();
+    context.ellipse(-bf.size * 0.6, 0, bf.size, bf.size * 0.6 * (0.4 + Math.abs(wingFlap)), 0.3 + wingFlap, 0, Math.PI * 2);
+    context.fill();
+    /* Right wing */
+    context.fillStyle = bf.color2;
+    context.beginPath();
+    context.ellipse(bf.size * 0.6, 0, bf.size, bf.size * 0.6 * (0.4 + Math.abs(wingFlap)), -0.3 - wingFlap, 0, Math.PI * 2);
+    context.fill();
+    /* Body */
+    context.globalAlpha = 0.8;
+    context.fillStyle = "#333";
+    context.beginPath();
+    context.ellipse(0, 0, 1, bf.size * 0.5, 0, 0, Math.PI * 2);
+    context.fill();
+    context.globalAlpha = 1;
+    context.restore();
   }
 };
 
@@ -838,7 +845,6 @@ const updateScore = () => {
       scoreLabel.textContent = gameState.score;
       gameState.scorePop = 1;
       Audio.score();
-      sound.score();
     }
   });
 };
@@ -882,7 +888,6 @@ const update = (deltaSeconds) => {
     gameState.isGameOver = true;
     gameState.shakeTimer = 12;
     gameState.shakeIntensity = 6;
-    sound.hit();
   }
 
   pipes.forEach((pipe) => {
@@ -895,19 +900,19 @@ const update = (deltaSeconds) => {
     gameState.isGameOver = true;
     gameState.shakeTimer = 12;
     gameState.shakeIntensity = 6;
-    sound.hit();
   }
 
   if (gameState.isGameOver) {
     const wasNewBest = gameState.score > gameState.best;
     saveBestScore();
+    if (!feathersSpawned) {
+      spawnFeatherParticles();
+      feathersSpawned = true;
+    }
     Audio.crash();
     Audio.stopDrone();
     if (wasNewBest && gameState.score > 0) {
       Audio.newHighScore();
-    if (!feathersSpawned) {
-      spawnFeatherParticles();
-      feathersSpawned = true;
     }
   }
 
@@ -938,6 +943,19 @@ const update = (deltaSeconds) => {
       leaf.x = canvas.width + 10;
       leaf.y = 60 + Math.random() * (canvas.height - 160);
     }
+  }
+
+  /* Update butterflies */
+  for (const bf of butterflies) {
+    bf.phase += deltaSeconds * 1.5;
+    bf.wingPhase += deltaSeconds * 12;
+    bf.x += Math.sin(bf.phase) * bf.speedX * deltaSeconds;
+    bf.y += Math.cos(bf.phase * 0.7) * bf.speedY * deltaSeconds;
+    /* Wrap around */
+    if (bf.x < -20) bf.x = canvas.width + 20;
+    if (bf.x > canvas.width + 20) bf.x = -20;
+    if (bf.y < 40) bf.y = 40;
+    if (bf.y > canvas.height * 0.45) bf.y = canvas.height * 0.45;
   }
 
   /* Update drip animation */
@@ -1016,15 +1034,12 @@ const flap = () => {
   if (gameState.isGameOver) {
     resetGame();
     startGame();
-    sound.swoosh();
   } else if (!gameState.isRunning) {
     startGame();
-    sound.swoosh();
   }
 
   bird.velocity = gameState.lift;
   Audio.flap();
-  sound.flap();
 };
 
 window.addEventListener("keydown", (event) => {
@@ -1047,9 +1062,19 @@ restartButton.addEventListener("click", () => {
   resetGame();
 });
 
-muteButton.addEventListener("click", () => {
-  sound.toggleMute();
-});
+/* --- Mute toggle --- */
+const muteButton = document.getElementById("muteButton");
+if (muteButton) {
+  const updateMuteLabel = () => {
+    muteButton.textContent = Audio.isMuted() ? "Unmute" : "Mute";
+  };
+  muteButton.addEventListener("click", () => {
+    Audio.init();
+    Audio.toggle();
+    updateMuteLabel();
+  });
+  updateMuteLabel();
+}
 
 loadBestScore();
 resetGame();
