@@ -42,12 +42,15 @@ Purchased with SP. Each upgrade has escalating cost (`baseCost * 1.15^level`).
 | Upgrade | Effect | Base Cost |
 |---|---|---|
 | **Beefy Beans** | +1 SP per tap | 10 SP |
-| **Glitter Gut** | x2 tap multiplier (stacks additively) | 100 SP |
+| **Glitter Gut** | +1x tap multiplier (stacks additively) | 100 SP |
 | **Auto-Poot Fairy** | +1 SP/sec passive income | 50 SP |
 | **Rainbow Turbo** | +5 SP/sec passive income | 500 SP |
 | **Golden Hay** | +20 SP/sec passive income | 2,500 SP |
-| **Cloud Compressor** | All tap values x2 (milestone, one-time) | 10,000 SP |
-| **Unicorn Evolution** | Evolve to next visual form (see below) | Varies |
+| **Cloud Compressor** | All tap values x2 (one-time) | 10,000 SP |
+| **Enchanted Burrito** | +50 SP/sec passive income | 15,000 SP |
+| **Quantum Gas** | +100 SP/sec passive income | 75,000 SP |
+| **Mega Multiplier** | All tap values x3 (one-time) | 250,000 SP |
+| **Critical Fart** | 10% chance for 10x tap (one-time) | 500,000 SP |
 
 ### 4. Unicorn Evolutions
 
@@ -55,11 +58,28 @@ Visual transformations unlocked at SP milestones. Each evolution changes the pro
 
 | Stage | Name | Lifetime SP | Visual Change |
 |---|---|---|---|
-| 0 | Baby Unicorn | 0 | Small, simple, pastel pink body |
-| 1 | Sparkle Pony | 500 | Bigger, rainbow mane, glitter particles |
-| 2 | Majestic Stallion | 5,000 | Muscular, flowing mane, wings appear |
-| 3 | Cosmic Unicorn | 50,000 | Starfield body, glowing horn, galaxy mane |
-| 4 | Fart God | 500,000 | Enormous, throne of clouds, constant rainbow aura |
+| 0 | Baby Form | 0 | Small, simple, base skin |
+| 1 | Sparkle Form | 500 | Bigger, orbiting sparkle particles |
+| 2 | Majestic Form | 5,000 | Wings appear, flowing effects |
+| 3 | Cosmic Form | 50,000 | Cosmic body colors, glowing aura, body stars |
+| 4 | Fart God | 500,000 | Cloud throne, golden aura |
+| 5 | Nebula Beast | 5,000,000 | Nebula swirl background effect |
+| 6 | Dimension Ripper | 50,000,000 | Dimensional rift cracks radiate outward |
+| 7 | The Omnifarter | 500,000,000 | Permanent rainbow ring, maximum glow |
+
+### 5. Skins
+
+Alternate character skins purchasable with SP. Each skin has its own procedural drawing with evolution-specific visual variants.
+
+| Skin | Cost | Description |
+|---|---|---|
+| **Unicorn** | Free | Default. Pink body, golden horn, rainbow mane/tail |
+| **Tuna** | 1,000 SP | Silver-blue fish with fins, tail, shimmering scales |
+| **Volleyball** | 5,000 SP | White ball with seams, cute face, ground shadow |
+| **Spidermonkey** | 25,000 SP | Golden-brown monkey with long curly tail, big eyes |
+| **Chewbacca** | 100,000 SP | Brown furry body with bandolier and ammo pouches |
+
+All skins support all 8 evolution stages with universal effects (wings, aura, sparkles, cloud throne, nebula, rifts, rainbow ring) plus skin-specific cosmic color variants at evolution 3+.
 
 ### 5. Fart Particles & Effects
 
