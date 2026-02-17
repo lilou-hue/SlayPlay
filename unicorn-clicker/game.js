@@ -1772,7 +1772,7 @@
 
     if (state.spPerSec > 0) {
       sparkleTimer += dt;
-      if (sparkleTimer > 2 + Math.random()) { Audio.sparkle(); sparkleTimer = 0; }
+      if (sparkleTimer > 2 + Math.random()) { SFX.sparkle(); sparkleTimer = 0; }
     }
 
     if (squash > 0) { squash -= dt * 6; if (squash < 0) squash = 0; }
@@ -1891,7 +1891,7 @@
             if (u.oneTime) state.upgrades[u.key] = true;
             else state.upgrades[u.key]++;
             applyUpgrade(u.key);
-            Audio.purchase();
+            SFX.purchase();
           }
           return;
         }
@@ -1926,7 +1926,7 @@
       if (canEvolve() && pos.x >= evoX && pos.x <= evoX + btnW) {
         state.sp -= EVOLUTIONS[state.evolution].cost;
         state.evolution++;
-        Audio.evolve();
+        SFX.evolve();
         spawnFartParticles(CHAR_X, CHAR_Y, 30);
         shakeAmount = 1.5;
         spawnFloatingText(W/2, H*0.3, EVOLUTIONS[state.evolution].name + '!', '#ffd700');
@@ -1950,7 +1950,7 @@
       state.totalClicks++;
       squash = 1;
       shakeAmount = Math.max(shakeAmount, 0.5);
-      Audio.fart(state.evolution);
+      SFX.fart(state.evolution);
       const sk = currentSkin();
       const count = 5 + Math.floor(Math.random() * 6) + state.evolution * 2;
       spawnFartParticles(CHAR_X + sk.fartDx, CHAR_Y + sk.fartDy, count);
