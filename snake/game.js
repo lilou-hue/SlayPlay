@@ -14,6 +14,13 @@ const CELL = 20;
 const COLS = canvas.width / CELL;   // 24
 const ROWS = canvas.height / CELL;  // 24
 
+/* --- i18n setup --- */
+I18N.createSelector(document.querySelector('.game__header'));
+I18N.applyDOM();
+window.addEventListener('langchange', () => {
+  I18N.applyDOM();
+});
+
 /* ── State ─────────────────────────────────────────────────── */
 
 const state = {
@@ -1296,10 +1303,10 @@ function gameLoop(timestamp) {
   drawEatFlash();
 
   if (state.phase === "idle") {
-    drawOverlay("Snake", "Arrow keys or swipe to start");
+    drawOverlay(I18N.t('snTitle'), I18N.t('snStartPrompt'));
   } else if (state.phase === "dead") {
-    const extra = state.score === state.best && state.score > 0 ? "New Best!" : null;
-    drawOverlay("Game Over", `Score: ${state.score}`, extra);
+    const extra = state.score === state.best && state.score > 0 ? I18N.t('snNewBest') : null;
+    drawOverlay(I18N.t('gameOver'), `${I18N.t('snScorePrefix')}${state.score}`, extra);
   }
 
   ctx.restore();

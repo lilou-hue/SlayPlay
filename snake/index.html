@@ -9,29 +9,30 @@
   <body>
     <main class="game">
       <header class="game__header">
-        <a href="/" class="back-link">&larr; Back to Games</a>
-        <h1>Snake</h1>
-        <p>Arrow keys or swipe to steer. Eat, grow, survive the closing walls.</p>
+        <a href="/" class="back-link" data-i18n="backToGames">&larr; Back to Games</a>
+        <h1 data-i18n="snTitle">Snake</h1>
+        <p data-i18n="snInstructions">Arrow keys or swipe to steer. Eat, grow, survive the closing walls.</p>
       </header>
       <section class="game__panel">
         <canvas id="gameCanvas" width="480" height="480" aria-label="Snake game"></canvas>
         <div class="game__hud">
           <div class="hud__score">
-            <span>Score</span>
+            <span data-i18n="score">Score</span>
             <strong id="score">0</strong>
           </div>
           <div class="hud__score">
-            <span>Best</span>
+            <span data-i18n="best">Best</span>
             <strong id="bestScore">0</strong>
           </div>
           <button id="muteButton" class="hud__mute" type="button" aria-label="Toggle sound">&#x1F50A;</button>
-          <button id="restartButton" class="hud__button" type="button">Restart</button>
+          <button id="restartButton" class="hud__button" type="button" data-i18n="restart">Restart</button>
         </div>
       </section>
       <footer class="game__footer">
-        <p>Tip: the walls close in every 15 points &mdash; turn up the volume!</p>
+        <p data-i18n="snTip">Tip: the walls close in every 15 points &mdash; turn up the volume!</p>
       </footer>
     </main>
+    <script src="/i18n.js"></script>
     <script src="game.js"></script>
   </body>
 </html>

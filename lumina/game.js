@@ -66,11 +66,11 @@
 
   // ── Depth Zone Palettes ───────────────────────────────────
   const ZONES = [
-    { name: "Sapphire Grotto",  crystal: [77,201,246],  ambient: [26,58,92],   wall: [42,74,106],  bg: [6,12,30]    },
-    { name: "Amethyst Depths",  crystal: [180,77,255],  ambient: [58,26,92],   wall: [74,42,106],  bg: [14,6,30]    },
-    { name: "Emerald Abyss",    crystal: [77,255,136],  ambient: [26,92,58],   wall: [42,106,74],  bg: [6,30,14]    },
-    { name: "Molten Core",      crystal: [255,136,68],  ambient: [92,58,26],   wall: [106,74,42],  bg: [30,14,6]    },
-    { name: "Void Heart",       crystal: [255,77,106],  ambient: [92,26,42],   wall: [106,42,58],  bg: [30,6,12]    },
+    { name: "Sapphire Grotto",  i18nKey: "luSapphireGrotto",  crystal: [77,201,246],  ambient: [26,58,92],   wall: [42,74,106],  bg: [6,12,30]    },
+    { name: "Amethyst Depths",  i18nKey: "luAmethystDepths",  crystal: [180,77,255],  ambient: [58,26,92],   wall: [74,42,106],  bg: [14,6,30]    },
+    { name: "Emerald Abyss",    i18nKey: "luEmeraldAbyss",    crystal: [77,255,136],  ambient: [26,92,58],   wall: [42,106,74],  bg: [6,30,14]    },
+    { name: "Molten Core",      i18nKey: "luMoltenCore",      crystal: [255,136,68],  ambient: [92,58,26],   wall: [106,74,42],  bg: [30,14,6]    },
+    { name: "Void Heart",       i18nKey: "luVoidHeart",       crystal: [255,77,106],  ambient: [92,26,42],   wall: [106,42,58],  bg: [30,6,12]    },
   ];
 
   // ── State Enum ────────────────────────────────────────────
@@ -83,6 +83,13 @@
   const bestEl = document.getElementById("bestScore");
   const muteBtn = document.getElementById("muteButton");
   const restartBtn = document.getElementById("restartButton");
+
+  /* --- i18n setup --- */
+  I18N.createSelector(document.querySelector('.game__header'));
+  I18N.applyDOM();
+  window.addEventListener('langchange', () => {
+    I18N.applyDOM();
+  });
 
   // ── Offscreen Canvases ────────────────────────────────────
   const sceneCanvas = document.createElement("canvas");
@@ -851,7 +858,7 @@
     const zi = zoneIndex();
     if (zi !== prevZone && prevZone < zi) {
       zoneAnnounceTmr = 2.5;
-      zoneAnnounceName = ZONES[zi].name;
+      zoneAnnounceName = ZONES[zi].i18nKey;
       sfxZone();
       haptic([30, 20, 30, 20, 30, 20, 30]);
       prevZone = zi;
@@ -1953,27 +1960,27 @@
     c.shadowBlur = 30;
     c.font = "bold 52px 'Trebuchet MS', sans-serif";
     c.fillStyle = rgb([255, 255, 255], 0.95);
-    c.fillText("LUMINA", CFG.W / 2, CFG.H * 0.32);
+    c.fillText(I18N.t('luTitle'), CFG.W / 2, CFG.H * 0.32);
     c.shadowBlur = 0;
 
     // Subtitle
     c.font = "16px 'Trebuchet MS', sans-serif";
     c.fillStyle = rgb(pal.crystal, 0.7);
-    c.fillText("D E E P   R A D I A N C E", CFG.W / 2, CFG.H * 0.39);
+    c.fillText(I18N.t('luSubtitle'), CFG.W / 2, CFG.H * 0.39);
 
     // Prompt (pulsing)
     const promptAlpha = 0.4 + Math.sin(t * 3) * 0.3;
     c.font = "15px 'Trebuchet MS', sans-serif";
     c.fillStyle = rgb([200, 210, 250], promptAlpha);
-    c.fillText(isMobile ? "Tap to Begin" : "Press Space or Tap to Begin", CFG.W / 2, CFG.H * 0.55);
+    c.fillText(isMobile ? I18N.t('luTapToBegin') : I18N.t('luSpaceToBegin'), CFG.W / 2, CFG.H * 0.55);
 
     // Controls info
     c.font = "13px 'Trebuchet MS', sans-serif";
     c.fillStyle = rgb([160, 170, 210], 0.5);
     if (isMobile) {
-      c.fillText("Touch Left/Right to Move \u2022 Tap Center to Pulse", CFG.W / 2, CFG.H * 0.65);
+      c.fillText(I18N.t('luMobileControls'), CFG.W / 2, CFG.H * 0.65);
     } else {
-      c.fillText("\u2190 \u2192  Move     Space  Pulse Light", CFG.W / 2, CFG.H * 0.65);
+      c.fillText(I18N.t('luDesktopControls'), CFG.W / 2, CFG.H * 0.65);
     }
 
     // Animated player preview
@@ -2025,11 +2032,11 @@
     c.textBaseline = "middle";
     c.font = "bold 36px 'Trebuchet MS', sans-serif";
     c.fillStyle = "rgba(200,210,250,0.9)";
-    c.fillText("PAUSED", CFG.W / 2, CFG.H * 0.45);
+    c.fillText(I18N.t('paused'), CFG.W / 2, CFG.H * 0.45);
 
     c.font = "14px 'Trebuchet MS', sans-serif";
     c.fillStyle = "rgba(200,210,250,0.5)";
-    c.fillText("Press Escape to Resume", CFG.W / 2, CFG.H * 0.53);
+    c.fillText(I18N.t('pressEscResume'), CFG.W / 2, CFG.H * 0.53);
   }
 
   function drawGameOver(c, pal) {
@@ -2049,24 +2056,24 @@
 
     c.font = "15px 'Trebuchet MS', sans-serif";
     c.fillStyle = rgb(pal.crystal, 0.7);
-    c.fillText("D E P T H   R E A C H E D", CFG.W / 2, CFG.H * 0.42);
+    c.fillText(I18N.t('luDepthReached'), CFG.W / 2, CFG.H * 0.42);
 
     // Best
     c.font = "14px 'Trebuchet MS', sans-serif";
     c.fillStyle = rgb([200, 210, 250], 0.5);
-    c.fillText("Best: " + bestScore, CFG.W / 2, CFG.H * 0.48);
+    c.fillText(I18N.t('luBestPrefix') + bestScore, CFG.W / 2, CFG.H * 0.48);
 
     // Zone reached
     const zi = Math.min(Math.floor(score / CFG.ZONE_LEN), ZONES.length - 1);
     c.fillStyle = rgb(ZONES[zi].crystal, 0.6);
-    c.fillText(ZONES[zi].name, CFG.W / 2, CFG.H * 0.53);
+    c.fillText(I18N.t(ZONES[zi].i18nKey), CFG.W / 2, CFG.H * 0.53);
 
     // Restart prompt
     const t = performance.now() / 1000;
     const promptAlpha = 0.35 + Math.sin(t * 3) * 0.25;
     c.font = "14px 'Trebuchet MS', sans-serif";
     c.fillStyle = rgb([200, 210, 250], promptAlpha);
-    c.fillText(isMobile ? "Tap to Restart" : "Press Space or Tap to Restart", CFG.W / 2, CFG.H * 0.63);
+    c.fillText(isMobile ? I18N.t('luTapToRestart') : I18N.t('luSpaceToRestart'), CFG.W / 2, CFG.H * 0.63);
   }
 
   function drawZoneAnnounce(c, pal) {
@@ -2080,7 +2087,7 @@
     c.shadowBlur = 15;
     c.font = "bold 22px 'Trebuchet MS', sans-serif";
     c.fillStyle = rgb(pal.crystal, 0.9);
-    c.fillText(zoneAnnounceName, CFG.W / 2, CFG.H * 0.15);
+    c.fillText(I18N.t(zoneAnnounceName), CFG.W / 2, CFG.H * 0.15);
     c.shadowBlur = 0;
 
     c.globalAlpha = 1;
@@ -2105,7 +2112,7 @@
     c.fillText("\u25B6", CFG.W * 0.85, y);
     // Center pulse icon
     c.font = "14px 'Trebuchet MS', sans-serif";
-    c.fillText("PULSE", CFG.W * 0.5, y);
+    c.fillText(I18N.t('luPulse'), CFG.W * 0.5, y);
 
     // Active zone highlight
     if (touchActive && touchMoveDir !== 0) {

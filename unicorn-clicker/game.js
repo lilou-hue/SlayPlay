@@ -6,13 +6,19 @@
   canvas.width = W;
   canvas.height = H;
 
+  /* --- i18n setup --- */
+  I18N.applyDOM();
+  window.addEventListener('langchange', () => {
+    I18N.applyDOM();
+  });
+
   /* ────────────────── Skins ────────────────── */
   const SKINS = [
-    { key: 'unicorn',      name: 'Unicorn',       cost: 0,      fartDx: -40, fartDy: 10 },
-    { key: 'tuna',          name: 'Tuna',           cost: 1000,   fartDx: -50, fartDy: 5 },
-    { key: 'volleyball',    name: 'Volleyball',     cost: 5000,   fartDx: 0,   fartDy: 35 },
-    { key: 'spidermonkey',  name: 'Spidermonkey',   cost: 25000,  fartDx: -35, fartDy: 20 },
-    { key: 'chewbacca',     name: 'Chewbacca',      cost: 100000, fartDx: -35, fartDy: 15 },
+    { key: 'unicorn',      name: 'Unicorn',       cost: 0,      fartDx: -40, fartDy: 10,  i18nKey: 'ucSkinUnicorn' },
+    { key: 'tuna',          name: 'Tuna',           cost: 1000,   fartDx: -50, fartDy: 5,   i18nKey: 'ucSkinTuna' },
+    { key: 'volleyball',    name: 'Volleyball',     cost: 5000,   fartDx: 0,   fartDy: 35,  i18nKey: 'ucSkinVolleyball' },
+    { key: 'spidermonkey',  name: 'Spidermonkey',   cost: 25000,  fartDx: -35, fartDy: 20,  i18nKey: 'ucSkinSpidermonkey' },
+    { key: 'chewbacca',     name: 'Chewbacca',      cost: 100000, fartDx: -35, fartDy: 15,  i18nKey: 'ucSkinChewbacca' },
   ];
 
   /* ────────────────── State ────────────────── */
@@ -38,16 +44,16 @@
 
   /* ────────────────── Upgrades ────────────────── */
   const UPGRADES = [
-    { key: 'beefyBeans',      name: 'Beefy Beans',       desc: '+1 SP per tap',       baseCost: 10 },
-    { key: 'glitterGut',      name: 'Glitter Gut',        desc: '+1x tap multiplier',  baseCost: 100 },
-    { key: 'autoFairy',       name: 'Auto-Poot Fairy',    desc: '+1 SP/sec',           baseCost: 50 },
-    { key: 'rainbowTurbo',    name: 'Rainbow Turbo',      desc: '+5 SP/sec',           baseCost: 500 },
-    { key: 'goldenHay',       name: 'Golden Hay',         desc: '+20 SP/sec',          baseCost: 2500 },
-    { key: 'cloudCompressor', name: 'Cloud Compressor',   desc: 'All taps x2 (once)',  baseCost: 10000,  oneTime: true },
-    { key: 'enchantedBurrito',name: 'Enchanted Burrito',  desc: '+50 SP/sec',          baseCost: 15000 },
-    { key: 'quantumGas',      name: 'Quantum Gas',        desc: '+100 SP/sec',         baseCost: 75000 },
-    { key: 'megaMultiplier',  name: 'Mega Multiplier',    desc: 'All taps x3 (once)',  baseCost: 250000, oneTime: true },
-    { key: 'criticalFart',    name: 'Critical Fart',      desc: '10% chance 10x tap',  baseCost: 500000, oneTime: true },
+    { key: 'beefyBeans',      name: 'Beefy Beans',       desc: '+1 SP per tap',       baseCost: 10,     i18nKey: 'ucUpgBeefyBeans',       i18nDescKey: 'ucUpgBeefyBeansDesc' },
+    { key: 'glitterGut',      name: 'Glitter Gut',        desc: '+1x tap multiplier',  baseCost: 100,    i18nKey: 'ucUpgGlitterGut',       i18nDescKey: 'ucUpgGlitterGutDesc' },
+    { key: 'autoFairy',       name: 'Auto-Poot Fairy',    desc: '+1 SP/sec',           baseCost: 50,     i18nKey: 'ucUpgAutoFairy',        i18nDescKey: 'ucUpgAutoFairyDesc' },
+    { key: 'rainbowTurbo',    name: 'Rainbow Turbo',      desc: '+5 SP/sec',           baseCost: 500,    i18nKey: 'ucUpgRainbowTurbo',     i18nDescKey: 'ucUpgRainbowTurboDesc' },
+    { key: 'goldenHay',       name: 'Golden Hay',         desc: '+20 SP/sec',          baseCost: 2500,   i18nKey: 'ucUpgGoldenHay',        i18nDescKey: 'ucUpgGoldenHayDesc' },
+    { key: 'cloudCompressor', name: 'Cloud Compressor',   desc: 'All taps x2 (once)',  baseCost: 10000,  oneTime: true, i18nKey: 'ucUpgCloudCompressor', i18nDescKey: 'ucUpgCloudCompressorDesc' },
+    { key: 'enchantedBurrito',name: 'Enchanted Burrito',  desc: '+50 SP/sec',          baseCost: 15000,  i18nKey: 'ucUpgEnchantedBurrito', i18nDescKey: 'ucUpgEnchantedBurritoDesc' },
+    { key: 'quantumGas',      name: 'Quantum Gas',        desc: '+100 SP/sec',         baseCost: 75000,  i18nKey: 'ucUpgQuantumGas',       i18nDescKey: 'ucUpgQuantumGasDesc' },
+    { key: 'megaMultiplier',  name: 'Mega Multiplier',    desc: 'All taps x3 (once)',  baseCost: 250000, oneTime: true, i18nKey: 'ucUpgMegaMultiplier',  i18nDescKey: 'ucUpgMegaMultiplierDesc' },
+    { key: 'criticalFart',    name: 'Critical Fart',      desc: '10% chance 10x tap',  baseCost: 500000, oneTime: true, i18nKey: 'ucUpgCriticalFart',    i18nDescKey: 'ucUpgCriticalFartDesc' },
   ];
 
   function upgradeCost(u) {
@@ -77,14 +83,14 @@
 
   /* ────────────────── Evolutions ────────────────── */
   const EVOLUTIONS = [
-    { name: 'Baby Form',          threshold: 0,           cost: 500 },
-    { name: 'Sparkle Form',       threshold: 500,         cost: 5000 },
-    { name: 'Majestic Form',      threshold: 5000,        cost: 50000 },
-    { name: 'Cosmic Form',        threshold: 50000,       cost: 500000 },
-    { name: 'Fart God',           threshold: 500000,      cost: 5000000 },
-    { name: 'Nebula Beast',       threshold: 5000000,     cost: 50000000 },
-    { name: 'Dimension Ripper',   threshold: 50000000,    cost: 500000000 },
-    { name: 'The Omnifarter',     threshold: 500000000,   cost: Infinity },
+    { name: 'Baby Form',          threshold: 0,           cost: 500,       i18nKey: 'ucEvoBabyForm' },
+    { name: 'Sparkle Form',       threshold: 500,         cost: 5000,      i18nKey: 'ucEvoSparkleForm' },
+    { name: 'Majestic Form',      threshold: 5000,        cost: 50000,     i18nKey: 'ucEvoMajesticForm' },
+    { name: 'Cosmic Form',        threshold: 50000,       cost: 500000,    i18nKey: 'ucEvoCosmicForm' },
+    { name: 'Fart God',           threshold: 500000,      cost: 5000000,   i18nKey: 'ucEvoFartGod' },
+    { name: 'Nebula Beast',       threshold: 5000000,     cost: 50000000,  i18nKey: 'ucEvoNebulaBeast' },
+    { name: 'Dimension Ripper',   threshold: 50000000,    cost: 500000000, i18nKey: 'ucEvoDimensionRipper' },
+    { name: 'The Omnifarter',     threshold: 500000000,   cost: Infinity,  i18nKey: 'ucEvoTheOmnifarter' },
   ];
   const MAX_EVO = EVOLUTIONS.length - 1;
 
@@ -1436,21 +1442,21 @@
     ctx.fillStyle = '#ffd700';
     ctx.font = 'bold 30px "Segoe UI", system-ui, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(formatNum(state.sp) + ' SP', W/2, 40);
+    ctx.fillText(formatNum(state.sp) + ' ' + I18N.t('ucSP'), W/2, 40);
 
     ctx.font = '16px "Segoe UI", system-ui, sans-serif';
     ctx.fillStyle = '#ffb6c1';
-    ctx.fillText('+' + formatNum(effectiveTap()) + ' per tap', W/2, 64);
+    ctx.fillText('+' + formatNum(effectiveTap()) + ' ' + I18N.t('ucPerTap'), W/2, 64);
     if (state.spPerSec > 0) {
       ctx.fillStyle = '#98fb98';
-      ctx.fillText('+' + formatNum(state.spPerSec) + '/sec', W/2, 84);
+      ctx.fillText('+' + formatNum(state.spPerSec) + I18N.t('ucPerSec'), W/2, 84);
     }
 
     // Evolution name + skin name
     ctx.font = '14px "Segoe UI", system-ui, sans-serif';
     ctx.fillStyle = '#c4b5fd';
-    const skinLabel = currentSkin().name;
-    ctx.fillText(EVOLUTIONS[state.evolution].name + ' ' + skinLabel, W/2, H*0.18);
+    const skinLabel = I18N.t(currentSkin().i18nKey);
+    ctx.fillText(I18N.t(EVOLUTIONS[state.evolution].i18nKey) + ' ' + skinLabel, W/2, H*0.18);
 
     // Restart button (top-right corner, small)
     const rstX = W - 38, rstY = 12, rstS = 24;
@@ -1476,11 +1482,11 @@
 
     // Shop button
     const shopX = W*0.18 - btnW/2;
-    drawButton(shopX, btnY, btnW, btnH, btnR, 'Shop', '#ff69b4', shopOpen);
+    drawButton(shopX, btnY, btnW, btnH, btnR, I18N.t('ucShop'), '#ff69b4', shopOpen);
 
     // Skins button
     const skinsX = W*0.5 - btnW/2;
-    drawButton(skinsX, btnY, btnW, btnH, btnR, 'Skins', '#c084fc', skinsOpen);
+    drawButton(skinsX, btnY, btnW, btnH, btnR, I18N.t('ucSkins'), '#c084fc', skinsOpen);
 
     // Evolve button
     if (canEvolve()) {
@@ -1495,10 +1501,10 @@
       ctx.fillStyle = '#ffd700';
       ctx.font = 'bold 15px "Segoe UI", system-ui, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('Evolve!', evoX + btnW/2, btnY + 26);
+      ctx.fillText(I18N.t('ucEvolve'), evoX + btnW/2, btnY + 26);
       ctx.font = '10px "Segoe UI", system-ui, sans-serif';
       ctx.fillStyle = '#c4b5fd';
-      ctx.fillText(formatNum(EVOLUTIONS[state.evolution].cost) + ' SP', evoX + btnW/2, btnY - 5);
+      ctx.fillText(formatNum(EVOLUTIONS[state.evolution].cost) + ' ' + I18N.t('ucSP'), evoX + btnW/2, btnY - 5);
     }
   }
 
@@ -1535,7 +1541,7 @@
     ctx.strokeStyle = 'rgba(255,105,180,0.4)'; ctx.lineWidth = 2; ctx.stroke();
 
     ctx.fillStyle = '#ffd700'; ctx.font = 'bold 22px "Segoe UI", system-ui, sans-serif';
-    ctx.textAlign = 'center'; ctx.fillText('Shop', W/2, p.y+32);
+    ctx.textAlign = 'center'; ctx.fillText(I18N.t('ucShop'), W/2, p.y+32);
     ctx.fillStyle = '#ff69b4'; ctx.font = 'bold 20px "Segoe UI", system-ui, sans-serif';
     ctx.textAlign = 'right'; ctx.fillText('X', p.x+p.w-16, p.y+28);
 
@@ -1566,15 +1572,15 @@
       ctx.fillStyle = owned ? '#888' : (canAfford ? '#fff' : '#888');
       ctx.font = 'bold 14px "Segoe UI", system-ui, sans-serif';
       const level = u.oneTime ? '' : ' (Lv ' + state.upgrades[u.key] + ')';
-      ctx.fillText(u.name + level, p.x+16, ry+18);
+      ctx.fillText(I18N.t(u.i18nKey) + level, p.x+16, ry+18);
 
       ctx.fillStyle = '#aaa'; ctx.font = '11px "Segoe UI", system-ui, sans-serif';
-      ctx.fillText(u.desc, p.x+16, ry+34);
+      ctx.fillText(I18N.t(u.i18nDescKey), p.x+16, ry+34);
 
       ctx.textAlign = 'right';
       ctx.fillStyle = owned ? '#4a4' : (canAfford ? '#ffd700' : '#666');
       ctx.font = 'bold 13px "Segoe UI", system-ui, sans-serif';
-      ctx.fillText(owned ? 'OWNED' : formatNum(cost) + ' SP', p.x+p.w-16, ry+26);
+      ctx.fillText(owned ? I18N.t('ucOwned') : formatNum(cost) + ' ' + I18N.t('ucSP'), p.x+p.w-16, ry+26);
       ctx.textAlign = 'left';
     }
     ctx.restore();
@@ -1582,11 +1588,11 @@
     // Scroll indicators
     if (shopScroll > 0) {
       ctx.fillStyle = '#ffd700'; ctx.font = '14px "Segoe UI", system-ui, sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText('^ scroll up ^', W/2, startY + 8);
+      ctx.fillText(I18N.t('ucScrollUp'), W/2, startY + 8);
     }
     if (shopScroll < maxScroll) {
       ctx.fillStyle = '#ffd700'; ctx.font = '14px "Segoe UI", system-ui, sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText('v scroll down v', W/2, p.y + p.h - 6);
+      ctx.fillText(I18N.t('ucScrollDown'), W/2, p.y + p.h - 6);
     }
   }
 
@@ -1602,7 +1608,7 @@
     ctx.strokeStyle = 'rgba(192,132,252,0.4)'; ctx.lineWidth = 2; ctx.stroke();
 
     ctx.fillStyle = '#c084fc'; ctx.font = 'bold 22px "Segoe UI", system-ui, sans-serif';
-    ctx.textAlign = 'center'; ctx.fillText('Skins', W/2, p.y+32);
+    ctx.textAlign = 'center'; ctx.fillText(I18N.t('ucSkins'), W/2, p.y+32);
     ctx.fillStyle = '#c084fc'; ctx.font = 'bold 20px "Segoe UI", system-ui, sans-serif';
     ctx.textAlign = 'right'; ctx.fillText('X', p.x+p.w-16, p.y+28);
 
@@ -1635,22 +1641,22 @@
       ctx.textAlign = 'left';
       ctx.fillStyle = unlocked ? '#fff' : (canAfford ? '#ddd' : '#888');
       ctx.font = 'bold 16px "Segoe UI", system-ui, sans-serif';
-      ctx.fillText(s.name, p.x + 80, ry + 28);
+      ctx.fillText(I18N.t(s.i18nKey), p.x + 80, ry + 28);
 
       // Status
       ctx.textAlign = 'right';
       if (selected) {
         ctx.fillStyle = '#c084fc'; ctx.font = 'bold 14px "Segoe UI", system-ui, sans-serif';
-        ctx.fillText('EQUIPPED', p.x+p.w-18, ry+30);
+        ctx.fillText(I18N.t('ucEquipped'), p.x+p.w-18, ry+30);
       } else if (unlocked) {
         ctx.fillStyle = '#98fb98'; ctx.font = 'bold 14px "Segoe UI", system-ui, sans-serif';
-        ctx.fillText('SELECT', p.x+p.w-18, ry+30);
+        ctx.fillText(I18N.t('ucSelect'), p.x+p.w-18, ry+30);
       } else {
         ctx.fillStyle = canAfford ? '#ffd700' : '#666';
         ctx.font = 'bold 14px "Segoe UI", system-ui, sans-serif';
-        ctx.fillText(formatNum(s.cost) + ' SP', p.x+p.w-18, ry+24);
+        ctx.fillText(formatNum(s.cost) + ' ' + I18N.t('ucSP'), p.x+p.w-18, ry+24);
         ctx.fillStyle = '#aaa'; ctx.font = '11px "Segoe UI", system-ui, sans-serif';
-        ctx.fillText('tap to unlock', p.x+p.w-18, ry+40);
+        ctx.fillText(I18N.t('ucTapToUnlock'), p.x+p.w-18, ry+40);
       }
       ctx.textAlign = 'left';
     }
@@ -1722,12 +1728,12 @@
     ctx.fillStyle = '#ff6b6b';
     ctx.font = 'bold 20px "Segoe UI", system-ui, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('Restart Game?', W / 2, dy + 40);
+    ctx.fillText(I18N.t('ucRestartGame'), W / 2, dy + 40);
 
     // Warning text
     ctx.fillStyle = '#ccc';
     ctx.font = '14px "Segoe UI", system-ui, sans-serif';
-    ctx.fillText('All progress will be lost!', W / 2, dy + 70);
+    ctx.fillText(I18N.t('ucProgressLost'), W / 2, dy + 70);
 
     // Yes button
     const yBtnX = dx + 30, yBtnY = dy + dh - 60, yBtnW = 110, yBtnH = 38;
@@ -1741,7 +1747,7 @@
     ctx.stroke();
     ctx.fillStyle = '#ff6b6b';
     ctx.font = 'bold 16px "Segoe UI", system-ui, sans-serif';
-    ctx.fillText('Yes, restart', yBtnX + yBtnW / 2, yBtnY + 25);
+    ctx.fillText(I18N.t('ucYesRestart'), yBtnX + yBtnW / 2, yBtnY + 25);
 
     // No button
     const nBtnX = dx + dw - 140, nBtnY = yBtnY, nBtnW = 110, nBtnH = 38;
@@ -1755,7 +1761,7 @@
     ctx.stroke();
     ctx.fillStyle = '#6bd66b';
     ctx.font = 'bold 16px "Segoe UI", system-ui, sans-serif';
-    ctx.fillText('Cancel', nBtnX + nBtnW / 2, nBtnY + 25);
+    ctx.fillText(I18N.t('ucCancel'), nBtnX + nBtnW / 2, nBtnY + 25);
   }
 
   /* ────────────────── Update ────────────────── */
@@ -1929,7 +1935,7 @@
         Audio.evolve();
         spawnFartParticles(CHAR_X, CHAR_Y, 30);
         shakeAmount = 1.5;
-        spawnFloatingText(W/2, H*0.3, EVOLUTIONS[state.evolution].name + '!', '#ffd700');
+        spawnFloatingText(W/2, H*0.3, I18N.t(EVOLUTIONS[state.evolution].i18nKey) + '!', '#ffd700');
         return;
       }
     }
