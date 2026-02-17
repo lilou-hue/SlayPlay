@@ -9,26 +9,26 @@
   <body>
     <main class="game">
       <header class="game__header">
-        <a href="/" class="back-link">&larr; Back to Games</a>
-        <h1>Flappy Bird</h1>
-        <p>Press space or click/tap to flap. Avoid the pipes!</p>
+        <a href="/" class="back-link" data-i18n="backToGames">&larr; Back to Games</a>
+        <h1 data-i18n="fbTitle">Flappy Bird</h1>
+        <p data-i18n="fbInstructions">Press space or click/tap to flap. Avoid the pipes!</p>
       </header>
       <section class="game__panel">
         <canvas id="gameCanvas" width="360" height="640" aria-label="Flappy Bird game"></canvas>
         <div class="game__hud">
           <div class="hud__score">
-            <span>Score</span>
+            <span data-i18n="score">Score</span>
             <strong id="score">0</strong>
           </div>
           <div class="hud__score">
-            <span>Best</span>
+            <span data-i18n="best">Best</span>
             <strong id="bestScore">0</strong>
           </div>
-          <button id="restartButton" class="hud__button" type="button">Restart</button>
+          <button id="restartButton" class="hud__button" type="button" data-i18n="restart">Restart</button>
         </div>
       </section>
       <footer class="game__footer">
-        <p>Tip: keep a steady rhythm to stay in the gap.</p>
+        <p data-i18n="fbTip">Tip: keep a steady rhythm to stay in the gap.</p>
       </footer>
     </main>
     <script src="audio.js"></script>

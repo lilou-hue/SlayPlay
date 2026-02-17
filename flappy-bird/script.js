@@ -4,6 +4,15 @@ const scoreLabel = document.getElementById("score");
 const bestScoreLabel = document.getElementById("bestScore");
 const restartButton = document.getElementById("restartButton");
 
+/* --- i18n setup --- */
+I18N.createSelector(document.querySelector('.game__header'));
+I18N.applyDOM();
+
+window.addEventListener('langchange', () => {
+  I18N.applyDOM();
+  draw();
+});
+
 const gameState = {
   gravity: 1800,
   lift: -520,
@@ -997,11 +1006,11 @@ const draw = () => {
   drawScorePop();
 
   if (!gameState.isRunning && !gameState.isGameOver) {
-    drawOverlay("Tap to start", "Keep the bird in the gaps.");
+    drawOverlay(I18N.t("tapToStart"), I18N.t("keepBirdInGaps"));
   }
 
   if (gameState.isGameOver) {
-    drawOverlay("Game Over", "Tap or press space to try again.");
+    drawOverlay(I18N.t("gameOver"), I18N.t("tapOrSpaceTryAgain"));
   }
 
   context.restore();
