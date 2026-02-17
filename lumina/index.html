@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <main class="game">
+    <main class="game" id="gameContainer">
       <header class="game__header">
         <a href="/" class="back-link">&larr; Back to Games</a>
         <h1>Lumina</h1>
@@ -25,13 +25,74 @@
             <strong id="bestScore">0</strong>
           </div>
           <button id="muteButton" class="hud__mute" type="button" aria-label="Toggle sound">&#x1F50A;</button>
+          <button id="fullscreenButton" class="hud__mute" type="button" aria-label="Toggle fullscreen">&#x26F6;</button>
           <button id="restartButton" class="hud__button" type="button">Restart</button>
         </div>
+
+        <!-- Settings bar -->
+        <div class="settings-bar">
+          <div class="setting-group">
+            <label for="themeSelect">Theme</label>
+            <select id="themeSelect">
+              <option value="default">Crystal Deep</option>
+              <option value="inferno">Inferno</option>
+              <option value="arctic">Arctic</option>
+              <option value="toxic">Toxic</option>
+              <option value="void">Void</option>
+            </select>
+          </div>
+          <div class="setting-group">
+            <label for="skinSelect">Crystal</label>
+            <select id="skinSelect">
+              <option value="classic">Classic</option>
+              <option value="flame">Flame</option>
+              <option value="frost">Frost</option>
+              <option value="prism">Prism</option>
+              <option value="shadow">Shadow</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Mobile controls -->
+        <div class="mobile-controls" id="mobileControls">
+          <button class="ctrl-btn ctrl-left" id="ctrlLeft" aria-label="Move left">&#9664;</button>
+          <button class="ctrl-btn ctrl-pulse" id="ctrlPulse" aria-label="Pulse light">&#10023;</button>
+          <button class="ctrl-btn ctrl-right" id="ctrlRight" aria-label="Move right">&#9654;</button>
+        </div>
       </section>
+
+      <!-- Achievements panel -->
+      <div class="achievements-panel" id="achievementsPanel">
+        <button class="achievements-toggle" id="achievementsToggle" type="button">Achievements</button>
+        <div class="achievements-list" id="achievementsList"></div>
+      </div>
+
       <footer class="game__footer">
         <p>Tip: Collect shards to keep your light alive &mdash; the darkness hungers.</p>
       </footer>
     </main>
+
+    <!-- Achievement popup -->
+    <div class="achievement-popup" id="achievementPopup">
+      <div class="achievement-popup__icon" id="achievementPopupIcon"></div>
+      <div class="achievement-popup__text">
+        <strong id="achievementPopupTitle"></strong>
+        <span id="achievementPopupDesc"></span>
+      </div>
+    </div>
+
+    <!-- Tutorial overlay -->
+    <div class="tutorial-overlay" id="tutorialOverlay">
+      <div class="tutorial-card">
+        <h2 id="tutorialTitle">Welcome to Lumina!</h2>
+        <p id="tutorialText">Descend into the depths of a mysterious cavern.</p>
+        <div class="tutorial-visual" id="tutorialVisual"></div>
+        <div class="tutorial-dots" id="tutorialDots"></div>
+        <button class="tutorial-btn" id="tutorialBtn" type="button">Next</button>
+        <button class="tutorial-skip" id="tutorialSkip" type="button">Skip Tutorial</button>
+      </div>
+    </div>
+
     <script src="game.js"></script>
   </body>
 </html>
