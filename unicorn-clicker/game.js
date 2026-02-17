@@ -480,7 +480,7 @@
     const evo = state.evolution;
     const cx = UNICORN_X;
     const cy = UNICORN_Y + Math.sin(gameTime * 2) * 6;
-    const OL = '#3d2244'; // main outline color
+    const OL = '#9e70a8'; // soft outline color
 
     const sq = squash > 0 ? squash : 0;
     const scaleX = 1 + sq * 0.15;
@@ -543,7 +543,7 @@
     // ── Back legs (stubby chibi) ──
     const legCol = evo >= 3 ? '#c8b8f8' : '#f5c8d8';
     const legShade = evo >= 3 ? '#a890d8' : '#e0a8c0';
-    const legOL = evo >= 3 ? '#6b50a0' : OL;
+    const legOL = evo >= 3 ? '#8068b0' : '#c090b0';
     const legW = 10 * S, legH = 16 * S;
     // Back-left
     chibiEllipse(-15 * S, 26 * S, legW / 2, legH / 2, legShade, legOL, 2);
@@ -569,9 +569,9 @@
     ctx.beginPath();
     ctx.ellipse(0, bodyY, bodyW, bodyH, 0, 0, Math.PI * 2);
     ctx.fill();
-    // Body outline
-    ctx.strokeStyle = evo >= 3 ? '#5030a0' : OL;
-    ctx.lineWidth = 2.5;
+    // Body outline (soft)
+    ctx.strokeStyle = evo >= 3 ? '#6848b0' : '#c090b0';
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.ellipse(0, bodyY, bodyW, bodyH, 0, 0, Math.PI * 2);
     ctx.stroke();
@@ -652,9 +652,9 @@
       ctx.restore();
     }
 
-    // ── Head (HUGE chibi head — ~55% of character) ──
-    const headR = 36 * S;
-    const headY = -20 * S;
+    // ── Head (big chibi head — proportionate) ──
+    const headR = 30 * S;
+    const headY = -18 * S;
     // Head shadow on body
     ctx.fillStyle = 'rgba(0,0,0,0.05)';
     ctx.beginPath();
@@ -677,9 +677,9 @@
     ctx.beginPath();
     ctx.ellipse(0, headY, headR, headR * 0.92, 0, 0, Math.PI * 2);
     ctx.fill();
-    // Head outline
-    ctx.strokeStyle = evo >= 3 ? '#4020a0' : OL;
-    ctx.lineWidth = 3;
+    // Head outline (soft)
+    ctx.strokeStyle = evo >= 3 ? '#6040b0' : '#c090b0';
+    ctx.lineWidth = 2.2;
     ctx.beginPath();
     ctx.ellipse(0, headY, headR, headR * 0.92, 0, 0, Math.PI * 2);
     ctx.stroke();
@@ -715,8 +715,8 @@
     ctx.quadraticCurveTo(earX + 14 * S, earY - 6 * S, earX + 12 * S, headY - 16 * S);
     ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = evo >= 3 ? '#4020a0' : OL;
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = evo >= 3 ? '#6040b0' : '#c090b0';
+    ctx.lineWidth = 1.8;
     ctx.stroke();
     // Inner ear
     ctx.fillStyle = evo >= 3 ? '#3820a0' : '#ffc0d8';
@@ -727,25 +727,46 @@
     ctx.closePath();
     ctx.fill();
 
-    // ── Mane (fluffy filled volumes) ──
-    for (let i = 0; i < 7; i++) {
-      const hue = (i * 45 + gameTime * 50) % 360;
-      const mx = -8 * S + i * 3 * S;
-      const my = headY - headR * 0.7 - Math.sin(gameTime * 2.5 + i * 0.8) * 4;
-      const mr = (7 - i * 0.3) * S;
-      // Filled puff
-      ctx.fillStyle = `hsl(${hue}, 78%, 58%)`;
+    // ── Mane (flowing pastel locks draped over head) ──
+    const maneColors = [
+      {h: 350, s: 70, l: 75}, // pink
+      {h: 20,  s: 80, l: 75}, // peach
+      {h: 50,  s: 75, l: 72}, // gold
+      {h: 140, s: 55, l: 70}, // mint
+      {h: 210, s: 65, l: 75}, // sky
+      {h: 270, s: 60, l: 78}, // lavender
+    ];
+    // Draw locks from back to front, each a soft tapered shape
+    for (let i = maneColors.length - 1; i >= 0; i--) {
+      const mc = maneColors[i];
+      const wave = Math.sin(gameTime * 2 + i * 0.9) * 3;
+      const lockX = -headR * 0.55 - 2 * S + i * 2.5 * S;
+      const lockTopY = headY - headR * 0.65 + i * 1.5 * S;
+      const lockBotY = headY + headR * 0.3 + i * 5 * S + wave;
+      const lockW = (6.5 - i * 0.3) * S;
+
+      // Lock body (tapered rounded shape)
+      ctx.fillStyle = `hsl(${mc.h}, ${mc.s}%, ${mc.l}%)`;
       ctx.beginPath();
-      ctx.arc(mx - 6, my + i * 4 * S, mr, 0, Math.PI * 2);
+      ctx.moveTo(lockX - lockW * 0.4, lockTopY);
+      ctx.quadraticCurveTo(lockX - lockW * 0.7, (lockTopY + lockBotY) * 0.5 + wave, lockX - lockW * 0.2 + wave * 0.5, lockBotY);
+      ctx.quadraticCurveTo(lockX + lockW * 0.3, lockBotY - 2, lockX + lockW * 0.5 + wave * 0.3, lockBotY - 4);
+      ctx.quadraticCurveTo(lockX + lockW * 0.8, (lockTopY + lockBotY) * 0.5 - wave * 0.5, lockX + lockW * 0.5, lockTopY);
+      ctx.closePath();
       ctx.fill();
-      // Outline
-      ctx.strokeStyle = `hsl(${hue}, 55%, 38%)`;
-      ctx.lineWidth = 1.5;
+
+      // Soft outline
+      ctx.strokeStyle = `hsl(${mc.h}, ${mc.s - 15}%, ${mc.l - 20}%)`;
+      ctx.lineWidth = 1.2;
       ctx.stroke();
-      // Highlight
-      ctx.fillStyle = `hsla(${hue}, 90%, 80%, 0.5)`;
+
+      // Inner highlight streak
+      ctx.fillStyle = `hsla(${mc.h}, ${mc.s + 10}%, ${mc.l + 12}%, 0.5)`;
       ctx.beginPath();
-      ctx.arc(mx - 6 - mr * 0.2, my + i * 4 * S - mr * 0.3, mr * 0.35, 0, Math.PI * 2);
+      ctx.moveTo(lockX, lockTopY + 3);
+      ctx.quadraticCurveTo(lockX - lockW * 0.15, (lockTopY + lockBotY) * 0.45 + wave * 0.5, lockX + wave * 0.3, lockBotY - 6);
+      ctx.quadraticCurveTo(lockX + lockW * 0.2, (lockTopY + lockBotY) * 0.45, lockX + lockW * 0.15, lockTopY + 3);
+      ctx.closePath();
       ctx.fill();
     }
 
@@ -799,10 +820,10 @@
       ctx.stroke();
     }
 
-    // ── Eyes (BIG anime chibi eyes) ──
-    const eyeSpacing = 13 * S;
+    // ── Eyes (round chibi eyes) ──
+    const eyeSpacing = 12 * S;
     const eyeY = headY + 2 * S;
-    const eyeRx = 11 * S, eyeRy = 13 * S;
+    const eyeRx = 9 * S, eyeRy = 10 * S;
     const blinkCycle = gameTime % 4;
     const isBlinking = blinkCycle > 3.85 && blinkCycle < 3.95;
     const eyeOpen = isBlinking ? 0.08 : 1;
@@ -815,36 +836,36 @@
       ctx.beginPath();
       ctx.ellipse(ex, eyeY, eyeRx, eyeRy * eyeOpen, 0, 0, Math.PI * 2);
       ctx.fill();
-      // Eye outline
-      ctx.strokeStyle = OL;
-      ctx.lineWidth = 2.5;
+      // Eye outline (soft)
+      ctx.strokeStyle = '#c09ab0';
+      ctx.lineWidth = 1.8;
       ctx.beginPath();
       ctx.ellipse(ex, eyeY, eyeRx, eyeRy * eyeOpen, 0, 0, Math.PI * 2);
       ctx.stroke();
 
       if (!isBlinking) {
-        // Iris (gradient)
-        const irisR = 8 * S;
+        // Iris (gradient — warm & bright)
+        const irisR = 6.5 * S;
         const irisY = eyeY + 1 * S;
         const irisGrad = ctx.createRadialGradient(ex, irisY - irisR * 0.3, 1, ex, irisY, irisR);
         if (evo >= 3) {
-          irisGrad.addColorStop(0, '#c084fc');
-          irisGrad.addColorStop(0.5, '#7c3aed');
-          irisGrad.addColorStop(1, '#4c1d95');
+          irisGrad.addColorStop(0, '#d8aaff');
+          irisGrad.addColorStop(0.5, '#a06ee0');
+          irisGrad.addColorStop(1, '#7040b8');
         } else {
-          irisGrad.addColorStop(0, '#a080e0');
-          irisGrad.addColorStop(0.5, '#6040b0');
-          irisGrad.addColorStop(1, '#2d1b69');
+          irisGrad.addColorStop(0, '#c8a0f0');
+          irisGrad.addColorStop(0.5, '#9070d0');
+          irisGrad.addColorStop(1, '#6848a8');
         }
         ctx.fillStyle = irisGrad;
         ctx.beginPath();
         ctx.arc(ex, irisY, irisR, 0, Math.PI * 2);
         ctx.fill();
 
-        // Pupil
-        ctx.fillStyle = '#0a0018';
+        // Pupil (small & soft)
+        ctx.fillStyle = '#1a0830';
         ctx.beginPath();
-        ctx.arc(ex, irisY + 1, irisR * 0.55, 0, Math.PI * 2);
+        ctx.arc(ex, irisY + 0.5, irisR * 0.38, 0, Math.PI * 2);
         ctx.fill();
 
         // Main highlight (large, top-right)
@@ -863,53 +884,33 @@
         ctx.arc(ex + 1.5 * S, irisY - 5 * S, 1.2 * S, 0, Math.PI * 2);
         ctx.fill();
 
-        // Upper eyelash (thick arc)
-        ctx.strokeStyle = OL;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(ex, eyeY, eyeRx, Math.PI + 0.3, Math.PI * 2 - 0.3);
-        ctx.stroke();
-        // Lash tips (little spikes at corners)
-        const lashLen = 4 * S;
+        // Upper eyelid (gentle curved line, no spikes)
+        ctx.strokeStyle = '#b888b8';
         ctx.lineWidth = 2;
-        // Outer lash
-        const lx1 = ex + eyeRx * Math.cos(-0.3);
-        const ly1 = eyeY + eyeRy * Math.sin(-0.3);
         ctx.beginPath();
-        ctx.moveTo(lx1, ly1);
-        ctx.lineTo(lx1 + side * lashLen * 0.7, ly1 - lashLen);
-        ctx.stroke();
-        // Middle lash
-        const lx2 = ex + eyeRx * 0.7 * side;
-        const ly2 = eyeY - eyeRy * 0.8;
-        ctx.beginPath();
-        ctx.moveTo(lx2, ly2);
-        ctx.lineTo(lx2 + side * lashLen * 0.3, ly2 - lashLen * 0.9);
+        ctx.arc(ex, eyeY, eyeRx, Math.PI + 0.4, Math.PI * 2 - 0.4);
         ctx.stroke();
       }
     }
 
-    // ── Blush (rosy circles on cheeks) ──
-    ctx.fillStyle = 'rgba(255,130,170,0.3)';
-    chibiEllipse(-eyeSpacing - 6 * S, eyeY + 10 * S, 8 * S, 5 * S, 'rgba(255,130,170,0.3)', null);
-    chibiEllipse(eyeSpacing + 6 * S, eyeY + 10 * S, 8 * S, 5 * S, 'rgba(255,130,170,0.3)', null);
+    // ── Blush (soft pink ovals on cheeks) ──
+    chibiEllipse(-eyeSpacing - 4 * S, eyeY + 8 * S, 7 * S, 4 * S, 'rgba(255,160,190,0.35)', null);
+    chibiEllipse(eyeSpacing + 4 * S, eyeY + 8 * S, 7 * S, 4 * S, 'rgba(255,160,190,0.35)', null);
 
-    // ── Mouth (tiny cute w-shape) ──
-    const mouthY = eyeY + 14 * S;
-    ctx.strokeStyle = evo >= 3 ? '#6040a0' : '#c06080';
-    ctx.lineWidth = 2;
+    // ── Mouth (simple smile arc) ──
+    const mouthY = eyeY + 12 * S;
+    ctx.strokeStyle = evo >= 3 ? '#8868c0' : '#d08098';
+    ctx.lineWidth = 1.8;
     ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.moveTo(-4 * S, mouthY);
-    ctx.quadraticCurveTo(-2 * S, mouthY + 3 * S, 0, mouthY + 1 * S);
-    ctx.quadraticCurveTo(2 * S, mouthY + 3 * S, 4 * S, mouthY);
+    ctx.arc(0, mouthY - 2 * S, 3.5 * S, 0.15, Math.PI - 0.15);
     ctx.stroke();
     ctx.lineCap = 'butt';
 
-    // ── Nose (tiny dot) ──
-    ctx.fillStyle = evo >= 3 ? 'rgba(160,100,220,0.4)' : 'rgba(220,140,170,0.5)';
+    // ── Nose (tiny soft dot) ──
+    ctx.fillStyle = evo >= 3 ? 'rgba(160,120,220,0.3)' : 'rgba(220,160,180,0.4)';
     ctx.beginPath();
-    ctx.arc(0, mouthY - 4 * S, 1.5 * S, 0, Math.PI * 2);
+    ctx.arc(0, mouthY - 5 * S, 1.2 * S, 0, Math.PI * 2);
     ctx.fill();
 
     // ── Sparkle Pony+ glitter (orbiting 4-point stars) ──
