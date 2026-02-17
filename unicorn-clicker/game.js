@@ -756,76 +756,158 @@
     ctx.closePath();
     ctx.fill();
 
-    // ── Mane (chunky chibi hair sections — naomilord style) ──
-    // Hair cap — thick arc covering the entire top of the head (no bald spots)
+    // ── Mane (chunky chibi hair — naomilord style) ──
     const headVR = headR * 0.92; // vertical radius of head ellipse
-    const capPuff = 5 * S; // extra puffiness beyond head edge
-
-    const capGrad = ctx.createLinearGradient(-headR, headY - headVR, headR * 0.5, headY + headVR * 0.3);
-    capGrad.addColorStop(0, 'hsl(300, 65%, 78%)');
-    capGrad.addColorStop(0.35, 'hsl(340, 60%, 80%)');
-    capGrad.addColorStop(0.65, 'hsl(30, 70%, 78%)');
-    capGrad.addColorStop(1, 'hsl(260, 55%, 80%)');
-    ctx.fillStyle = capGrad;
-
-    ctx.beginPath();
-    // Bottom-right of the hair line (just past the right eye area)
-    const capR = headR + capPuff;
-    const capVR = headVR + capPuff;
-    // Start at right forehead — just above the eye line
-    ctx.moveTo(headR * 0.75, headY + headVR * 0.1);
-    // Arc across the ENTIRE top of the head (from right to left), puffed outward
-    // Use the ellipse path covering the top ~240 degrees
-    // Right side up
-    ctx.quadraticCurveTo(capR * 0.95, headY - headVR * 0.3, capR * 0.7, headY - capVR * 0.8);
-    // Top-right to top
-    ctx.quadraticCurveTo(capR * 0.3, headY - capVR * 1.08, 0, headY - capVR * 1.1);
-    // Top to top-left
-    ctx.quadraticCurveTo(-capR * 0.35, headY - capVR * 1.08, -capR * 0.7, headY - capVR * 0.85);
-    // Top-left down left side
-    ctx.quadraticCurveTo(-capR * 1.0, headY - capVR * 0.5, -capR * 0.95, headY + headVR * 0.15);
-    // Bottom edge — sweeps right across forehead as a wavy bangs line
-    // Left bang dip
-    ctx.quadraticCurveTo(-headR * 0.75, headY + headVR * 0.35, -headR * 0.55, headY + headVR * 0.05);
-    // Center-left bang dip
-    ctx.quadraticCurveTo(-headR * 0.35, headY + headVR * 0.3, -headR * 0.15, headY + headVR * 0.0);
-    // Center bang dip
-    ctx.quadraticCurveTo(headR * 0.05, headY + headVR * 0.25, headR * 0.25, headY + headVR * 0.0);
-    // Right bang dip
-    ctx.quadraticCurveTo(headR * 0.5, headY + headVR * 0.2, headR * 0.75, headY + headVR * 0.1);
-    ctx.closePath();
-    ctx.fill();
-
-    // Cap outline — only draw the outer edge, not the bangs bottom
-    ctx.strokeStyle = 'hsl(310, 50%, 55%)';
-    ctx.lineWidth = 2.5;
-    ctx.stroke();
-
-    // Bang tips — pointy chibi bang sections hanging over the forehead
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
-    const bangSections = [
-      { bx: -headR * 0.65, topY: headY + headVR * 0.2,  tipY: headY + headVR * 0.55, bw: 12, h: 300, s: 65, l: 76 },
-      { bx: -headR * 0.25, topY: headY + headVR * 0.15, tipY: headY + headVR * 0.52, bw: 13, h: 340, s: 60, l: 78 },
-      { bx:  headR * 0.12, topY: headY + headVR * 0.12, tipY: headY + headVR * 0.48, bw: 12, h: 30,  s: 70, l: 78 },
-      { bx:  headR * 0.5,  topY: headY + headVR * 0.15, tipY: headY + headVR * 0.42, bw: 11, h: 260, s: 55, l: 80 },
+
+    // Hair uses the same chunky leaf/teardrop shapes as the flowing mane
+    // but tiled across the entire top of the head like thick voluminous hair.
+    // Each "hair clump" is anchored on the head edge and points outward/upward,
+    // overlapping to fully cover the scalp with no bald spots.
+
+    // Palette matching the flowing mane
+    const hairPalette = [
+      { h: 300, s: 65, l: 78 }, // lavender-pink
+      { h: 340, s: 60, l: 80 }, // pink
+      { h: 30,  s: 70, l: 78 }, // peach
+      { h: 180, s: 50, l: 76 }, // mint
+      { h: 260, s: 55, l: 80 }, // periwinkle
     ];
 
-    for (const b of bangSections) {
-      const bw = b.bw * S * 0.5;
+    // Back hair layer — large leaf shapes radiating outward from the back/top
+    // These are drawn FIRST so they sit behind the head-top clumps
+    const backHair = [
+      // angle around head (rad), outward length, width, palette index
+      { a: Math.PI * 0.80, len: 22, w: 20, pi: 0 },
+      { a: Math.PI * 0.65, len: 24, w: 19, pi: 1 },
+      { a: Math.PI * 0.50, len: 26, w: 20, pi: 2 },
+      { a: Math.PI * 0.35, len: 24, w: 19, pi: 3 },
+      { a: Math.PI * 0.20, len: 20, w: 18, pi: 4 },
+    ];
+
+    for (const bh of backHair) {
+      const col = hairPalette[bh.pi];
+      const ancX = Math.cos(bh.a) * headR * 0.95;
+      const ancY = headY + Math.sin(bh.a) * headVR * 0.95 * -1; // flip: PI=left, 0=right, top is positive
+      // Tip points outward from head center
+      const dirX = Math.cos(bh.a);
+      const dirY = -Math.sin(bh.a);
+      const tipX = ancX + dirX * bh.len * S;
+      const tipY = ancY - dirY * bh.len * S; // canvas Y is inverted
+      const hw = bh.w * S * 0.5;
+      // Perpendicular direction for width
+      const perpX = -dirY;
+      const perpY = dirX;
+
       ctx.beginPath();
-      ctx.moveTo(b.bx - bw, b.topY);
-      ctx.quadraticCurveTo(b.bx - bw * 0.3, (b.topY + b.tipY) * 0.55, b.bx, b.tipY);
-      ctx.quadraticCurveTo(b.bx + bw * 0.3, (b.topY + b.tipY) * 0.55, b.bx + bw, b.topY);
+      ctx.moveTo(ancX, ancY);
+      ctx.bezierCurveTo(
+        ancX + perpX * hw * 1.2, ancY + perpY * hw * 1.2,
+        tipX + perpX * hw * 0.6, tipY + perpY * hw * 0.6,
+        tipX, tipY
+      );
+      ctx.bezierCurveTo(
+        tipX - perpX * hw * 0.6, tipY - perpY * hw * 0.6,
+        ancX - perpX * hw * 1.2, ancY - perpY * hw * 1.2,
+        ancX, ancY
+      );
       ctx.closePath();
-      ctx.fillStyle = `hsl(${b.h}, ${b.s}%, ${b.l}%)`;
+      const g = ctx.createLinearGradient(ancX, ancY, tipX, tipY);
+      g.addColorStop(0, `hsl(${col.h}, ${col.s}%, ${col.l}%)`);
+      g.addColorStop(1, `hsl(${(col.h + 25) % 360}, ${col.s + 5}%, ${col.l - 5}%)`);
+      ctx.fillStyle = g;
       ctx.fill();
-      ctx.strokeStyle = `hsl(${b.h}, ${b.s - 10}%, ${b.l - 25}%)`;
+      ctx.strokeStyle = `hsl(${col.h}, ${col.s - 10}%, ${col.l - 25}%)`;
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+    }
+
+    // Middle layer — fat overlapping clumps covering the entire scalp
+    // These sit ON TOP of the head fill and overlap each other
+    const topHair = [
+      // Each clump: angle on head, how far it puffs out, width, palette index
+      { a: Math.PI * 0.85, len: 16, w: 22, pi: 0 },
+      { a: Math.PI * 0.72, len: 18, w: 21, pi: 1 },
+      { a: Math.PI * 0.58, len: 20, w: 22, pi: 2 },
+      { a: Math.PI * 0.45, len: 20, w: 22, pi: 3 },
+      { a: Math.PI * 0.32, len: 18, w: 21, pi: 4 },
+      { a: Math.PI * 0.18, len: 16, w: 20, pi: 0 },
+    ];
+
+    for (const th of topHair) {
+      const col = hairPalette[th.pi];
+      const ancX = Math.cos(th.a) * headR * 0.85;
+      const ancY = headY - Math.sin(th.a) * headVR * 0.85;
+      const dirX = Math.cos(th.a);
+      const dirY = -Math.sin(th.a);
+      const tipX = ancX + dirX * th.len * S;
+      const tipY = ancY + dirY * th.len * S;
+      const hw = th.w * S * 0.5;
+      const perpX = dirY;
+      const perpY = -dirX;
+
+      ctx.beginPath();
+      ctx.moveTo(ancX + perpX * hw * 0.4, ancY + perpY * hw * 0.4);
+      ctx.bezierCurveTo(
+        ancX + perpX * hw * 1.3, ancY + perpY * hw * 1.3,
+        tipX + perpX * hw * 0.5, tipY + perpY * hw * 0.5,
+        tipX, tipY
+      );
+      ctx.bezierCurveTo(
+        tipX - perpX * hw * 0.5, tipY - perpY * hw * 0.5,
+        ancX - perpX * hw * 1.3, ancY - perpY * hw * 1.3,
+        ancX - perpX * hw * 0.4, ancY - perpY * hw * 0.4
+      );
+      ctx.closePath();
+      const g = ctx.createLinearGradient(ancX, ancY, tipX, tipY);
+      g.addColorStop(0, `hsl(${col.h}, ${col.s}%, ${col.l}%)`);
+      g.addColorStop(1, `hsl(${(col.h + 20) % 360}, ${col.s}%, ${col.l + 3}%)`);
+      ctx.fillStyle = g;
+      ctx.fill();
+      ctx.strokeStyle = `hsl(${col.h}, ${col.s - 10}%, ${col.l - 25}%)`;
       ctx.lineWidth = 2;
       ctx.stroke();
     }
 
-    // 5 large leaf/teardrop-shaped flowing sections, pastel rainbow, bold outlines
+    // Front bangs — leaf-shaped sections hanging down over the forehead
+    const bangY = headY + headVR * 0.1;
+    const bangs = [
+      { x: -headR * 0.68, len: 18, w: 16, pi: 0 },
+      { x: -headR * 0.35, len: 20, w: 17, pi: 1 },
+      { x:  headR * 0.0,  len: 19, w: 16, pi: 2 },
+      { x:  headR * 0.35, len: 17, w: 16, pi: 3 },
+      { x:  headR * 0.62, len: 14, w: 14, pi: 4 },
+    ];
+
+    for (const b of bangs) {
+      const col = hairPalette[b.pi];
+      const hw = b.w * S * 0.5;
+      const tipY = bangY + b.len * S;
+      ctx.beginPath();
+      ctx.moveTo(b.x - hw, bangY);
+      ctx.bezierCurveTo(
+        b.x - hw * 1.1, bangY + b.len * S * 0.4,
+        b.x - hw * 0.3, tipY - b.len * S * 0.15,
+        b.x, tipY
+      );
+      ctx.bezierCurveTo(
+        b.x + hw * 0.3, tipY - b.len * S * 0.15,
+        b.x + hw * 1.1, bangY + b.len * S * 0.4,
+        b.x + hw, bangY
+      );
+      ctx.closePath();
+      const g = ctx.createLinearGradient(b.x, bangY, b.x, tipY);
+      g.addColorStop(0, `hsl(${col.h}, ${col.s}%, ${col.l}%)`);
+      g.addColorStop(1, `hsl(${(col.h + 25) % 360}, ${col.s + 5}%, ${col.l - 5}%)`);
+      ctx.fillStyle = g;
+      ctx.fill();
+      ctx.strokeStyle = `hsl(${col.h}, ${col.s - 10}%, ${col.l - 25}%)`;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    // Flowing mane sections (off the left/back of head)
     const maneSections = [
       // {startAngle on head, length, width, hue, sway offset}
       { ax: -0.85, ay: -0.3, len: 38, w: 18, h: 300, s: 65, l: 78, sOff: 0 },    // back — lavender-pink
