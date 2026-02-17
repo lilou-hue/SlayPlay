@@ -279,9 +279,9 @@
           <canvas id="snakeCanvas" width="360" height="200"></canvas>
         </div>
         <div class="card-body">
-          <h2>Snake</h2>
-          <p>Guide the snake, eat to grow, and survive as the walls close in. Turn up the volume!</p>
-          <span class="card-tag snake-tag">Classic</span>
+          <h2 data-i18n="snakeTitle">Snake</h2>
+          <p data-i18n="snakeDesc">Guide the snake, eat to grow, and survive as the walls close in. Turn up the volume!</p>
+          <span class="card-tag snake-tag" data-i18n="classic">Classic</span>
         </div>
       </a>
 
@@ -290,9 +290,9 @@
           <canvas id="luminaCanvas" width="360" height="200"></canvas>
         </div>
         <div class="card-body">
-          <h2>Lumina</h2>
-          <p>Descend through a dark crystalline cavern. Your light is all that reveals the way.</p>
-          <span class="card-tag lumina-tag">Graphics</span>
+          <h2 data-i18n="luminaTitle">Lumina</h2>
+          <p data-i18n="luminaDesc">Descend through a dark crystalline cavern. Your light is all that reveals the way.</p>
+          <span class="card-tag lumina-tag" data-i18n="graphics">Graphics</span>
         </div>
       </a>
 
@@ -301,9 +301,9 @@
           <canvas id="phantomCanvas" width="360" height="200"></canvas>
         </div>
         <div class="card-body">
-          <h2>Phantom Road</h2>
-          <p>Race through the dark, chain combos, grab power-ups, and evade the police!</p>
-          <span class="card-tag phantom-tag">Racing</span>
+          <h2 data-i18n="phantomRoadTitle">Phantom Road</h2>
+          <p data-i18n="phantomRoadDesc">Race through the dark, chain combos, grab power-ups, and evade the police!</p>
+          <span class="card-tag phantom-tag" data-i18n="racing">Racing</span>
         </div>
       </a>
 
@@ -312,9 +312,9 @@
           <canvas id="unicornCanvas" width="360" height="200"></canvas>
         </div>
         <div class="card-body">
-          <h2>Unicorn Fart Clicker</h2>
-          <p>Tap a majestic unicorn to unleash rainbow farts. Earn Sparkle Points and evolve!</p>
-          <span class="card-tag unicorn-tag">Idle</span>
+          <h2 data-i18n="unicornClickerTitle">Unicorn Fart Clicker</h2>
+          <p data-i18n="unicornClickerDesc">Tap a majestic unicorn to unleash rainbow farts. Earn Sparkle Points and evolve!</p>
+          <span class="card-tag unicorn-tag" data-i18n="idle">Idle</span>
         </div>
       </a>
     </div>
@@ -1070,6 +1070,12 @@
         requestAnimationFrame(draw);
       })();
     })();
+    </script>
+    <script src="i18n.js"></script>
+    <script>
+      I18N.createSelector(document.body);
+      I18N.applyDOM();
+      window.addEventListener('langchange', () => I18N.applyDOM());
     </script>
   </body>
 </html>

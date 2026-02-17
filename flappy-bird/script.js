@@ -1036,7 +1036,14 @@ const startGame = () => {
   }
 };
 
+let lastFlapTime = 0;
+const FLAP_COOLDOWN = 100; // ms — prevents double-tap from firing two flaps
+
 const flap = () => {
+  const now = performance.now();
+  if (now - lastFlapTime < FLAP_COOLDOWN) return;
+  lastFlapTime = now;
+
   Audio.init();
   Audio.resume();
 

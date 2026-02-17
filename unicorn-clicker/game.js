@@ -1146,11 +1146,29 @@
         ctx.arc(ex + 1.5 * S, irisY - 5 * S, 1.2 * S, 0, Math.PI * 2);
         ctx.fill();
 
-        // Upper eyelid (gentle curved line, no spikes)
-        ctx.strokeStyle = '#b888b8';
+        // Upper eyelid (gentle curved line)
+        ctx.strokeStyle = evo >= 3 ? '#8068b0' : '#b888b8';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.arc(ex, eyeY, eyeRx, Math.PI + 0.4, Math.PI * 2 - 0.4);
+        ctx.stroke();
+
+        // Eyelash tips
+        ctx.strokeStyle = evo >= 3 ? '#8068b0' : '#b888b8';
+        ctx.lineWidth = 1.5;
+        // Outer lash
+        const lx1 = ex + eyeRx * Math.cos(-0.4);
+        const ly1 = eyeY + eyeRy * eyeOpen * Math.sin(-0.4);
+        ctx.beginPath();
+        ctx.moveTo(lx1, ly1);
+        ctx.lineTo(lx1 + side * 2.5 * S, ly1 - 3.5 * S);
+        ctx.stroke();
+        // Mid lash
+        const lx2 = ex + eyeRx * 0.7 * side;
+        const ly2 = eyeY - eyeRy * eyeOpen * 0.85;
+        ctx.beginPath();
+        ctx.moveTo(lx2, ly2);
+        ctx.lineTo(lx2 + side * 1.5 * S, ly2 - 3 * S);
         ctx.stroke();
       }
     }
@@ -1159,13 +1177,15 @@
     chibiEllipse(-eyeSpacing - 4 * S, eyeY + 8 * S, 7 * S, 4 * S, 'rgba(255,160,190,0.35)', null);
     chibiEllipse(eyeSpacing + 4 * S, eyeY + 8 * S, 7 * S, 4 * S, 'rgba(255,160,190,0.35)', null);
 
-    // ── Mouth (simple smile arc) ──
+    // ── Mouth (cute w-shape) ──
     const mouthY = eyeY + 12 * S;
     ctx.strokeStyle = evo >= 3 ? '#8868c0' : '#d08098';
     ctx.lineWidth = 1.8;
     ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.arc(0, mouthY - 2 * S, 3.5 * S, 0.15, Math.PI - 0.15);
+    ctx.moveTo(-3.5 * S, mouthY);
+    ctx.quadraticCurveTo(-1.8 * S, mouthY + 2.5 * S, 0, mouthY + 0.5 * S);
+    ctx.quadraticCurveTo(1.8 * S, mouthY + 2.5 * S, 3.5 * S, mouthY);
     ctx.stroke();
     ctx.lineCap = 'butt';
 
