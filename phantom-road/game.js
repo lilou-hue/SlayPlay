@@ -145,8 +145,8 @@ const audio = (() => {
 
 // ── Constants ────────────────────────────────────────────
 const ROAD_WIDTH = 210;
-const CAR_W = 30;
-const CAR_H = 52;
+const CAR_W = 36;
+const CAR_H = 62;
 const LANE_COUNT = 3;
 
 const zones = [
@@ -788,11 +788,11 @@ function update(dt) {
   // ── Tail light trail ──
   if (Math.random() < 0.5) {
     spawnParticle(
-      state.carX - 10 + Math.random() * 20,
+      state.carX - 12 + Math.random() * 24,
       state.carY + CAR_H / 2 + 4,
-      (Math.random() - 0.5) * 15,
-      40 + Math.random() * 30,
-      0.25, "rgba(255,80,30,0.5)", 2
+      (Math.random() - 0.5) * 18,
+      50 + Math.random() * 40,
+      0.3, "rgba(255,80,30,0.6)", 2.5
     );
   }
 
@@ -974,12 +974,7 @@ function draw() {
     drawTrafficCar(t);
   }
 
-  // ── Player car ──
-  if (state.phase !== "gameover") {
-    drawPlayerCar();
-  }
-
-  // ── Particles ──
+  // ── Particles (under darkness) ──
   for (const p of state.particles) {
     const alpha = p.life / p.maxLife;
     ctx.globalAlpha = alpha;
@@ -997,6 +992,11 @@ function draw() {
     // Full darkness on crash (just a dim vignette)
     ctx.fillStyle = "rgba(0,0,0,0.65)";
     ctx.fillRect(0, 0, W, H);
+  }
+
+  // ── Player car (drawn ON TOP of darkness so it's always visible) ──
+  if (state.phase !== "gameover") {
+    drawPlayerCar();
   }
 
   // ── HUD elements on canvas ──
@@ -1082,60 +1082,93 @@ function drawPlayerCar() {
   ctx.translate(state.carX, state.carY);
   ctx.rotate(state.steerAngle);
 
-  // Shadow
-  ctx.fillStyle = "rgba(0,0,0,0.3)";
+  // Ambient glow underneath car (makes it pop against dark road)
+  ctx.fillStyle = "rgba(255,140,60,0.12)";
+  ctx.shadowColor = "rgba(255,120,40,0.4)";
+  ctx.shadowBlur = 35;
   ctx.beginPath();
-  ctx.ellipse(2, 6, CAR_W / 2 + 2, CAR_H / 2 - 4, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 0, CAR_W / 2 + 12, CAR_H / 2 + 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Shadow
+  ctx.fillStyle = "rgba(0,0,0,0.35)";
+  ctx.beginPath();
+  ctx.ellipse(3, 7, CAR_W / 2 + 2, CAR_H / 2 - 5, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Car body
+  // Car body (brighter, more saturated)
   const bodyGrad = ctx.createLinearGradient(0, -CAR_H / 2, 0, CAR_H / 2);
-  bodyGrad.addColorStop(0, "#ff7744");
-  bodyGrad.addColorStop(0.5, "#ee4422");
-  bodyGrad.addColorStop(1, "#cc2211");
+  bodyGrad.addColorStop(0, "#ff8855");
+  bodyGrad.addColorStop(0.4, "#ff5533");
+  bodyGrad.addColorStop(1, "#dd2211");
   ctx.fillStyle = bodyGrad;
   ctx.beginPath();
-  ctx.roundRect(-CAR_W / 2, -CAR_H / 2, CAR_W, CAR_H, [8, 8, 4, 4]);
+  ctx.roundRect(-CAR_W / 2, -CAR_H / 2, CAR_W, CAR_H, [10, 10, 5, 5]);
   ctx.fill();
 
+  // Bright edge highlight (left side)
+  ctx.fillStyle = "rgba(255,200,150,0.2)";
+  ctx.fillRect(-CAR_W / 2, -CAR_H / 2 + 4, 3, CAR_H - 8);
+
+  // Body side stripe (racing stripe)
+  ctx.fillStyle = "rgba(255,255,255,0.12)";
+  ctx.fillRect(-CAR_W / 2 + 4, -CAR_H / 2 + 2, 3, CAR_H - 4);
+  ctx.fillRect(CAR_W / 2 - 7, -CAR_H / 2 + 2, 3, CAR_H - 4);
+
   // Roof
-  ctx.fillStyle = "rgba(200,100,60,0.3)";
+  ctx.fillStyle = "rgba(255,120,70,0.25)";
   ctx.beginPath();
-  ctx.roundRect(-CAR_W / 2 + 5, -8, CAR_W - 10, 20, 3);
+  ctx.roundRect(-CAR_W / 2 + 6, -10, CAR_W - 12, 24, 4);
   ctx.fill();
 
   // Windshield
-  ctx.fillStyle = "rgba(100,180,255,0.45)";
+  ctx.fillStyle = "rgba(130,200,255,0.5)";
   ctx.beginPath();
-  ctx.roundRect(-CAR_W / 2 + 4, -CAR_H / 2 + 6, CAR_W - 8, 13, 2);
+  ctx.roundRect(-CAR_W / 2 + 5, -CAR_H / 2 + 7, CAR_W - 10, 15, 3);
   ctx.fill();
+  // Windshield reflection
+  ctx.fillStyle = "rgba(255,255,255,0.15)";
+  ctx.fillRect(-CAR_W / 2 + 7, -CAR_H / 2 + 8, CAR_W / 2 - 4, 6);
 
   // Rear window
-  ctx.fillStyle = "rgba(100,150,200,0.25)";
-  ctx.fillRect(-CAR_W / 2 + 5, CAR_H / 2 - 16, CAR_W - 10, 8);
+  ctx.fillStyle = "rgba(100,160,220,0.3)";
+  ctx.beginPath();
+  ctx.roundRect(-CAR_W / 2 + 6, CAR_H / 2 - 19, CAR_W - 12, 10, 2);
+  ctx.fill();
 
-  // Rear lights
-  ctx.fillStyle = "#ff2200";
+  // Rear lights (big bright glowing)
+  ctx.fillStyle = "#ff3300";
   ctx.shadowColor = "#ff2200";
-  ctx.shadowBlur = 10;
-  ctx.fillRect(-CAR_W / 2 + 1, CAR_H / 2 - 5, 7, 4);
-  ctx.fillRect(CAR_W / 2 - 8, CAR_H / 2 - 5, 7, 4);
+  ctx.shadowBlur = 14;
+  ctx.beginPath();
+  ctx.roundRect(-CAR_W / 2 + 1, CAR_H / 2 - 7, 9, 5, 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.roundRect(CAR_W / 2 - 10, CAR_H / 2 - 7, 9, 5, 2);
+  ctx.fill();
   ctx.shadowBlur = 0;
 
-  // Headlights
-  ctx.fillStyle = "#ffe8a0";
-  ctx.shadowColor = "#ffeecc";
-  ctx.shadowBlur = 12;
-  ctx.fillRect(-CAR_W / 2 + 2, -CAR_H / 2, 7, 5);
-  ctx.fillRect(CAR_W / 2 - 9, -CAR_H / 2, 7, 5);
+  // Headlights (bright white-yellow, very visible)
+  ctx.fillStyle = "#fff4cc";
+  ctx.shadowColor = "#ffe080";
+  ctx.shadowBlur = 18;
+  ctx.beginPath();
+  ctx.roundRect(-CAR_W / 2 + 2, -CAR_H / 2 - 1, 9, 7, 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.roundRect(CAR_W / 2 - 11, -CAR_H / 2 - 1, 9, 7, 2);
+  ctx.fill();
   ctx.shadowBlur = 0;
 
-  // Nitro glow on car
+  // Nitro glow on exhaust
   if (state.nitroActive) {
-    ctx.fillStyle = "rgba(255,120,20,0.3)";
+    ctx.fillStyle = "rgba(255,100,10,0.5)";
     ctx.shadowColor = "#ff6600";
-    ctx.shadowBlur = 20;
-    ctx.fillRect(-CAR_W / 2 - 2, CAR_H / 2 - 4, CAR_W + 4, 8);
+    ctx.shadowBlur = 30;
+    ctx.beginPath();
+    ctx.roundRect(-CAR_W / 2 - 3, CAR_H / 2 - 5, CAR_W + 6, 10, 4);
+    ctx.fill();
     ctx.shadowBlur = 0;
   }
 
@@ -1225,26 +1258,27 @@ function drawHeadlights() {
   ctx.lineTo(state.carX + 16, state.carY - CAR_H / 2);
   ctx.fill();
 
-  // Car ambient glow
+  // Glow around car position (so the road near car is visible)
   const carGlow = ctx.createRadialGradient(
-    state.carX, state.carY, 15,
-    state.carX, state.carY, 90
+    state.carX, state.carY, 20,
+    state.carX, state.carY, 110
   );
-  carGlow.addColorStop(0, "rgba(255,255,255,0.95)");
-  carGlow.addColorStop(0.4, "rgba(255,255,255,0.5)");
+  carGlow.addColorStop(0, "rgba(255,255,255,0.9)");
+  carGlow.addColorStop(0.35, "rgba(255,255,255,0.5)");
+  carGlow.addColorStop(0.7, "rgba(255,255,255,0.15)");
   carGlow.addColorStop(1, "rgba(255,255,255,0)");
   ctx.fillStyle = carGlow;
-  ctx.fillRect(state.carX - 90, state.carY - 90, 180, 180);
+  ctx.fillRect(state.carX - 110, state.carY - 110, 220, 220);
 
   // Rear tail-light glow (see behind a little)
   const rearGlow = ctx.createRadialGradient(
-    state.carX, state.carY + 50, 5,
-    state.carX, state.carY + 80, 70
+    state.carX, state.carY + 60, 8,
+    state.carX, state.carY + 90, 80
   );
-  rearGlow.addColorStop(0, "rgba(255,255,255,0.4)");
+  rearGlow.addColorStop(0, "rgba(255,255,255,0.35)");
   rearGlow.addColorStop(1, "rgba(255,255,255,0)");
   ctx.fillStyle = rearGlow;
-  ctx.fillRect(state.carX - 70, state.carY, 140, 160);
+  ctx.fillRect(state.carX - 80, state.carY + 10, 160, 160);
 
   ctx.globalCompositeOperation = "source-over";
   ctx.restore();
