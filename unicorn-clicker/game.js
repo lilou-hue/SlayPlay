@@ -1222,201 +1222,1035 @@
     }
   }
 
-  /* ── Skin: Tuna ── */
+  /* ── Skin: Tuna (Chibi) ── */
   function drawSkinTuna(bs, evo) {
     const S = 1 + evo * 0.1;
-    // Tail fin
-    ctx.fillStyle = evo >= 3 ? '#6a5acd' : '#708090';
+
+    // ── Tail fin (cute rounded fork) ──
+    const tailCol = evo >= 3 ? '#8878ee' : '#7aafc8';
+    const tailDark = evo >= 3 ? '#5a48b8' : '#4a7a98';
     ctx.beginPath();
-    ctx.moveTo(-30*S, 0);
-    ctx.lineTo(-48*S, -18*S);
-    ctx.lineTo(-48*S, 18*S);
-    ctx.closePath();
+    ctx.moveTo(-22*S, 8*S);
+    ctx.bezierCurveTo(-36*S, 2*S, -44*S, -16*S + Math.sin(gameTime*2.5)*4, -40*S, -22*S + Math.sin(gameTime*2.5)*4);
+    ctx.quadraticCurveTo(-34*S, -18*S, -30*S, -8*S);
+    ctx.moveTo(-22*S, 8*S);
+    ctx.bezierCurveTo(-36*S, 14*S, -44*S, 28*S + Math.sin(gameTime*2.5)*4, -40*S, 34*S + Math.sin(gameTime*2.5)*4);
+    ctx.quadraticCurveTo(-34*S, 28*S, -30*S, 18*S);
+    ctx.fillStyle = tailCol;
     ctx.fill();
-    // Body
-    const bodyGrad = ctx.createRadialGradient(-4*S, -4*S, 4, 0, 0, 32*S);
-    bodyGrad.addColorStop(0, evo >= 3 ? '#9370db' : '#4682b4');
-    bodyGrad.addColorStop(1, evo >= 3 ? '#483d8b' : '#1e3a5f');
-    ctx.fillStyle = bodyGrad;
+    ctx.strokeStyle = tailDark;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // ── Tiny stubby body ──
+    const bodyW = 22*S, bodyH = 18*S, bodyY = 10*S;
+    if (evo >= 3) {
+      const bg = ctx.createRadialGradient(-2*S, bodyY - 3*S, 3, 0, bodyY, bodyW);
+      bg.addColorStop(0, '#6a60d8');
+      bg.addColorStop(0.6, '#4840a8');
+      bg.addColorStop(1, '#2a2068');
+      ctx.fillStyle = bg;
+    } else {
+      const bg = ctx.createRadialGradient(-2*S, bodyY - 3*S, 3, 0, bodyY, bodyW);
+      bg.addColorStop(0, '#a8d8f0');
+      bg.addColorStop(0.5, '#78b8d8');
+      bg.addColorStop(1, '#4a90b8');
+      ctx.fillStyle = bg;
+    }
     ctx.beginPath();
-    ctx.ellipse(0, 0, 32*S, 18*S, 0, 0, Math.PI*2);
+    ctx.ellipse(0, bodyY, bodyW, bodyH, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = evo >= 3 ? '#5040a0' : '#3a7898';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // Body highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.beginPath();
+    ctx.ellipse(-bodyW*0.2, bodyY - bodyH*0.3, bodyW*0.4, bodyH*0.25, -0.3, 0, Math.PI*2);
     ctx.fill();
     // Belly
-    ctx.fillStyle = evo >= 3 ? 'rgba(200,180,255,0.4)' : 'rgba(200,220,240,0.5)';
+    ctx.fillStyle = evo >= 3 ? 'rgba(200,190,255,0.35)' : 'rgba(220,240,255,0.45)';
     ctx.beginPath();
-    ctx.ellipse(2*S, 6*S, 22*S, 10*S, 0, 0, Math.PI*2);
+    ctx.ellipse(2*S, bodyY + 3*S, bodyW*0.6, bodyH*0.5, 0, 0, Math.PI*2);
     ctx.fill();
-    // Dorsal fin
-    ctx.fillStyle = evo >= 3 ? '#7b68ee' : '#5f8fad';
+
+    // ── Tiny side fins (stubby chibi) ──
+    const finCol = evo >= 3 ? '#7868d8' : '#68a8c8';
+    const finOL = evo >= 3 ? '#5040a0' : '#4880a0';
+    // Left fin
+    ctx.save();
+    ctx.translate(-16*S, bodyY + 2*S);
+    ctx.rotate(-0.3 + Math.sin(gameTime*3)*0.15);
+    chibiEllipse(0, 0, 8*S, 5*S, finCol, finOL, 1.8);
+    ctx.restore();
+    // Right fin
+    ctx.save();
+    ctx.translate(16*S, bodyY + 2*S);
+    ctx.rotate(0.3 - Math.sin(gameTime*3)*0.15);
+    chibiEllipse(0, 0, 8*S, 5*S, finCol, finOL, 1.8);
+    ctx.restore();
+
+    // ── Dorsal fin (cute rounded) ──
+    ctx.fillStyle = evo >= 3 ? '#7b68ee' : '#68a0c0';
     ctx.beginPath();
-    ctx.moveTo(-6*S, -17*S);
-    ctx.quadraticCurveTo(4*S, -38*S, 14*S, -17*S);
+    ctx.moveTo(-4*S, bodyY - bodyH + 2*S);
+    ctx.quadraticCurveTo(3*S, bodyY - bodyH - 18*S, 10*S, bodyY - bodyH + 2*S);
     ctx.closePath();
     ctx.fill();
-    // Pectoral fin
-    ctx.fillStyle = evo >= 3 ? '#8878ce' : '#5a7f9a';
-    ctx.beginPath();
-    ctx.moveTo(10*S, 6*S);
-    ctx.quadraticCurveTo(22*S, 20*S, 8*S, 18*S);
-    ctx.closePath();
-    ctx.fill();
-    // Eye
-    ctx.fillStyle = '#fff';
-    ctx.beginPath(); ctx.arc(16*S, -4*S, 5*S, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#222';
-    ctx.beginPath(); ctx.arc(17.5*S, -4*S, 2.8*S, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#fff';
-    ctx.beginPath(); ctx.arc(18.5*S, -5.5*S, 1.2*S, 0, Math.PI*2); ctx.fill();
-    // Mouth
-    ctx.strokeStyle = evo >= 3 ? '#6a5acd' : '#2c5a7a';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.arc(26*S, 2*S, 5*S, -0.3, 0.5);
+    ctx.strokeStyle = evo >= 3 ? '#5a48c0' : '#4880a0';
+    ctx.lineWidth = 1.8;
     ctx.stroke();
+
+    // Body stars (cosmic evo)
+    if (evo >= 3) {
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2 + gameTime * 0.5;
+        const r = 5 + (i % 3) * 5;
+        const sx = Math.cos(a) * r;
+        const sy = bodyY + Math.sin(a) * r * 0.6;
+        ctx.fillStyle = `rgba(255,255,255,${0.4 + Math.sin(gameTime*3 + i)*0.3})`;
+        ctx.beginPath();
+        ctx.arc(sx, sy, 1.2, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+
+    // ── Big chibi head ──
+    const headR = 28*S;
+    const headY = -16*S;
+    // Head shadow on body
+    ctx.fillStyle = 'rgba(0,0,0,0.05)';
+    ctx.beginPath();
+    ctx.ellipse(0, bodyY - bodyH*0.3, headR*0.7, 5, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    if (evo >= 3) {
+      const hg = ctx.createRadialGradient(-4*S, headY - 5*S, 4, 0, headY, headR);
+      hg.addColorStop(0, '#5a50d0');
+      hg.addColorStop(0.6, '#3830a0');
+      hg.addColorStop(1, '#201868');
+      ctx.fillStyle = hg;
+    } else {
+      const hg = ctx.createRadialGradient(-4*S, headY - 5*S, 4, 0, headY, headR);
+      hg.addColorStop(0, '#c8e8f8');
+      hg.addColorStop(0.4, '#90c8e0');
+      hg.addColorStop(1, '#5898c0');
+      ctx.fillStyle = hg;
+    }
+    ctx.beginPath();
+    ctx.ellipse(0, headY, headR, headR*0.9, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = evo >= 3 ? '#4838a0' : '#4080a0';
+    ctx.lineWidth = 2.2;
+    ctx.stroke();
+    // Head highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.beginPath();
+    ctx.ellipse(-headR*0.25, headY - headR*0.3, headR*0.4, headR*0.2, -0.3, 0, Math.PI*2);
+    ctx.fill();
+
+    // Head stars (cosmic)
+    if (evo >= 3) {
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2 + gameTime * 0.6;
+        const r = 10 + (i % 2) * 8;
+        ctx.fillStyle = `rgba(255,255,255,${0.35 + Math.sin(gameTime*3 + i)*0.25})`;
+        ctx.beginPath();
+        ctx.arc(Math.cos(a)*r, headY + Math.sin(a)*r*0.7, 1.3, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+
+    // ── Big chibi eyes ──
+    const eyeSpacing = 11*S;
+    const eyeY = headY + 2*S;
+    const eyeRx = 8.5*S, eyeRy = 9.5*S;
+    const blinkCycle = gameTime % 4;
+    const isBlinking = blinkCycle > 3.85 && blinkCycle < 3.95;
+    const eyeOpen = isBlinking ? 0.08 : 1;
+
+    for (let side = -1; side <= 1; side += 2) {
+      const ex = side * eyeSpacing;
+      // Sclera
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.ellipse(ex, eyeY, eyeRx, eyeRy*eyeOpen, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = evo >= 3 ? '#6858b0' : '#5090b0';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+
+      if (!isBlinking) {
+        // Iris
+        const irisR = 6*S;
+        const irisY = eyeY + 1*S;
+        const irisGrad = ctx.createRadialGradient(ex, irisY - irisR*0.3, 1, ex, irisY, irisR);
+        if (evo >= 3) {
+          irisGrad.addColorStop(0, '#b8a0ff');
+          irisGrad.addColorStop(0.5, '#8060d0');
+          irisGrad.addColorStop(1, '#5838a8');
+        } else {
+          irisGrad.addColorStop(0, '#80d0f0');
+          irisGrad.addColorStop(0.5, '#4098c0');
+          irisGrad.addColorStop(1, '#206888');
+        }
+        ctx.fillStyle = irisGrad;
+        ctx.beginPath();
+        ctx.arc(ex, irisY, irisR, 0, Math.PI*2);
+        ctx.fill();
+        // Pupil
+        ctx.fillStyle = '#0a1830';
+        ctx.beginPath();
+        ctx.arc(ex, irisY + 0.5, irisR*0.38, 0, Math.PI*2);
+        ctx.fill();
+        // Main highlight
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.ellipse(ex + 2.5*S*side*0.5, irisY - 3*S, 3*S, 3.5*S, 0, 0, Math.PI*2);
+        ctx.fill();
+        // Secondary highlight
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.beginPath();
+        ctx.arc(ex - 1.5*S*side*0.5, irisY + 2.5*S, 1.8*S, 0, Math.PI*2);
+        ctx.fill();
+        // Tiny sparkle
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(ex + 1.2*S, irisY - 4.5*S, 1*S, 0, Math.PI*2);
+        ctx.fill();
+        // Upper eyelid line
+        ctx.strokeStyle = evo >= 3 ? '#5848a0' : '#3878a0';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(ex, eyeY, eyeRx, Math.PI + 0.4, Math.PI*2 - 0.4);
+        ctx.stroke();
+      }
+    }
+
+    // ── Blush ──
+    chibiEllipse(-eyeSpacing - 4*S, eyeY + 8*S, 6*S, 3.5*S, 'rgba(255,160,200,0.3)', null);
+    chibiEllipse(eyeSpacing + 4*S, eyeY + 8*S, 6*S, 3.5*S, 'rgba(255,160,200,0.3)', null);
+
+    // ── Cute mouth (w-shape) ──
+    const mouthY = eyeY + 11*S;
+    ctx.strokeStyle = evo >= 3 ? '#7060c0' : '#4088a8';
+    ctx.lineWidth = 1.8;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-3*S, mouthY);
+    ctx.quadraticCurveTo(-1.5*S, mouthY + 2.5*S, 0, mouthY + 0.5*S);
+    ctx.quadraticCurveTo(1.5*S, mouthY + 2.5*S, 3*S, mouthY);
+    ctx.stroke();
+    ctx.lineCap = 'butt';
+
+    // ── Sparkle particles (evo 1+) ──
+    if (evo >= 1) {
+      const count = 3 + evo * 2;
+      for (let i = 0; i < count; i++) {
+        const angle = gameTime * 1.8 + (i / count) * Math.PI * 2;
+        const dist = 42*S + Math.sin(gameTime + i)*8;
+        const sx = Math.cos(angle) * dist;
+        const sy = headY + Math.sin(angle) * dist * 0.5;
+        const ss = 2.5 + Math.sin(gameTime*4 + i*2)*1.2;
+        const hue = (i*60 + gameTime*30) % 360;
+        const alpha = 0.6 + Math.sin(gameTime*3 + i)*0.3;
+        ctx.fillStyle = `hsla(${hue}, 90%, 75%, ${alpha})`;
+        drawStar4(sx, sy, ss, gameTime*2 + i);
+      }
+    }
   }
 
-  /* ── Skin: Volleyball ── */
+  /* ── Skin: Volleyball (Chibi) ── */
   function drawSkinVolleyball(bs, evo) {
-    // Ball body
-    const ballGrad = ctx.createRadialGradient(-5*bs, -8*bs, 2, 0, 0, 28*bs);
-    ballGrad.addColorStop(0, '#fff');
-    ballGrad.addColorStop(1, '#e8e0d0');
-    ctx.fillStyle = ballGrad;
-    ctx.beginPath(); ctx.arc(0, 0, 26*bs, 0, Math.PI*2); ctx.fill();
-    ctx.strokeStyle = '#bbb'; ctx.lineWidth = 1.5;
+    const S = 1 + evo * 0.1;
+
+    // ── Ground shadow ──
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+    ctx.beginPath();
+    ctx.ellipse(0, 38*S, 20*S, 5*S, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    // ── Stubby little legs (bouncy) ──
+    const legBounce = Math.sin(gameTime*3)*2;
+    const legCol = evo >= 3 ? '#c8b8f8' : '#f0e0d0';
+    const legOL = evo >= 3 ? '#8868c0' : '#c0a898';
+    chibiEllipse(-10*S, 28*S + legBounce, 7*S, 10*S, legCol, legOL, 2);
+    chibiEllipse(10*S, 28*S - legBounce, 7*S, 10*S, legCol, legOL, 2);
+    // Leg highlights
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.beginPath(); ctx.ellipse(-10*S - 1, 26*S + legBounce, 3*S, 4*S, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(10*S - 1, 26*S - legBounce, 3*S, 4*S, 0, 0, Math.PI*2); ctx.fill();
+
+    // ── Stubby little arms ──
+    const armWave = Math.sin(gameTime*2.5)*0.15;
+    ctx.save();
+    ctx.translate(-26*S, 4*S);
+    ctx.rotate(-0.4 + armWave);
+    chibiEllipse(0, 0, 6*S, 10*S, legCol, legOL, 1.8);
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.beginPath(); ctx.ellipse(-1, -2*S, 2.5*S, 4*S, 0, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+    ctx.save();
+    ctx.translate(26*S, 4*S);
+    ctx.rotate(0.4 - armWave);
+    chibiEllipse(0, 0, 6*S, 10*S, legCol, legOL, 1.8);
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.beginPath(); ctx.ellipse(-1, -2*S, 2.5*S, 4*S, 0, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+
+    // ── Big round chibi ball-head-body (volleyball IS the head) ──
+    const headR = 28*S;
+    const headY = -2*S;
+    // Main ball
+    if (evo >= 3) {
+      const hg = ctx.createRadialGradient(-5*S, headY - 6*S, 4, 0, headY, headR);
+      hg.addColorStop(0, '#e8d8ff');
+      hg.addColorStop(0.5, '#c8b0f0');
+      hg.addColorStop(1, '#a080d0');
+      ctx.fillStyle = hg;
+    } else {
+      const hg = ctx.createRadialGradient(-5*S, headY - 6*S, 4, 0, headY, headR);
+      hg.addColorStop(0, '#fffcf5');
+      hg.addColorStop(0.5, '#f8f0e0');
+      hg.addColorStop(1, '#e8d8c0');
+      ctx.fillStyle = hg;
+    }
+    ctx.beginPath();
+    ctx.arc(0, headY, headR, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = evo >= 3 ? '#8868c0' : '#c0a888';
+    ctx.lineWidth = 2.2;
     ctx.stroke();
-    // Face (cute eyes on the ball)
-    const ey = -4*bs;
-    ctx.fillStyle='#333'; ctx.beginPath(); ctx.arc(-8*bs,ey,3.5*bs,0,Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(8*bs,ey,3.5*bs,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle='#fff';
-    ctx.beginPath(); ctx.arc(-6.5*bs,ey-1.5*bs,1.5*bs,0,Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(9.5*bs,ey-1.5*bs,1.5*bs,0,Math.PI*2); ctx.fill();
-    // Smile
-    ctx.strokeStyle = '#555'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(0, 2*bs, 8*bs, 0.15*Math.PI, 0.85*Math.PI); ctx.stroke();
+
+    // Volleyball seam lines (subtle, cute)
+    ctx.strokeStyle = evo >= 3 ? 'rgba(120,90,180,0.25)' : 'rgba(180,160,130,0.25)';
+    ctx.lineWidth = 1.5;
+    // Vertical seam
+    ctx.beginPath();
+    ctx.bezierCurveTo(-4*S, headY - headR, 4*S, headY - headR*0.3, -2*S, headY + headR);
+    ctx.stroke();
+    // Horizontal seam
+    ctx.beginPath();
+    ctx.moveTo(-headR, headY + 2*S);
+    ctx.bezierCurveTo(-headR*0.5, headY - 6*S, headR*0.5, headY + 8*S, headR, headY);
+    ctx.stroke();
+
+    // Head highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.beginPath();
+    ctx.ellipse(-headR*0.25, headY - headR*0.35, headR*0.4, headR*0.22, -0.3, 0, Math.PI*2);
+    ctx.fill();
+
+    // Body stars (cosmic)
+    if (evo >= 3) {
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2 + gameTime * 0.5;
+        const r = 10 + (i % 3) * 6;
+        ctx.fillStyle = `rgba(255,255,255,${0.4 + Math.sin(gameTime*3 + i)*0.3})`;
+        ctx.beginPath();
+        ctx.arc(Math.cos(a)*r, headY + Math.sin(a)*r*0.7, 1.3, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+
+    // ── Big chibi eyes ──
+    const eyeSpacing = 11*S;
+    const eyeY = headY + 0*S;
+    const eyeRx = 8.5*S, eyeRy = 9.5*S;
+    const blinkCycle = gameTime % 4;
+    const isBlinking = blinkCycle > 3.85 && blinkCycle < 3.95;
+    const eyeOpen = isBlinking ? 0.08 : 1;
+
+    for (let side = -1; side <= 1; side += 2) {
+      const ex = side * eyeSpacing;
+      // Sclera
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.ellipse(ex, eyeY, eyeRx, eyeRy*eyeOpen, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = evo >= 3 ? '#8870b8' : '#b0a090';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+
+      if (!isBlinking) {
+        // Iris
+        const irisR = 6*S;
+        const irisY = eyeY + 1*S;
+        const irisGrad = ctx.createRadialGradient(ex, irisY - irisR*0.3, 1, ex, irisY, irisR);
+        if (evo >= 3) {
+          irisGrad.addColorStop(0, '#d0b8ff');
+          irisGrad.addColorStop(0.5, '#a080e0');
+          irisGrad.addColorStop(1, '#7050b0');
+        } else {
+          irisGrad.addColorStop(0, '#a0c8e0');
+          irisGrad.addColorStop(0.5, '#6098b8');
+          irisGrad.addColorStop(1, '#386888');
+        }
+        ctx.fillStyle = irisGrad;
+        ctx.beginPath();
+        ctx.arc(ex, irisY, irisR, 0, Math.PI*2);
+        ctx.fill();
+        // Pupil
+        ctx.fillStyle = '#1a1028';
+        ctx.beginPath();
+        ctx.arc(ex, irisY + 0.5, irisR*0.38, 0, Math.PI*2);
+        ctx.fill();
+        // Main highlight
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.ellipse(ex + 2.5*S*side*0.5, irisY - 3*S, 3*S, 3.5*S, 0, 0, Math.PI*2);
+        ctx.fill();
+        // Secondary highlight
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.beginPath();
+        ctx.arc(ex - 1.5*S*side*0.5, irisY + 2.5*S, 1.8*S, 0, Math.PI*2);
+        ctx.fill();
+        // Tiny sparkle
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(ex + 1.2*S, irisY - 4.5*S, 1*S, 0, Math.PI*2);
+        ctx.fill();
+        // Upper eyelid
+        ctx.strokeStyle = evo >= 3 ? '#7060a8' : '#908070';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(ex, eyeY, eyeRx, Math.PI + 0.4, Math.PI*2 - 0.4);
+        ctx.stroke();
+        // Eyelash tips
+        ctx.lineWidth = 1.5;
+        const lx1 = ex + eyeRx*Math.cos(-0.4);
+        const ly1 = eyeY + eyeRy*eyeOpen*Math.sin(-0.4);
+        ctx.beginPath();
+        ctx.moveTo(lx1, ly1);
+        ctx.lineTo(lx1 + side*2.5*S, ly1 - 3*S);
+        ctx.stroke();
+      }
+    }
+
+    // ── Blush ──
+    chibiEllipse(-eyeSpacing - 4*S, eyeY + 8*S, 6*S, 3.5*S, 'rgba(255,150,180,0.3)', null);
+    chibiEllipse(eyeSpacing + 4*S, eyeY + 8*S, 6*S, 3.5*S, 'rgba(255,150,180,0.3)', null);
+
+    // ── Cute w-mouth ──
+    const mouthY = eyeY + 12*S;
+    ctx.strokeStyle = evo >= 3 ? '#8868c0' : '#a09080';
+    ctx.lineWidth = 1.8;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-3.5*S, mouthY);
+    ctx.quadraticCurveTo(-1.8*S, mouthY + 2.5*S, 0, mouthY + 0.5*S);
+    ctx.quadraticCurveTo(1.8*S, mouthY + 2.5*S, 3.5*S, mouthY);
+    ctx.stroke();
+    ctx.lineCap = 'butt';
+
+    // ── Tiny headband / sweatband (cute accessory) ──
+    ctx.strokeStyle = evo >= 3 ? '#a888f0' : '#ff6060';
+    ctx.lineWidth = 3*S;
+    ctx.beginPath();
+    ctx.arc(0, headY, headR - 1, -Math.PI*0.85, -Math.PI*0.15);
+    ctx.stroke();
+
+    // ── Sparkles (evo 1+) ──
+    if (evo >= 1) {
+      const count = 3 + evo * 2;
+      for (let i = 0; i < count; i++) {
+        const angle = gameTime*1.8 + (i / count) * Math.PI*2;
+        const dist = 42*S + Math.sin(gameTime + i)*8;
+        const sx = Math.cos(angle) * dist;
+        const sy = headY + Math.sin(angle) * dist * 0.5;
+        const ss = 2.5 + Math.sin(gameTime*4 + i*2)*1.2;
+        const hue = (i*60 + gameTime*30) % 360;
+        const alpha = 0.6 + Math.sin(gameTime*3 + i)*0.3;
+        ctx.fillStyle = `hsla(${hue}, 90%, 75%, ${alpha})`;
+        drawStar4(sx, sy, ss, gameTime*2 + i);
+      }
+    }
   }
 
-  /* ── Skin: Spidermonkey ── */
+  /* ── Skin: Spidermonkey (Chibi) ── */
   function drawSkinSpidermonkey(bs, evo) {
+    const S = 1 + evo * 0.1;
     const furColor = evo >= 3 ? '#2d1b69' : '#8B6914';
     const furLight = evo >= 3 ? '#4c3a90' : '#c4a035';
-    const bellyColor = evo >= 3 ? '#1a0f40' : '#f5deb3';
-    // Tail (long, curly)
-    ctx.strokeStyle = furColor; ctx.lineWidth = 4*bs;
-    ctx.beginPath(); ctx.moveTo(-20*bs, 10*bs);
-    ctx.bezierCurveTo(-40*bs, 0, -55*bs, -25*bs+Math.sin(gameTime*2)*8, -50*bs, -40*bs+Math.sin(gameTime*2.5)*6);
-    ctx.bezierCurveTo(-45*bs, -50*bs, -35*bs, -48*bs, -30*bs, -42*bs+Math.sin(gameTime*3)*4);
+    const furDark = evo >= 3 ? '#1a0f40' : '#6a4a0a';
+    const bellyColor = evo >= 3 ? '#3a2868' : '#f5deb3';
+    const furOL = evo >= 3 ? '#1a0f40' : '#5a3a08';
+
+    // ── Curly tail (cute springy spiral) ──
+    ctx.strokeStyle = furColor;
+    ctx.lineWidth = 5*S;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-18*S, 14*S);
+    ctx.bezierCurveTo(-32*S, 8*S, -42*S, -8*S + Math.sin(gameTime*2)*6, -38*S, -22*S + Math.sin(gameTime*2.5)*5);
+    ctx.bezierCurveTo(-34*S, -32*S, -26*S, -34*S + Math.sin(gameTime*3)*3, -22*S, -28*S + Math.sin(gameTime*3)*3);
+    ctx.bezierCurveTo(-18*S, -22*S, -20*S, -16*S, -24*S, -14*S + Math.sin(gameTime*2.8)*2);
     ctx.stroke();
-    // Legs
-    ctx.strokeStyle = furColor; ctx.lineWidth = 5*bs;
-    ctx.beginPath(); ctx.moveTo(-12*bs,18*bs); ctx.lineTo(-18*bs,40*bs); ctx.lineTo(-22*bs,45*bs); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(8*bs,18*bs); ctx.lineTo(14*bs,40*bs); ctx.lineTo(18*bs,45*bs); ctx.stroke();
-    // Arms
-    ctx.lineWidth = 4*bs;
-    ctx.beginPath(); ctx.moveTo(-20*bs,0); ctx.lineTo(-35*bs,15*bs+Math.sin(gameTime*3)*4); ctx.lineTo(-38*bs,22*bs); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(16*bs,-2*bs); ctx.lineTo(30*bs,12*bs+Math.cos(gameTime*3)*4); ctx.lineTo(34*bs,18*bs); ctx.stroke();
-    // Body
-    const bg = ctx.createRadialGradient(-3,-3,3,0,0,25*bs);
-    bg.addColorStop(0,furLight); bg.addColorStop(1,furColor);
-    ctx.fillStyle = bg;
-    ctx.beginPath(); ctx.ellipse(0,5*bs,22*bs,20*bs,0,0,Math.PI*2); ctx.fill();
-    // Belly
+    ctx.strokeStyle = furLight;
+    ctx.lineWidth = 2.5*S;
+    ctx.beginPath();
+    ctx.moveTo(-18*S, 14*S);
+    ctx.bezierCurveTo(-32*S, 8*S, -42*S, -8*S + Math.sin(gameTime*2)*6, -38*S, -22*S + Math.sin(gameTime*2.5)*5);
+    ctx.stroke();
+    ctx.lineCap = 'butt';
+
+    // ── Stubby back legs ──
+    const legW = 9*S, legH = 14*S;
+    chibiEllipse(-12*S, 26*S, legW/2, legH/2, furColor, furOL, 2);
+    chibiEllipse(12*S, 26*S, legW/2, legH/2, furColor, furOL, 2);
+    // Tiny feet
+    chibiEllipse(-12*S, 34*S, 6*S, 4*S, furDark, furOL, 1.5);
+    chibiEllipse(12*S, 34*S, 6*S, 4*S, furDark, furOL, 1.5);
+
+    // ── Small round chibi body ──
+    const bodyW = 24*S, bodyH = 20*S, bodyY = 10*S;
+    if (evo >= 3) {
+      const bg = ctx.createRadialGradient(-2*S, bodyY - 4*S, 3, 0, bodyY, bodyW);
+      bg.addColorStop(0, '#4c3a90');
+      bg.addColorStop(0.6, '#2d1b69');
+      bg.addColorStop(1, '#1a0f40');
+      ctx.fillStyle = bg;
+    } else {
+      const bg = ctx.createRadialGradient(-2*S, bodyY - 4*S, 3, 0, bodyY, bodyW);
+      bg.addColorStop(0, '#d8b840');
+      bg.addColorStop(0.5, '#b8900a');
+      bg.addColorStop(1, '#8B6914');
+      ctx.fillStyle = bg;
+    }
+    ctx.beginPath();
+    ctx.ellipse(0, bodyY, bodyW, bodyH, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = furOL;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // Body highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.beginPath();
+    ctx.ellipse(-bodyW*0.2, bodyY - bodyH*0.3, bodyW*0.4, bodyH*0.22, -0.3, 0, Math.PI*2);
+    ctx.fill();
+    // Belly patch
     ctx.fillStyle = bellyColor;
-    ctx.beginPath(); ctx.ellipse(2*bs,8*bs,12*bs,12*bs,0,0,Math.PI*2); ctx.fill();
-    // Head
-    const hx = 8*bs, hy = -22*bs;
-    ctx.fillStyle = furColor;
-    ctx.beginPath(); ctx.arc(hx,hy,16*bs,0,Math.PI*2); ctx.fill();
-    // Face area
+    ctx.beginPath();
+    ctx.ellipse(0, bodyY + 2*S, bodyW*0.55, bodyH*0.5, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    // Body stars (cosmic)
+    if (evo >= 3) {
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2 + gameTime * 0.5;
+        const r = 5 + (i % 3) * 5;
+        ctx.fillStyle = `rgba(255,255,255,${0.4 + Math.sin(gameTime*3 + i)*0.3})`;
+        ctx.beginPath();
+        ctx.arc(Math.cos(a)*r, bodyY + Math.sin(a)*r*0.6, 1.2, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+
+    // ── Stubby front legs (on top of body) ──
+    chibiEllipse(-8*S, 28*S, legW/2, legH/2, furLight, furOL, 2);
+    chibiEllipse(14*S, 28*S, legW/2, legH/2, furLight, furOL, 2);
+
+    // ── Stubby arms ──
+    const armWave = Math.sin(gameTime*3)*0.2;
+    ctx.save();
+    ctx.translate(-22*S, 4*S);
+    ctx.rotate(-0.4 + armWave);
+    chibiEllipse(0, 0, 6*S, 11*S, furColor, furOL, 1.8);
+    // Tiny hand
+    chibiEllipse(0, 10*S, 5*S, 4*S, furDark, furOL, 1.5);
+    ctx.restore();
+    ctx.save();
+    ctx.translate(22*S, 2*S);
+    ctx.rotate(0.4 - armWave);
+    chibiEllipse(0, 0, 6*S, 11*S, furColor, furOL, 1.8);
+    chibiEllipse(0, 10*S, 5*S, 4*S, furDark, furOL, 1.5);
+    ctx.restore();
+
+    // ── Big chibi head ──
+    const headR = 30*S;
+    const headY = -18*S;
+    // Head shadow on body
+    ctx.fillStyle = 'rgba(0,0,0,0.05)';
+    ctx.beginPath();
+    ctx.ellipse(0, bodyY - bodyH*0.3, headR*0.7, 5, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    if (evo >= 3) {
+      const hg = ctx.createRadialGradient(-4*S, headY - 5*S, 4, 0, headY, headR);
+      hg.addColorStop(0, '#4c3a90');
+      hg.addColorStop(0.6, '#2d1b69');
+      hg.addColorStop(1, '#1a0f40');
+      ctx.fillStyle = hg;
+    } else {
+      const hg = ctx.createRadialGradient(-4*S, headY - 5*S, 4, 0, headY, headR);
+      hg.addColorStop(0, '#d8b840');
+      hg.addColorStop(0.4, '#c4a035');
+      hg.addColorStop(1, '#8B6914');
+      ctx.fillStyle = hg;
+    }
+    ctx.beginPath();
+    ctx.arc(0, headY, headR, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = furOL;
+    ctx.lineWidth = 2.2;
+    ctx.stroke();
+    // Head highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.beginPath();
+    ctx.ellipse(-headR*0.25, headY - headR*0.35, headR*0.4, headR*0.22, -0.3, 0, Math.PI*2);
+    ctx.fill();
+
+    // ── Ears (big round chibi ears) ──
+    chibiEllipse(-headR + 4*S, headY - 10*S, 10*S, 10*S, furColor, furOL, 2);
+    chibiEllipse(headR - 4*S, headY - 10*S, 10*S, 10*S, furColor, furOL, 2);
+    // Inner ears
+    chibiEllipse(-headR + 4*S, headY - 10*S, 6*S, 6*S, bellyColor, null);
+    chibiEllipse(headR - 4*S, headY - 10*S, 6*S, 6*S, bellyColor, null);
+
+    // ── Face area (light muzzle) ──
     ctx.fillStyle = bellyColor;
-    ctx.beginPath(); ctx.ellipse(hx+4*bs,hy+2*bs,11*bs,10*bs,0,0,Math.PI*2); ctx.fill();
-    // Eyes
-    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.ellipse(hx,hy-2*bs,5*bs,5.5*bs,0,0,Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(hx+10*bs,hy-2*bs,5*bs,5.5*bs,0,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle = evo >= 3 ? '#c4b5fd' : '#3a2510';
-    ctx.beginPath(); ctx.arc(hx+1.5*bs,hy-1*bs,3*bs,0,Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(hx+11*bs,hy-1*bs,3*bs,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle='#fff';
-    ctx.beginPath(); ctx.arc(hx+2.5*bs,hy-3*bs,1.2*bs,0,Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(hx+12*bs,hy-3*bs,1.2*bs,0,Math.PI*2); ctx.fill();
-    // Nose
+    ctx.beginPath();
+    ctx.ellipse(0, headY + 6*S, 16*S, 14*S, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    // Head stars (cosmic)
+    if (evo >= 3) {
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2 + gameTime * 0.6;
+        const r = 12 + (i % 2) * 8;
+        ctx.fillStyle = `rgba(255,255,255,${0.35 + Math.sin(gameTime*3 + i)*0.25})`;
+        ctx.beginPath();
+        ctx.arc(Math.cos(a)*r, headY + Math.sin(a)*r*0.7, 1.3, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+
+    // ── Big chibi eyes ──
+    const eyeSpacing = 12*S;
+    const eyeY = headY + 0*S;
+    const eyeRx = 9*S, eyeRy = 10*S;
+    const blinkCycle = gameTime % 4;
+    const isBlinking = blinkCycle > 3.85 && blinkCycle < 3.95;
+    const eyeOpen = isBlinking ? 0.08 : 1;
+
+    for (let side = -1; side <= 1; side += 2) {
+      const ex = side * eyeSpacing;
+      // Sclera
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.ellipse(ex, eyeY, eyeRx, eyeRy*eyeOpen, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = evo >= 3 ? '#5040a0' : '#8a6820';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+
+      if (!isBlinking) {
+        // Iris
+        const irisR = 6.5*S;
+        const irisY = eyeY + 1*S;
+        const irisGrad = ctx.createRadialGradient(ex, irisY - irisR*0.3, 1, ex, irisY, irisR);
+        if (evo >= 3) {
+          irisGrad.addColorStop(0, '#c4b5fd');
+          irisGrad.addColorStop(0.5, '#8870d0');
+          irisGrad.addColorStop(1, '#5a40a0');
+        } else {
+          irisGrad.addColorStop(0, '#c08820');
+          irisGrad.addColorStop(0.5, '#805818');
+          irisGrad.addColorStop(1, '#3a2510');
+        }
+        ctx.fillStyle = irisGrad;
+        ctx.beginPath();
+        ctx.arc(ex, irisY, irisR, 0, Math.PI*2);
+        ctx.fill();
+        // Pupil
+        ctx.fillStyle = '#0a0808';
+        ctx.beginPath();
+        ctx.arc(ex, irisY + 0.5, irisR*0.38, 0, Math.PI*2);
+        ctx.fill();
+        // Main highlight
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.ellipse(ex + 3*S*side*0.5, irisY - 3.5*S, 3.5*S, 4*S, 0, 0, Math.PI*2);
+        ctx.fill();
+        // Secondary highlight
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.beginPath();
+        ctx.arc(ex - 2*S*side*0.5, irisY + 3*S, 2*S, 0, Math.PI*2);
+        ctx.fill();
+        // Tiny sparkle
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(ex + 1.5*S, irisY - 5*S, 1.2*S, 0, Math.PI*2);
+        ctx.fill();
+        // Upper eyelid
+        ctx.strokeStyle = evo >= 3 ? '#5040a0' : '#6a4a10';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(ex, eyeY, eyeRx, Math.PI + 0.4, Math.PI*2 - 0.4);
+        ctx.stroke();
+        // Eyelash tips
+        ctx.lineWidth = 1.5;
+        const lx1 = ex + eyeRx*Math.cos(-0.4);
+        const ly1 = eyeY + eyeRy*eyeOpen*Math.sin(-0.4);
+        ctx.beginPath();
+        ctx.moveTo(lx1, ly1);
+        ctx.lineTo(lx1 + side*2.5*S, ly1 - 3.5*S);
+        ctx.stroke();
+      }
+    }
+
+    // ── Blush ──
+    chibiEllipse(-eyeSpacing - 3*S, eyeY + 9*S, 7*S, 4*S, 'rgba(255,160,160,0.3)', null);
+    chibiEllipse(eyeSpacing + 3*S, eyeY + 9*S, 7*S, 4*S, 'rgba(255,160,160,0.3)', null);
+
+    // ── Nose (cute heart-shaped) ──
+    const noseY = eyeY + 10*S;
     ctx.fillStyle = evo >= 3 ? '#6d5aad' : '#5a3a1a';
-    ctx.beginPath(); ctx.ellipse(hx+5*bs,hy+4*bs,3*bs,2*bs,0,0,Math.PI*2); ctx.fill();
-    // Ears
-    ctx.fillStyle = furColor;
-    ctx.beginPath(); ctx.arc(hx-12*bs,hy-8*bs,6*bs,0,Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(hx+18*bs,hy-8*bs,6*bs,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle = bellyColor;
-    ctx.beginPath(); ctx.arc(hx-12*bs,hy-8*bs,3.5*bs,0,Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(hx+18*bs,hy-8*bs,3.5*bs,0,Math.PI*2); ctx.fill();
-    // Mouth
+    ctx.beginPath();
+    ctx.moveTo(0, noseY + 3*S);
+    ctx.bezierCurveTo(-3*S, noseY, -4*S, noseY - 2*S, -2*S, noseY - 2*S);
+    ctx.bezierCurveTo(0, noseY - 1*S, 0, noseY - 1*S, 2*S, noseY - 2*S);
+    ctx.bezierCurveTo(4*S, noseY - 2*S, 3*S, noseY, 0, noseY + 3*S);
+    ctx.fill();
+
+    // ── Cute w-mouth ──
+    const mouthY = noseY + 5*S;
     ctx.strokeStyle = evo >= 3 ? '#4c3a90' : '#5a3a1a';
-    ctx.lineWidth = 1.2;
-    ctx.beginPath(); ctx.arc(hx+5*bs,hy+6*bs,5*bs,0.1*Math.PI,0.9*Math.PI); ctx.stroke();
+    ctx.lineWidth = 1.8;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-4*S, mouthY);
+    ctx.quadraticCurveTo(-2*S, mouthY + 3*S, 0, mouthY + 0.5*S);
+    ctx.quadraticCurveTo(2*S, mouthY + 3*S, 4*S, mouthY);
+    ctx.stroke();
+    ctx.lineCap = 'butt';
+
+    // ── Tuft of head fur ──
+    const tuftCol = evo >= 3 ? '#5c4aa0' : '#d8b020';
+    for (let i = 0; i < 3; i++) {
+      const angle = -Math.PI*0.5 + (i - 1)*0.3;
+      const wave = Math.sin(gameTime*2 + i)*3;
+      const tx = Math.cos(angle)*(headR - 2*S);
+      const ty = headY + Math.sin(angle)*(headR - 2*S);
+      const tipX = tx + Math.cos(angle)*12*S + wave;
+      const tipY = ty + Math.sin(angle)*12*S - Math.abs(wave);
+      ctx.beginPath();
+      ctx.moveTo(tx - 4*S, ty);
+      ctx.quadraticCurveTo(tipX, tipY, tx + 4*S, ty);
+      ctx.closePath();
+      ctx.fillStyle = tuftCol;
+      ctx.fill();
+      ctx.strokeStyle = furOL;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    // ── Sparkles (evo 1+) ──
+    if (evo >= 1) {
+      const count = 4 + evo * 2;
+      for (let i = 0; i < count; i++) {
+        const angle = gameTime*1.8 + (i / count) * Math.PI*2;
+        const dist = 48*S + Math.sin(gameTime + i)*10;
+        const sx = Math.cos(angle) * dist;
+        const sy = headY + Math.sin(angle) * dist * 0.5;
+        const ss = 3 + Math.sin(gameTime*4 + i*2)*1.5;
+        const hue = (i*60 + gameTime*30) % 360;
+        const alpha = 0.6 + Math.sin(gameTime*3 + i)*0.3;
+        ctx.fillStyle = `hsla(${hue}, 90%, 75%, ${alpha})`;
+        drawStar4(sx, sy, ss, gameTime*2 + i);
+      }
+    }
   }
 
-  /* ── Skin: Chewbacca ── */
+  /* ── Skin: Chewbacca (Chibi) ── */
   function drawSkinChewbacca(bs, evo) {
+    const S = 1 + evo * 0.1;
     const furColor = evo >= 3 ? '#1a0f40' : '#6B4226';
     const furLight = evo >= 3 ? '#2d1b69' : '#8B6340';
     const furDark = evo >= 3 ? '#0f0a2a' : '#4a2a12';
-    // Legs
-    ctx.fillStyle = furColor;
-    ctx.fillRect(-18*bs,22*bs,12*bs,30*bs); ctx.fillRect(8*bs,22*bs,12*bs,30*bs);
-    ctx.fillStyle = furDark;
-    ctx.fillRect(-18*bs,48*bs,12*bs,6*bs); ctx.fillRect(8*bs,48*bs,12*bs,6*bs);
-    // Body
-    const bg = ctx.createRadialGradient(-3,-5,5,0,0,35*bs);
-    bg.addColorStop(0,furLight); bg.addColorStop(1,furColor);
-    ctx.fillStyle = bg;
-    ctx.beginPath(); ctx.ellipse(0,5*bs,30*bs,28*bs,0,0,Math.PI*2); ctx.fill();
-    // Fur texture
-    ctx.strokeStyle = furDark; ctx.lineWidth = 1;
-    for (let i = 0; i < 12; i++) {
-      const fx = -20*bs+i*4*bs, fy = -10*bs+Math.sin(i)*15*bs;
-      ctx.beginPath(); ctx.moveTo(fx,fy); ctx.lineTo(fx+1,fy+6*bs); ctx.stroke();
+    const furOL = evo >= 3 ? '#0a0520' : '#3a1a08';
+
+    // ── Stubby back legs ──
+    const legW = 10*S, legH = 14*S;
+    chibiEllipse(-14*S, 28*S, legW/2, legH/2, furColor, furOL, 2);
+    chibiEllipse(14*S, 28*S, legW/2, legH/2, furColor, furOL, 2);
+    // Feet
+    chibiEllipse(-14*S, 36*S, 7*S, 4*S, furDark, furOL, 1.5);
+    chibiEllipse(14*S, 36*S, 7*S, 4*S, furDark, furOL, 1.5);
+
+    // ── Small round chibi body ──
+    const bodyW = 26*S, bodyH = 22*S, bodyY = 10*S;
+    if (evo >= 3) {
+      const bg = ctx.createRadialGradient(-3*S, bodyY - 4*S, 3, 0, bodyY, bodyW);
+      bg.addColorStop(0, '#2d1b69');
+      bg.addColorStop(0.6, '#1a0f40');
+      bg.addColorStop(1, '#0f0a2a');
+      ctx.fillStyle = bg;
+    } else {
+      const bg = ctx.createRadialGradient(-3*S, bodyY - 4*S, 3, 0, bodyY, bodyW);
+      bg.addColorStop(0, '#a07848');
+      bg.addColorStop(0.5, '#8B6340');
+      bg.addColorStop(1, '#6B4226');
+      ctx.fillStyle = bg;
     }
-    // Bandolier
-    ctx.strokeStyle = evo >= 3 ? '#a78bfa' : '#8B7355'; ctx.lineWidth = 5*bs;
-    ctx.beginPath(); ctx.moveTo(-20*bs,-15*bs); ctx.lineTo(20*bs,20*bs); ctx.stroke();
-    ctx.strokeStyle = evo >= 3 ? '#c4b5fd' : '#a08060'; ctx.lineWidth = 3*bs;
-    ctx.beginPath(); ctx.moveTo(-20*bs,-15*bs); ctx.lineTo(20*bs,20*bs); ctx.stroke();
-    // Ammo pouches on bandolier
+    ctx.beginPath();
+    ctx.ellipse(0, bodyY, bodyW, bodyH, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = furOL;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // Body highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.beginPath();
+    ctx.ellipse(-bodyW*0.2, bodyY - bodyH*0.3, bodyW*0.4, bodyH*0.22, -0.3, 0, Math.PI*2);
+    ctx.fill();
+
+    // Cute fur texture (soft wispy lines instead of harsh)
+    ctx.strokeStyle = evo >= 3 ? 'rgba(80,60,150,0.2)' : 'rgba(90,50,20,0.15)';
+    ctx.lineWidth = 1;
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 8; i++) {
+      const fx = -16*S + i*4.5*S;
+      const fy = bodyY - 8*S + Math.sin(i*1.3)*6*S;
+      ctx.beginPath();
+      ctx.moveTo(fx, fy);
+      ctx.quadraticCurveTo(fx + 1, fy + 4*S, fx - 1, fy + 7*S);
+      ctx.stroke();
+    }
+    ctx.lineCap = 'butt';
+
+    // ── Bandolier (cute diagonal strap with tiny pouches) ──
+    ctx.strokeStyle = evo >= 3 ? '#a78bfa' : '#8B7355';
+    ctx.lineWidth = 4*S;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-18*S, bodyY - 12*S);
+    ctx.lineTo(16*S, bodyY + 12*S);
+    ctx.stroke();
+    ctx.strokeStyle = evo >= 3 ? '#c4b5fd' : '#a08060';
+    ctx.lineWidth = 2.5*S;
+    ctx.beginPath();
+    ctx.moveTo(-18*S, bodyY - 12*S);
+    ctx.lineTo(16*S, bodyY + 12*S);
+    ctx.stroke();
+    ctx.lineCap = 'butt';
+    // Tiny rounded pouches
     for (let i = 0; i < 3; i++) {
-      const px = -12*bs+i*12*bs, py = -8*bs+i*11*bs;
-      ctx.fillStyle = evo >= 3 ? '#6d28d9' : '#705030';
-      ctx.fillRect(px-3*bs, py-2*bs, 6*bs, 5*bs);
+      const t = (i + 0.5) / 3;
+      const px = -18*S + t*34*S;
+      const py = bodyY - 12*S + t*24*S;
+      chibiEllipse(px, py, 3.5*S, 3*S, evo >= 3 ? '#6d28d9' : '#705030', evo >= 3 ? '#4c1d95' : '#503820', 1.2);
     }
-    // Arms
-    ctx.fillStyle = furColor;
-    ctx.fillRect(-30*bs,-2*bs,12*bs,28*bs); ctx.fillRect(20*bs,-2*bs,12*bs,28*bs);
-    // Hands
+
+    // Body stars (cosmic)
+    if (evo >= 3) {
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2 + gameTime * 0.5;
+        const r = 6 + (i % 3) * 5;
+        ctx.fillStyle = `rgba(255,255,255,${0.4 + Math.sin(gameTime*3 + i)*0.3})`;
+        ctx.beginPath();
+        ctx.arc(Math.cos(a)*r, bodyY + Math.sin(a)*r*0.6, 1.2, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+
+    // ── Stubby front legs ──
+    chibiEllipse(-10*S, 30*S, legW/2, legH/2, furLight, furOL, 2);
+    chibiEllipse(16*S, 30*S, legW/2, legH/2, furLight, furOL, 2);
+
+    // ── Stubby arms ──
+    const armWave = Math.sin(gameTime*2.5)*0.15;
+    ctx.save();
+    ctx.translate(-24*S, 2*S);
+    ctx.rotate(-0.35 + armWave);
+    chibiEllipse(0, 0, 7*S, 12*S, furColor, furOL, 1.8);
+    // Paw
+    chibiEllipse(0, 11*S, 6*S, 5*S, furDark, furOL, 1.5);
+    ctx.restore();
+    ctx.save();
+    ctx.translate(24*S, 2*S);
+    ctx.rotate(0.35 - armWave);
+    chibiEllipse(0, 0, 7*S, 12*S, furColor, furOL, 1.8);
+    chibiEllipse(0, 11*S, 6*S, 5*S, furDark, furOL, 1.5);
+    ctx.restore();
+
+    // ── Big chibi head ──
+    const headR = 30*S;
+    const headY = -20*S;
+    // Head shadow on body
+    ctx.fillStyle = 'rgba(0,0,0,0.05)';
+    ctx.beginPath();
+    ctx.ellipse(0, bodyY - bodyH*0.3, headR*0.7, 5, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    if (evo >= 3) {
+      const hg = ctx.createRadialGradient(-4*S, headY - 5*S, 4, 0, headY, headR);
+      hg.addColorStop(0, '#2d1b69');
+      hg.addColorStop(0.6, '#1a0f40');
+      hg.addColorStop(1, '#0f0a2a');
+      ctx.fillStyle = hg;
+    } else {
+      const hg = ctx.createRadialGradient(-4*S, headY - 5*S, 4, 0, headY, headR);
+      hg.addColorStop(0, '#a07848');
+      hg.addColorStop(0.4, '#8B6340');
+      hg.addColorStop(1, '#6B4226');
+      ctx.fillStyle = hg;
+    }
+    ctx.beginPath();
+    ctx.ellipse(0, headY, headR, headR*0.9, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = furOL;
+    ctx.lineWidth = 2.2;
+    ctx.stroke();
+    // Head highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.beginPath();
+    ctx.ellipse(-headR*0.25, headY - headR*0.3, headR*0.4, headR*0.22, -0.3, 0, Math.PI*2);
+    ctx.fill();
+
+    // Cute head fur wisps
+    ctx.strokeStyle = evo >= 3 ? 'rgba(60,40,120,0.2)' : 'rgba(80,40,15,0.15)';
+    ctx.lineWidth = 1;
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 6; i++) {
+      const fx = -12*S + i*5*S;
+      const fy = headY - 12*S + Math.sin(i*1.5)*4*S;
+      ctx.beginPath();
+      ctx.moveTo(fx, fy);
+      ctx.quadraticCurveTo(fx + 0.5, fy + 3*S, fx - 0.5, fy + 5*S);
+      ctx.stroke();
+    }
+    ctx.lineCap = 'butt';
+
+    // ── Face area (darker mask around eyes) ──
     ctx.fillStyle = furDark;
-    ctx.beginPath(); ctx.arc(-24*bs,28*bs,6*bs,0,Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(26*bs,28*bs,6*bs,0,Math.PI*2); ctx.fill();
-    // Head
-    const hx = 0, hy = -30*bs;
-    ctx.fillStyle = furColor;
-    ctx.beginPath(); ctx.ellipse(hx,hy,20*bs,18*bs,0,0,Math.PI*2); ctx.fill();
-    // Face area (darker fur around eyes)
-    ctx.fillStyle = furDark;
-    ctx.beginPath(); ctx.ellipse(hx,hy+2*bs,14*bs,10*bs,0,0,Math.PI*2); ctx.fill();
-    // Eyes
-    ctx.fillStyle='#222'; ctx.beginPath(); ctx.arc(hx-7*bs,hy,4*bs,0,Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(hx+7*bs,hy,4*bs,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle = evo >= 3 ? '#a78bfa' : '#4a2a12';
-    ctx.beginPath(); ctx.arc(hx-7*bs,hy,2.5*bs,0,Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(hx+7*bs,hy,2.5*bs,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle='rgba(255,255,255,0.3)';
-    ctx.beginPath(); ctx.arc(hx-5.5*bs,hy-1.5*bs,1*bs,0,Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(hx+8.5*bs,hy-1.5*bs,1*bs,0,Math.PI*2); ctx.fill();
-    // Nose
+    ctx.beginPath();
+    ctx.ellipse(0, headY + 4*S, 18*S, 12*S, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    // Head stars (cosmic)
+    if (evo >= 3) {
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2 + gameTime * 0.6;
+        const r = 12 + (i % 2) * 8;
+        ctx.fillStyle = `rgba(255,255,255,${0.35 + Math.sin(gameTime*3 + i)*0.25})`;
+        ctx.beginPath();
+        ctx.arc(Math.cos(a)*r, headY + Math.sin(a)*r*0.7, 1.3, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+
+    // ── Big chibi eyes ──
+    const eyeSpacing = 11*S;
+    const eyeY = headY + 2*S;
+    const eyeRx = 8.5*S, eyeRy = 9.5*S;
+    const blinkCycle = gameTime % 4;
+    const isBlinking = blinkCycle > 3.85 && blinkCycle < 3.95;
+    const eyeOpen = isBlinking ? 0.08 : 1;
+
+    for (let side = -1; side <= 1; side += 2) {
+      const ex = side * eyeSpacing;
+      // Sclera
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.ellipse(ex, eyeY, eyeRx, eyeRy*eyeOpen, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = evo >= 3 ? '#4030a0' : '#5a3018';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+
+      if (!isBlinking) {
+        // Iris
+        const irisR = 6*S;
+        const irisY = eyeY + 1*S;
+        const irisGrad = ctx.createRadialGradient(ex, irisY - irisR*0.3, 1, ex, irisY, irisR);
+        if (evo >= 3) {
+          irisGrad.addColorStop(0, '#c4b5fd');
+          irisGrad.addColorStop(0.5, '#a78bfa');
+          irisGrad.addColorStop(1, '#7c5fd0');
+        } else {
+          irisGrad.addColorStop(0, '#a07030');
+          irisGrad.addColorStop(0.5, '#6a4820');
+          irisGrad.addColorStop(1, '#4a2a12');
+        }
+        ctx.fillStyle = irisGrad;
+        ctx.beginPath();
+        ctx.arc(ex, irisY, irisR, 0, Math.PI*2);
+        ctx.fill();
+        // Pupil
+        ctx.fillStyle = '#080408';
+        ctx.beginPath();
+        ctx.arc(ex, irisY + 0.5, irisR*0.38, 0, Math.PI*2);
+        ctx.fill();
+        // Main highlight
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.ellipse(ex + 2.5*S*side*0.5, irisY - 3*S, 3*S, 3.5*S, 0, 0, Math.PI*2);
+        ctx.fill();
+        // Secondary highlight
+        ctx.fillStyle = 'rgba(255,255,255,0.65)';
+        ctx.beginPath();
+        ctx.arc(ex - 1.5*S*side*0.5, irisY + 2.5*S, 1.8*S, 0, Math.PI*2);
+        ctx.fill();
+        // Tiny sparkle
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(ex + 1.2*S, irisY - 4.5*S, 1*S, 0, Math.PI*2);
+        ctx.fill();
+        // Upper eyelid
+        ctx.strokeStyle = evo >= 3 ? '#3020a0' : '#3a1808';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(ex, eyeY, eyeRx, Math.PI + 0.4, Math.PI*2 - 0.4);
+        ctx.stroke();
+      }
+    }
+
+    // ── Blush ──
+    chibiEllipse(-eyeSpacing - 4*S, eyeY + 9*S, 6*S, 3.5*S, 'rgba(255,140,140,0.25)', null);
+    chibiEllipse(eyeSpacing + 4*S, eyeY + 9*S, 6*S, 3.5*S, 'rgba(255,140,140,0.25)', null);
+
+    // ── Nose (wide, flat, cute) ──
     ctx.fillStyle = evo >= 3 ? '#4c1d95' : '#2a1508';
-    ctx.beginPath(); ctx.ellipse(hx,hy+6*bs,5*bs,3*bs,0,0,Math.PI*2); ctx.fill();
-    // Mouth
-    ctx.strokeStyle = '#1a0a04'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(hx,hy+8*bs,6*bs,0.1*Math.PI,0.9*Math.PI); ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(0, eyeY + 10*S, 5*S, 3*S, 0, 0, Math.PI*2);
+    ctx.fill();
+    // Nostrils
+    ctx.fillStyle = evo >= 3 ? '#2a0a60' : '#1a0a04';
+    ctx.beginPath();
+    ctx.arc(-2*S, eyeY + 10.5*S, 1.2*S, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(2*S, eyeY + 10.5*S, 1.2*S, 0, Math.PI*2);
+    ctx.fill();
+
+    // ── Cute w-mouth ──
+    const mouthY = eyeY + 15*S;
+    ctx.strokeStyle = evo >= 3 ? '#2a1868' : '#3a1808';
+    ctx.lineWidth = 1.8;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-4*S, mouthY);
+    ctx.quadraticCurveTo(-2*S, mouthY + 3*S, 0, mouthY + 0.5*S);
+    ctx.quadraticCurveTo(2*S, mouthY + 3*S, 4*S, mouthY);
+    ctx.stroke();
+    ctx.lineCap = 'butt';
+
+    // ── Sparkles (evo 1+) ──
+    if (evo >= 1) {
+      const count = 4 + evo * 2;
+      for (let i = 0; i < count; i++) {
+        const angle = gameTime*1.8 + (i / count) * Math.PI*2;
+        const dist = 48*S + Math.sin(gameTime + i)*10;
+        const sx = Math.cos(angle) * dist;
+        const sy = headY + Math.sin(angle) * dist * 0.5;
+        const ss = 3 + Math.sin(gameTime*4 + i*2)*1.5;
+        const hue = (i*60 + gameTime*30) % 360;
+        const alpha = 0.6 + Math.sin(gameTime*3 + i)*0.3;
+        ctx.fillStyle = `hsla(${hue}, 90%, 75%, ${alpha})`;
+        drawStar4(sx, sy, ss, gameTime*2 + i);
+      }
+    }
   }
 
   /* ── Skin draw dispatcher ── */
