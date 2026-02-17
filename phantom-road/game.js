@@ -120,6 +120,74 @@ const audio = (() => {
     src.start();
   });
 
+  const powerUp = () => play((ac) => {
+    [0, 0.06, 0.12, 0.18].forEach((t, i) => {
+      const o = ac.createOscillator();
+      const g = ac.createGain();
+      o.type = "sine";
+      o.frequency.value = [440, 554, 659, 880][i];
+      g.gain.setValueAtTime(0.12, ac.currentTime + t);
+      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + t + 0.1);
+      o.connect(g).connect(ac.destination);
+      o.start(ac.currentTime + t);
+      o.stop(ac.currentTime + t + 0.1);
+    });
+  });
+
+  const shieldBreak = () => play((ac) => {
+    const o = ac.createOscillator();
+    const g = ac.createGain();
+    o.type = "triangle";
+    o.frequency.setValueAtTime(880, ac.currentTime);
+    o.frequency.exponentialRampToValueAtTime(110, ac.currentTime + 0.3);
+    g.gain.setValueAtTime(0.2, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.3);
+    o.connect(g).connect(ac.destination);
+    o.start();
+    o.stop(ac.currentTime + 0.3);
+  });
+
+  const policeSiren = () => play((ac) => {
+    const o = ac.createOscillator();
+    const g = ac.createGain();
+    o.type = "square";
+    o.frequency.setValueAtTime(660, ac.currentTime);
+    o.frequency.setValueAtTime(880, ac.currentTime + 0.15);
+    o.frequency.setValueAtTime(660, ac.currentTime + 0.3);
+    g.gain.setValueAtTime(0.06, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.45);
+    o.connect(g).connect(ac.destination);
+    o.start();
+    o.stop(ac.currentTime + 0.45);
+  });
+
+  const policeEvaded = () => play((ac) => {
+    [0, 0.07, 0.14, 0.21, 0.28].forEach((t, i) => {
+      const o = ac.createOscillator();
+      const g = ac.createGain();
+      o.type = "sine";
+      o.frequency.value = [523, 659, 784, 988, 1047][i];
+      g.gain.setValueAtTime(0.13, ac.currentTime + t);
+      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + t + 0.12);
+      o.connect(g).connect(ac.destination);
+      o.start(ac.currentTime + t);
+      o.stop(ac.currentTime + t + 0.12);
+    });
+  });
+
+  const comboUp = () => play((ac) => {
+    const o = ac.createOscillator();
+    const g = ac.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(880, ac.currentTime);
+    o.frequency.exponentialRampToValueAtTime(1760, ac.currentTime + 0.06);
+    g.gain.setValueAtTime(0.1, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.1);
+    o.connect(g).connect(ac.destination);
+    o.start();
+    o.stop(ac.currentTime + 0.1);
+  });
+
   const milestone = () => play((ac) => {
     [0, 0.08, 0.16].forEach((t, i) => {
       const o = ac.createOscillator();
@@ -140,7 +208,7 @@ const audio = (() => {
     muteBtn.textContent = muted ? "\u{1F507}" : "\u{1F50A}";
   };
 
-  return { startEngine, updateEngine, stopEngine, nearMiss, coinSound, nitroSound, crash, milestone, toggleMute, isMuted: () => muted };
+  return { startEngine, updateEngine, stopEngine, nearMiss, coinSound, nitroSound, crash, milestone, powerUp, shieldBreak, policeSiren, policeEvaded, comboUp, toggleMute, isMuted: () => muted };
 })();
 
 // ── Constants ────────────────────────────────────────────
@@ -155,6 +223,13 @@ const zones = [
   { name: "Mountains", roadColor: "#252535", lineColor: "#44ddff", fogColor: "#060820", dist: 1200 },
   { name: "Desert",    roadColor: "#302820", lineColor: "#ff5544", fogColor: "#100808", dist: 2500 },
   { name: "Void",      roadColor: "#181828", lineColor: "#cc44ff", fogColor: "#040410", dist: 4000 },
+];
+
+// ── Power-up types ────────────────────────────────────────
+const POWERUP_TYPES = [
+  { type: "shield", color: "#44aaff", glow: "#2288ff", label: "SHIELD", duration: 8 },
+  { type: "magnet", color: "#cc44ff", glow: "#aa22dd", label: "MAGNET", duration: 6 },
+  { type: "slowmo", color: "#44ff88", glow: "#22dd66", label: "SLOW-MO", duration: 4 },
 ];
 
 // ── State ────────────────────────────────────────────────
@@ -236,6 +311,47 @@ function initState() {
     // Crash
     crashX: 0,
     crashY: 0,
+
+    // Power-ups
+    powerUps: [],
+    powerUpTimer: 12,
+    activeShield: false,
+    shieldTimer: 0,
+    shieldHits: 0,
+    activeMagnet: false,
+    magnetTimer: 0,
+    activeSlowmo: false,
+    slowmoTimer: 0,
+    powerUpFlash: "",
+    powerUpFlashTimer: 0,
+
+    // Combo / multiplier
+    combo: 0,
+    comboTimer: 0,
+    multiplier: 1,
+    multiplierDisplay: 1,
+    totalCoins: 0,
+
+    // Police chase
+    policeActive: false,
+    policeY: H + 80,
+    policeX: W / 2,
+    policeSiren: 0,
+    policeChaseTimer: 0,
+    policeSurviveTime: 10,
+    nextPoliceAt: 350,
+    policeEvaded: 0,
+
+    // Streak
+    streak: 0,
+    bestStreak: 0,
+    streakDisplay: 0,
+    streakText: "",
+
+    // Road events
+    roadEvent: null,
+    roadEventTimer: 0,
+    nextEventAt: 200,
 
     // Mobile touch
     touchL: false,
@@ -486,8 +602,53 @@ function spawnHazard() {
   });
 }
 
+function spawnPowerUp() {
+  const rw = state.currentRoadWidth;
+  const cx = state.roadCenterX - rw / 2 + 30 + Math.random() * (rw - 60);
+  const typeInfo = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
+  state.powerUps.push({ x: cx, y: -25, ...typeInfo, bobPhase: Math.random() * Math.PI * 2 });
+}
+
+function spawnCoinPattern(pattern) {
+  const rw = state.currentRoadWidth;
+  const rcx = state.roadCenterX;
+  const left = rcx - rw / 2 + 25;
+  const right = rcx + rw / 2 - 25;
+
+  if (pattern === "zigzag") {
+    const startX = left + Math.random() * (right - left);
+    const dir = Math.random() < 0.5 ? 1 : -1;
+    for (let i = 0; i < 8; i++) {
+      const x = Math.max(left, Math.min(right, startX + dir * (i % 2 === 0 ? -30 : 30)));
+      state.coins.push({ x, y: -20 - i * 30, collected: false, sparkle: Math.random() * Math.PI * 2 });
+    }
+  } else if (pattern === "arc") {
+    const centerX = left + Math.random() * (right - left);
+    for (let i = 0; i < 7; i++) {
+      const angle = (i / 6) * Math.PI;
+      const x = Math.max(left, Math.min(right, centerX + Math.cos(angle) * 40));
+      const y = -20 - Math.sin(angle) * 60 - i * 15;
+      state.coins.push({ x, y, collected: false, sparkle: Math.random() * Math.PI * 2 });
+    }
+  } else if (pattern === "diamond") {
+    const cx2 = left + Math.random() * (right - left);
+    const offsets = [[0, 0], [-20, -30], [20, -30], [-40, -60], [0, -60], [40, -60], [-20, -90], [20, -90], [0, -120]];
+    for (const [ox, oy] of offsets) {
+      const x = Math.max(left, Math.min(right, cx2 + ox));
+      state.coins.push({ x, y: -20 + oy, collected: false, sparkle: Math.random() * Math.PI * 2 });
+    }
+  } else {
+    // Default line
+    const count = 2 + Math.floor(Math.random() * 3);
+    const baseX = left + Math.random() * (right - left);
+    for (let i = 0; i < count; i++) {
+      state.coins.push({ x: baseX, y: -20 - i * 35, collected: false, sparkle: Math.random() * Math.PI * 2 });
+    }
+  }
+}
+
 function spawnParticle(x, y, vx, vy, life, color, size) {
-  if (state.particles.length > 150) return;
+  if (state.particles.length > 200) return;
   state.particles.push({ x, y, vx, vy, life, maxLife: life, color, size });
 }
 
@@ -517,6 +678,37 @@ function update(dt) {
   }
   if (state.distance < 3) state.zoneTextTimer = 2.5;
   if (state.zoneTextTimer > 0) state.zoneTextTimer -= dt;
+
+  // ── Combo / multiplier decay ──
+  if (state.comboTimer > 0) {
+    state.comboTimer -= dt;
+    if (state.comboTimer <= 0) {
+      state.combo = 0;
+      state.multiplier = 1;
+    }
+  }
+  state.multiplier = Math.min(5, 1 + Math.floor(state.combo / 4));
+  state.multiplierDisplay += (state.multiplier - state.multiplierDisplay) * 6 * dt;
+
+  // ── Power-up flash ──
+  if (state.powerUpFlashTimer > 0) state.powerUpFlashTimer -= dt;
+
+  // ── Active power-up timers ──
+  if (state.shieldTimer > 0) {
+    state.shieldTimer -= dt;
+    if (state.shieldTimer <= 0) state.activeShield = false;
+  }
+  if (state.magnetTimer > 0) {
+    state.magnetTimer -= dt;
+    if (state.magnetTimer <= 0) state.activeMagnet = false;
+  }
+  if (state.slowmoTimer > 0) {
+    state.slowmoTimer -= dt;
+    if (state.slowmoTimer <= 0) state.activeSlowmo = false;
+  }
+
+  // ── Streak display ──
+  if (state.streakDisplay > 0) state.streakDisplay -= dt;
 
   // ── Speed ramp (faster progression) ──
   state.baseSpeed = 180 + state.distance * 0.08;
@@ -553,8 +745,17 @@ function update(dt) {
     state.nitroActive = false;
   }
 
+  // Slow-mo reduces speed of everything (but player still steers normally)
+  if (state.activeSlowmo) {
+    state.scrollSpeed *= 0.45;
+  }
+
   // ── Road width narrows ──
-  state.currentRoadWidth = Math.max(130, ROAD_WIDTH - state.distance * 0.007);
+  let roadNarrowExtra = 0;
+  if (state.roadEvent === "narrow") {
+    roadNarrowExtra = 40;
+  }
+  state.currentRoadWidth = Math.max(100, ROAD_WIDTH - state.distance * 0.007 - roadNarrowExtra);
   const rw = state.currentRoadWidth;
 
   // ── Road curving (more aggressive) ──
@@ -597,11 +798,15 @@ function update(dt) {
   const roadRight = state.roadCenterX + rw / 2;
   const onRoad = state.carX > roadLeft + CAR_W / 2 - 2 && state.carX < roadRight - CAR_W / 2 + 2;
 
-  // Edge drifting charges nitro
+  // Edge drifting charges nitro and builds combo
   if (onRoad) {
     const edgeDist = Math.min(state.carX - roadLeft, roadRight - state.carX);
     if (edgeDist < 35 && !state.nitroActive) {
       state.nitro = Math.min(1, state.nitro + dt * 0.4);
+      // Edge driving slowly builds combo
+      if (state.comboTimer > 0) {
+        state.combo += dt * 0.8;
+      }
       // Edge sparks
       if (Math.random() < 0.4) {
         const side = (state.carX - roadLeft < roadRight - state.carX) ? -1 : 1;
@@ -615,7 +820,30 @@ function update(dt) {
     }
   }
 
-  if (!onRoad) { gameOver(); return; }
+  if (!onRoad) {
+    if (state.activeShield) {
+      // Shield saves from going off-road once
+      state.activeShield = false;
+      state.shieldTimer = 0;
+      state.shieldHits++;
+      audio.shieldBreak();
+      haptic(30);
+      // Push car back onto road
+      if (state.carX < roadLeft + CAR_W / 2) state.carX = roadLeft + CAR_W / 2 + 5;
+      if (state.carX > roadRight - CAR_W / 2) state.carX = roadRight - CAR_W / 2 - 5;
+      state.carVelX *= -0.5;
+      state.shakeTime = 0.2;
+      state.shakeIntensity = 6;
+      for (let i = 0; i < 12; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        spawnParticle(state.carX, state.carY,
+          Math.cos(angle) * 120, Math.sin(angle) * 120,
+          0.3, "#44aaff", 3);
+      }
+    } else {
+      gameOver(); return;
+    }
+  }
 
   // ── Distance / score ──
   state.distance += state.scrollSpeed * dt * 0.12;
@@ -626,10 +854,10 @@ function update(dt) {
   const currentMilestone = Math.floor(state.distance / 200) * 200;
   if (currentMilestone > state.lastMilestone && currentMilestone > 0) {
     state.lastMilestone = currentMilestone;
-    state.milestoneText = `${currentMilestone}m`;
+    state.milestoneText = state.multiplier > 1 ? `${currentMilestone}m  x${state.multiplier}` : `${currentMilestone}m`;
     state.milestoneTimer = 1.5;
     audio.milestone();
-    state.nitro = Math.min(1, state.nitro + 0.15); // bonus nitro
+    state.nitro = Math.min(1, state.nitro + 0.15);
   }
   if (state.milestoneTimer > 0) state.milestoneTimer -= dt;
 
@@ -660,16 +888,18 @@ function update(dt) {
     }
   }
 
-  // ── Spawn coins ──
+  // ── Spawn coins (varied patterns) ──
   state.coinTimer -= dt;
   if (state.coinTimer <= 0) {
     state.coinTimer = 1.5 + Math.random() * 2;
-    // Spawn a small line of coins
-    const count = 2 + Math.floor(Math.random() * 3);
-    const baseX = state.roadCenterX - rw / 2 + 25 + Math.random() * (rw - 50);
-    for (let i = 0; i < count; i++) {
-      state.coins.push({ x: baseX, y: -20 - i * 35, collected: false, sparkle: Math.random() * Math.PI * 2 });
+    const patterns = ["line", "zigzag", "arc", "diamond"];
+    const weights = state.distance > 500 ? [0.3, 0.25, 0.25, 0.2] : [0.6, 0.2, 0.15, 0.05];
+    let r = Math.random(), sum = 0, pattern = "line";
+    for (let i = 0; i < patterns.length; i++) {
+      sum += weights[i];
+      if (r < sum) { pattern = patterns[i]; break; }
     }
+    spawnCoinPattern(pattern);
   }
 
   // ── Spawn hazards ──
@@ -677,6 +907,98 @@ function update(dt) {
   if (state.hazardTimer <= 0) {
     state.hazardTimer = 2.5 + Math.random() * 3 - Math.min(state.distance * 0.0005, 1.5);
     spawnHazard();
+  }
+
+  // ── Spawn power-ups ──
+  state.powerUpTimer -= dt;
+  if (state.powerUpTimer <= 0) {
+    state.powerUpTimer = 10 + Math.random() * 15;
+    spawnPowerUp();
+  }
+
+  // ── Road events (narrow sections, speed strips) ──
+  if (state.distance >= state.nextEventAt && !state.roadEvent) {
+    const events = ["narrow", "speedStrip"];
+    if (state.zoneIndex >= 2) events.push("rockfall");
+    if (state.zoneIndex >= 3) events.push("sandstorm");
+    state.roadEvent = events[Math.floor(Math.random() * events.length)];
+    state.roadEventTimer = state.roadEvent === "sandstorm" ? 5 : (state.roadEvent === "narrow" ? 4 : 2);
+    state.nextEventAt = state.distance + 150 + Math.random() * 200;
+  }
+  if (state.roadEvent) {
+    state.roadEventTimer -= dt;
+    if (state.roadEventTimer <= 0) state.roadEvent = null;
+    // Speed strip effect
+    if (state.roadEvent === "speedStrip") {
+      state.scrollSpeed *= 1.3;
+      state.nitro = Math.min(1, state.nitro + dt * 0.3);
+    }
+    // Sandstorm: flicker visibility & buffet
+    if (state.roadEvent === "sandstorm") {
+      state.carVelX += (Math.random() - 0.5) * 60 * dt;
+      if (Math.random() < 0.3) {
+        spawnParticle(
+          Math.random() * W, Math.random() * H,
+          150 + Math.random() * 100, 40 + Math.random() * 30,
+          0.3, "rgba(200,170,100,0.4)", 2
+        );
+      }
+    }
+    // Rockfall: random obstacles from top
+    if (state.roadEvent === "rockfall" && Math.random() < dt * 2) {
+      const rx = state.roadCenterX - rw / 2 + 20 + Math.random() * (rw - 40);
+      state.hazards.push({ x: rx, y: -30, type: "rock", w: 22, h: 22 });
+    }
+  }
+
+  // ── Police chase ──
+  if (state.distance >= state.nextPoliceAt && !state.policeActive) {
+    state.policeActive = true;
+    state.policeY = H + 80;
+    state.policeX = state.roadCenterX;
+    state.policeChaseTimer = state.policeSurviveTime;
+    state.policeSiren = 0;
+  }
+  if (state.policeActive) {
+    state.policeChaseTimer -= dt;
+    state.policeSiren += dt * 8;
+    // Police approaches player
+    const targetY = state.carY + 100;
+    state.policeY += (targetY - state.policeY) * 1.5 * dt;
+    state.policeX += (state.carX - state.policeX) * 0.8 * dt;
+    // Siren sound periodically
+    if (Math.floor(state.policeSiren) % 3 === 0 && state.policeSiren - Math.floor(state.policeSiren) < dt * 8) {
+      audio.policeSiren();
+    }
+    // Collision with police
+    const pdx = Math.abs(state.policeX - state.carX);
+    const pdy = Math.abs(state.policeY - state.carY);
+    if (pdx < (CAR_W + 28) / 2 && pdy < (CAR_H + 50) / 2) {
+      if (state.activeShield) {
+        state.activeShield = false;
+        state.shieldTimer = 0;
+        audio.shieldBreak();
+        state.policeY = state.carY + 150;
+      } else {
+        gameOver(); return;
+      }
+    }
+    // Police evaded!
+    if (state.policeChaseTimer <= 0) {
+      state.policeActive = false;
+      state.policeEvaded++;
+      state.nextPoliceAt = state.distance + 300 + Math.random() * 200;
+      const bonus = 50 * state.multiplier;
+      state.score += bonus;
+      state.distance += bonus;
+      state.nitro = 1;
+      state.combo += 5;
+      state.comboTimer = 4;
+      state.milestoneText = `EVADED! +${bonus}`;
+      state.milestoneTimer = 2;
+      audio.policeEvaded();
+      haptic([30, 20, 30, 20, 30]);
+    }
   }
 
   // ── Update traffic ──
@@ -689,39 +1011,75 @@ function update(dt) {
       const dist = Math.abs(t.x - state.carX);
       const hitDist = (CAR_W + t.w) / 2;
       if (dist < hitDist) {
-        gameOver();
-        return;
+        if (state.activeShield) {
+          state.activeShield = false;
+          state.shieldTimer = 0;
+          state.shieldHits++;
+          audio.shieldBreak();
+          haptic(30);
+          state.shakeTime = 0.2;
+          state.shakeIntensity = 6;
+          t.nearMissChecked = true;
+          t.passed = true;
+          // Push traffic away
+          t.speed += 200;
+          for (let j = 0; j < 10; j++) {
+            const angle = Math.random() * Math.PI * 2;
+            spawnParticle(state.carX, state.carY,
+              Math.cos(angle) * 100, Math.sin(angle) * 100,
+              0.3, "#44aaff", 3);
+          }
+        } else {
+          gameOver();
+          return;
+        }
       }
       // Near-miss: generous window
-      if (dist < hitDist + 28) {
+      if (dist < hitDist + 28 && !t.nearMissChecked) {
         t.nearMissChecked = true;
         t.passed = true;
         state.nearMissCombo++;
-        const bonus = 3 + state.nearMissCombo * 4;
+        state.streak++;
+        state.combo += 2;
+        state.comboTimer = 3.5;
+        const prevMult = state.multiplier;
+        state.multiplier = Math.min(5, 1 + Math.floor(state.combo / 4));
+        if (state.multiplier > prevMult) audio.comboUp();
+        const bonus = (3 + state.nearMissCombo * 4) * state.multiplier;
         state.score += bonus;
         state.distance += bonus;
         state.nearMissDisplay = 1.2;
+        const multText = state.multiplier > 1 ? ` x${state.multiplier}` : "";
         state.nearMissText = state.nearMissCombo > 1
-          ? `CLOSE! x${state.nearMissCombo}  +${bonus}`
-          : `CLOSE!  +${bonus}`;
+          ? `CLOSE! x${state.nearMissCombo}${multText}  +${bonus}`
+          : `CLOSE!${multText}  +${bonus}`;
         audio.nearMiss();
         haptic(15);
+        // Streak milestones
+        if (state.streak > 0 && state.streak % 5 === 0) {
+          state.streakDisplay = 1.5;
+          state.streakText = `${state.streak} STREAK!`;
+          state.nitro = Math.min(1, state.nitro + 0.2);
+          if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+        }
         // Spark particles between cars
-        for (let j = 0; j < 6; j++) {
+        const sparkColor = state.multiplier >= 3 ? "#ff44ff" : state.multiplier >= 2 ? "#44ffaa" : "#ffee66";
+        for (let j = 0; j < 6 + state.multiplier * 2; j++) {
           spawnParticle(
             (state.carX + t.x) / 2, state.carY,
-            (Math.random() - 0.5) * 100, (Math.random() - 0.5) * 80,
-            0.15 + Math.random() * 0.1,
-            "#ffee66", 2 + Math.random() * 2
+            (Math.random() - 0.5) * 120, (Math.random() - 0.5) * 100,
+            0.15 + Math.random() * 0.15,
+            sparkColor, 2 + Math.random() * 3
           );
         }
       }
     }
 
-    // Reset combo if car passed without near miss
+    // Reset near-miss combo (not main combo) if car passed without near miss
     if (!t.passed && t.y - t.h / 2 > state.carY + CAR_H) {
       t.passed = true;
       state.nearMissCombo = 0;
+      state.streak = 0;
     }
 
     if (t.y > H + 100) state.traffic.splice(i, 1);
@@ -733,17 +1091,37 @@ function update(dt) {
     c.y += state.scrollSpeed * dt;
     c.sparkle += dt * 4;
     if (!c.collected) {
+      // Magnet pulls coins toward car
+      if (state.activeMagnet) {
+        const mdx = state.carX - c.x;
+        const mdy = state.carY - c.y;
+        const mDist = Math.sqrt(mdx * mdx + mdy * mdy);
+        if (mDist < 150) {
+          const pull = Math.min(400, 6000 / (mDist + 10));
+          c.x += (mdx / mDist) * pull * dt;
+          c.y += (mdy / mDist) * pull * dt;
+        }
+      }
       const dx = c.x - state.carX;
       const dy = c.y - state.carY;
-      if (dx * dx + dy * dy < 600) { // ~24px radius
+      const collectRadius = state.activeMagnet ? 1200 : 600;
+      if (dx * dx + dy * dy < collectRadius) {
         c.collected = true;
-        state.score += 3;
-        state.distance += 3;
+        state.totalCoins++;
+        state.combo += 1;
+        state.comboTimer = 3.5;
+        const prevMult = state.multiplier;
+        state.multiplier = Math.min(5, 1 + Math.floor(state.combo / 4));
+        if (state.multiplier > prevMult) audio.comboUp();
+        const coinValue = 3 * state.multiplier;
+        state.score += coinValue;
+        state.distance += coinValue;
         audio.coinSound();
-        for (let j = 0; j < 5; j++) {
+        const sparkColor = state.multiplier >= 3 ? "#ffaa44" : "#ffdd44";
+        for (let j = 0; j < 5 + state.multiplier; j++) {
           spawnParticle(c.x, c.y,
             (Math.random() - 0.5) * 80, (Math.random() - 0.5) * 80,
-            0.2 + Math.random() * 0.15, "#ffdd44", 2 + Math.random() * 2);
+            0.2 + Math.random() * 0.15, sparkColor, 2 + Math.random() * 2);
         }
       }
     }
@@ -754,23 +1132,80 @@ function update(dt) {
   for (let i = state.hazards.length - 1; i >= 0; i--) {
     const hz = state.hazards[i];
     hz.y += state.scrollSpeed * dt;
+    // Rock type falls faster
+    if (hz.type === "rock") hz.y += 120 * dt;
     // Collision
     const dx = Math.abs(hz.x - state.carX);
     const dy = Math.abs(hz.y - state.carY);
     if (dx < (CAR_W + hz.w) / 2 - 4 && dy < (CAR_H + hz.h) / 2 - 4) {
       if (hz.type === "oil") {
-        // Oil = lose control briefly (push sideways)
         state.carVelX += (Math.random() - 0.5) * 400;
         state.shakeTime = 0.15;
         state.shakeIntensity = 5;
         haptic(25);
+        state.hazards.splice(i, 1);
+        continue;
+      } else if (state.activeShield) {
+        state.activeShield = false;
+        state.shieldTimer = 0;
+        state.shieldHits++;
+        audio.shieldBreak();
+        haptic(30);
+        state.shakeTime = 0.15;
+        state.shakeIntensity = 5;
+        for (let j = 0; j < 8; j++) {
+          const angle = Math.random() * Math.PI * 2;
+          spawnParticle(hz.x, hz.y,
+            Math.cos(angle) * 80, Math.sin(angle) * 80,
+            0.25, "#44aaff", 3);
+        }
+        state.hazards.splice(i, 1);
+        continue;
       } else {
-        // Cone/pothole = crash
         gameOver();
         return;
       }
     }
     if (hz.y > H + 40) state.hazards.splice(i, 1);
+  }
+
+  // ── Update power-ups ──
+  for (let i = state.powerUps.length - 1; i >= 0; i--) {
+    const pu = state.powerUps[i];
+    pu.y += state.scrollSpeed * dt;
+    pu.bobPhase += dt * 3;
+    // Collection check
+    const pdx = pu.x - state.carX;
+    const pdy = pu.y - state.carY;
+    if (pdx * pdx + pdy * pdy < 900) {
+      // Apply power-up
+      if (pu.type === "shield") {
+        state.activeShield = true;
+        state.shieldTimer = pu.duration;
+      } else if (pu.type === "magnet") {
+        state.activeMagnet = true;
+        state.magnetTimer = pu.duration;
+      } else if (pu.type === "slowmo") {
+        state.activeSlowmo = true;
+        state.slowmoTimer = pu.duration;
+      }
+      state.powerUpFlash = pu.color;
+      state.powerUpFlashTimer = 0.5;
+      state.combo += 3;
+      state.comboTimer = 4;
+      audio.powerUp();
+      haptic([15, 10, 15]);
+      // Burst particles
+      for (let j = 0; j < 15; j++) {
+        const angle = Math.random() * Math.PI * 2;
+        spawnParticle(pu.x, pu.y,
+          Math.cos(angle) * 100, Math.sin(angle) * 100,
+          0.35, pu.color, 3 + Math.random() * 3);
+      }
+      state.powerUps.splice(i, 1);
+      continue;
+    }
+    if (pu.y > H + 40) state.powerUps.splice(i, 1);
   }
 
   // ── Near-miss display ──
@@ -935,6 +1370,22 @@ function draw() {
       ctx.strokeStyle = "rgba(80,80,80,0.5)";
       ctx.lineWidth = 1.5;
       ctx.stroke();
+    } else if (hz.type === "rock") {
+      ctx.fillStyle = "#665544";
+      ctx.beginPath();
+      ctx.moveTo(hz.x, hz.y - 12);
+      ctx.lineTo(hz.x - 10, hz.y - 3);
+      ctx.lineTo(hz.x - 8, hz.y + 10);
+      ctx.lineTo(hz.x + 9, hz.y + 10);
+      ctx.lineTo(hz.x + 11, hz.y - 5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "rgba(100,85,70,0.5)";
+      ctx.beginPath();
+      ctx.moveTo(hz.x - 2, hz.y - 10);
+      ctx.lineTo(hz.x + 8, hz.y - 3);
+      ctx.lineTo(hz.x + 2, hz.y + 5);
+      ctx.fill();
     } else if (hz.type === "oil") {
       ctx.fillStyle = "rgba(40,20,60,0.5)";
       ctx.beginPath();
@@ -969,9 +1420,19 @@ function draw() {
     ctx.fill();
   }
 
+  // ── Power-ups ──
+  for (const pu of state.powerUps) {
+    drawPowerUp(pu);
+  }
+
   // ── Traffic ──
   for (const t of state.traffic) {
     drawTrafficCar(t);
+  }
+
+  // ── Police car ──
+  if (state.policeActive) {
+    drawPoliceCar();
   }
 
   // ── Particles (under darkness) ──
@@ -997,10 +1458,97 @@ function draw() {
   // ── Player car (drawn ON TOP of darkness so it's always visible) ──
   if (state.phase !== "gameover") {
     drawPlayerCar();
+    // Shield visual
+    if (state.activeShield) {
+      ctx.save();
+      ctx.translate(state.carX, state.carY);
+      const shieldPulse = 0.7 + Math.sin(Date.now() * 0.008) * 0.3;
+      ctx.strokeStyle = `rgba(68,170,255,${0.3 * shieldPulse})`;
+      ctx.lineWidth = 3;
+      ctx.shadowColor = "#44aaff";
+      ctx.shadowBlur = 15;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, CAR_W / 2 + 10, CAR_H / 2 + 6, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.restore();
+    }
+    // Magnet visual
+    if (state.activeMagnet) {
+      ctx.save();
+      ctx.translate(state.carX, state.carY);
+      const magnetPulse = (Date.now() % 1000) / 1000;
+      ctx.strokeStyle = `rgba(204,68,255,${0.2 * (1 - magnetPulse)})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, 30 + magnetPulse * 120, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.strokeStyle = `rgba(204,68,255,${0.15 * (1 - ((magnetPulse + 0.5) % 1))})`;
+      ctx.beginPath();
+      ctx.arc(0, 0, 30 + ((magnetPulse + 0.5) % 1) * 120, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  // ── Road event overlays ──
+  if (state.roadEvent === "sandstorm" && state.phase === "playing") {
+    ctx.save();
+    ctx.globalAlpha = 0.15 + Math.sin(Date.now() * 0.003) * 0.08;
+    ctx.fillStyle = "#c8a855";
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+  if (state.roadEvent === "speedStrip" && state.phase === "playing") {
+    ctx.save();
+    ctx.globalAlpha = 0.08;
+    const stripGrad = ctx.createLinearGradient(0, H, 0, 0);
+    stripGrad.addColorStop(0, "#ff4400");
+    stripGrad.addColorStop(0.3, "#ff8800");
+    stripGrad.addColorStop(1, "transparent");
+    ctx.fillStyle = stripGrad;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  // ── Power-up flash ──
+  if (state.powerUpFlashTimer > 0) {
+    ctx.save();
+    ctx.globalAlpha = state.powerUpFlashTimer * 0.3;
+    ctx.fillStyle = state.powerUpFlash;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  // ── Multiplier screen edge glow ──
+  if (state.multiplier >= 2 && state.phase === "playing") {
+    ctx.save();
+    const glowColors = { 2: "rgba(68,255,170,", 3: "rgba(255,200,50,", 4: "rgba(255,100,50,", 5: "rgba(255,50,200," };
+    const gc = glowColors[Math.min(5, state.multiplier)] || "rgba(255,255,255,";
+    const edgeGrad = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.3, W / 2, H / 2, Math.min(W, H) * 0.7);
+    edgeGrad.addColorStop(0, "transparent");
+    edgeGrad.addColorStop(1, gc + (0.04 + state.multiplier * 0.02) + ")");
+    ctx.fillStyle = edgeGrad;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  }
+
+  // ── Slow-mo visual tint ──
+  if (state.activeSlowmo && state.phase === "playing") {
+    ctx.save();
+    ctx.globalAlpha = 0.08;
+    ctx.fillStyle = "#44ff88";
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 1;
+    ctx.restore();
   }
 
   // ── HUD elements on canvas ──
   drawNitroBar();
+  drawComboHUD();
 
   // ── Near-miss text ──
   if (state.nearMissDisplay > 0) {
@@ -1014,6 +1562,47 @@ function draw() {
     ctx.shadowColor = "#ffaa00";
     ctx.shadowBlur = 18;
     ctx.fillText(state.nearMissText, W / 2, state.carY - 55 - (1 - t) * 15);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+
+  // ── Streak text ──
+  if (state.streakDisplay > 0 && state.phase === "playing") {
+    ctx.save();
+    const t = state.streakDisplay;
+    ctx.globalAlpha = Math.min(1, t);
+    const scale = 1 + (1 - Math.min(1, t * 2)) * 0.4;
+    ctx.font = `bold ${Math.round(24 * scale)}px 'Trebuchet MS', sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#44ffaa";
+    ctx.shadowColor = "#22cc88";
+    ctx.shadowBlur = 20;
+    ctx.fillText(state.streakText, W / 2, state.carY - 85 - (1.5 - t) * 12);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+
+  // ── Active power-up indicators ──
+  if (state.phase === "playing") {
+    drawActivePowerUps();
+  }
+
+  // ── Police chase warning ──
+  if (state.policeActive && state.phase === "playing") {
+    ctx.save();
+    const flashAlpha = 0.08 + Math.sin(state.policeSiren * 2) * 0.06;
+    const sirenPhase = Math.floor(state.policeSiren * 2) % 2;
+    ctx.globalAlpha = flashAlpha;
+    ctx.fillStyle = sirenPhase ? "#ff0000" : "#0044ff";
+    ctx.fillRect(0, H - 60, W, 60);
+    ctx.globalAlpha = 1;
+    // Timer
+    ctx.font = "bold 16px 'Trebuchet MS', sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#ff4444";
+    ctx.shadowColor = "#ff0000";
+    ctx.shadowBlur = 12;
+    ctx.fillText(`POLICE! Evade: ${Math.ceil(state.policeChaseTimer)}s`, W / 2, 35);
     ctx.shadowBlur = 0;
     ctx.restore();
   }
@@ -1228,8 +1817,9 @@ function drawTrafficCar(t) {
 function drawHeadlights() {
   ctx.save();
 
-  // Darkness layer
-  ctx.fillStyle = "rgba(0,0,0,0.72)";
+  // Darkness layer (heavier during sandstorm)
+  const darkOpacity = state.roadEvent === "sandstorm" ? 0.82 : 0.72;
+  ctx.fillStyle = `rgba(0,0,0,${darkOpacity})`;
   ctx.fillRect(0, 0, W, H);
 
   // Cut out headlight cone
@@ -1407,6 +1997,198 @@ function drawMobileTouchUI() {
   ctx.restore();
 }
 
+function drawPowerUp(pu) {
+  ctx.save();
+  const bob = Math.sin(pu.bobPhase) * 4;
+  ctx.translate(pu.x, pu.y + bob);
+
+  // Outer glow
+  ctx.fillStyle = pu.glow;
+  ctx.shadowColor = pu.glow;
+  ctx.shadowBlur = 20;
+  ctx.globalAlpha = 0.4 + Math.sin(pu.bobPhase * 2) * 0.15;
+  ctx.beginPath();
+  ctx.arc(0, 0, 16, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Inner circle
+  ctx.globalAlpha = 0.9;
+  ctx.fillStyle = pu.color;
+  ctx.beginPath();
+  ctx.arc(0, 0, 11, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Icon
+  ctx.globalAlpha = 1;
+  ctx.font = "bold 11px 'Trebuchet MS', sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#fff";
+  if (pu.type === "shield") ctx.fillText("S", 0, 0);
+  else if (pu.type === "magnet") ctx.fillText("M", 0, 0);
+  else if (pu.type === "slowmo") ctx.fillText("T", 0, 0);
+  ctx.textBaseline = "alphabetic";
+
+  // Orbiting sparkles
+  for (let i = 0; i < 3; i++) {
+    const a = pu.bobPhase * 1.5 + (i * Math.PI * 2 / 3);
+    const sx = Math.cos(a) * 18;
+    const sy = Math.sin(a) * 18;
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.arc(sx, sy, 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+function drawPoliceCar() {
+  ctx.save();
+  ctx.translate(state.policeX, state.policeY);
+
+  // Shadow
+  ctx.fillStyle = "rgba(0,0,0,0.3)";
+  ctx.beginPath();
+  ctx.ellipse(3, 5, 16, 28, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body (white with black hood)
+  ctx.fillStyle = "#eeeeff";
+  ctx.beginPath();
+  ctx.roundRect(-14, -25, 28, 50, 4);
+  ctx.fill();
+  ctx.fillStyle = "#222233";
+  ctx.fillRect(-14, -25, 28, 18);
+
+  // Light bar
+  const sirenPhase = Math.floor(state.policeSiren * 4) % 2;
+  ctx.fillStyle = sirenPhase ? "#ff0000" : "#0044ff";
+  ctx.shadowColor = sirenPhase ? "#ff0000" : "#0044ff";
+  ctx.shadowBlur = 25;
+  ctx.fillRect(-12, -8, 10, 5);
+  ctx.fillStyle = sirenPhase ? "#0044ff" : "#ff0000";
+  ctx.shadowColor = sirenPhase ? "#0044ff" : "#ff0000";
+  ctx.fillRect(2, -8, 10, 5);
+  ctx.shadowBlur = 0;
+
+  // Windshield
+  ctx.fillStyle = "rgba(80,160,220,0.4)";
+  ctx.fillRect(-10, -22, 20, 10);
+
+  // Headlights
+  ctx.fillStyle = "#fff8cc";
+  ctx.shadowColor = "#ffe080";
+  ctx.shadowBlur = 12;
+  ctx.fillRect(-12, -26, 6, 4);
+  ctx.fillRect(6, -26, 6, 4);
+  ctx.shadowBlur = 0;
+
+  // Headlight beams toward player
+  ctx.globalAlpha = 0.04;
+  ctx.fillStyle = "#ffe8a0";
+  ctx.beginPath();
+  ctx.moveTo(-8, -26);
+  ctx.lineTo(-30, -140);
+  ctx.lineTo(14, -140);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(8, -26);
+  ctx.lineTo(-14, -140);
+  ctx.lineTo(30, -140);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  ctx.restore();
+}
+
+function drawComboHUD() {
+  if (state.phase !== "playing") return;
+
+  // Multiplier display (right side)
+  if (state.multiplierDisplay > 1.05) {
+    ctx.save();
+    const m = state.multiplierDisplay;
+    const pulse = 1 + Math.sin(Date.now() * 0.006) * 0.05;
+    const size = Math.round(36 * pulse);
+    const colors = { 2: "#44ffaa", 3: "#ffcc33", 4: "#ff7744", 5: "#ff44cc" };
+    const color = colors[Math.min(5, Math.round(m))] || "#44ffaa";
+
+    ctx.font = `bold ${size}px 'Trebuchet MS', sans-serif`;
+    ctx.textAlign = "right";
+    ctx.fillStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 15;
+    ctx.fillText(`x${Math.round(m)}`, W - 16, 45);
+    ctx.shadowBlur = 0;
+
+    // Combo counter below
+    if (state.combo > 0) {
+      ctx.font = "bold 11px 'Trebuchet MS', sans-serif";
+      ctx.fillStyle = "rgba(255,255,255,0.4)";
+      ctx.fillText(`combo: ${Math.floor(state.combo)}`, W - 16, 60);
+
+      // Decay bar
+      const decayW = 50;
+      const decayFill = Math.min(1, state.comboTimer / 3.5);
+      ctx.fillStyle = "rgba(255,255,255,0.1)";
+      ctx.fillRect(W - 16 - decayW, 64, decayW, 3);
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.6;
+      ctx.fillRect(W - 16 - decayW, 64, decayW * decayFill, 3);
+      ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+  }
+
+  // Coins collected (top-left)
+  if (state.totalCoins > 0) {
+    ctx.save();
+    ctx.font = "bold 13px 'Trebuchet MS', sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#ffdd22";
+    ctx.fillText(`\u25CF ${state.totalCoins}`, 16, 30);
+    ctx.restore();
+  }
+}
+
+function drawActivePowerUps() {
+  const active = [];
+  if (state.activeShield) active.push({ label: "SHIELD", color: "#44aaff", timer: state.shieldTimer, max: 8 });
+  if (state.activeMagnet) active.push({ label: "MAGNET", color: "#cc44ff", timer: state.magnetTimer, max: 6 });
+  if (state.activeSlowmo) active.push({ label: "SLOW-MO", color: "#44ff88", timer: state.slowmoTimer, max: 4 });
+
+  if (active.length === 0) return;
+
+  ctx.save();
+  const startY = 76;
+  active.forEach((pu, i) => {
+    const y = startY + i * 22;
+    // Background
+    ctx.fillStyle = "rgba(0,0,0,0.3)";
+    ctx.beginPath();
+    ctx.roundRect(W - 100, y, 84, 18, 4);
+    ctx.fill();
+    // Timer bar
+    const fill = pu.timer / pu.max;
+    ctx.fillStyle = pu.color;
+    ctx.globalAlpha = 0.5;
+    ctx.beginPath();
+    ctx.roundRect(W - 100, y, 84 * fill, 18, 4);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    // Label
+    ctx.font = "bold 10px 'Trebuchet MS', sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#fff";
+    ctx.fillText(pu.label, W - 58, y + 13);
+  });
+  ctx.restore();
+}
+
 function drawStartScreen(color) {
   ctx.save();
   ctx.fillStyle = "rgba(0,0,0,0.7)";
@@ -1432,7 +2214,7 @@ function drawStartScreen(color) {
   ctx.fillStyle = "rgba(255,255,255,0.35)";
   if (isMobile) {
     ctx.fillText("Left / right side to steer", W / 2, H / 2 + 70);
-    ctx.fillText("NOS button for nitro boost", W / 2, H / 2 + 88);
+    ctx.fillText("Chain near-misses for combo multiplier!", W / 2, H / 2 + 88);
 
     // Fullscreen button (drawn on canvas)
     if (canFullscreen() && !document.fullscreenElement) {
@@ -1453,7 +2235,7 @@ function drawStartScreen(color) {
     }
   } else {
     ctx.fillText("Arrow keys to steer  |  Space for nitro", W / 2, H / 2 + 70);
-    ctx.fillText("Hug the edge to charge  |  Buzz traffic for bonus", W / 2, H / 2 + 88);
+    ctx.fillText("Chain near-misses & coins for combo multiplier!", W / 2, H / 2 + 88);
   }
 
   ctx.restore();
@@ -1471,25 +2253,39 @@ function drawGameOverScreen() {
   ctx.fillStyle = "#ff3322";
   ctx.shadowColor = "#ff3322";
   ctx.shadowBlur = 30;
-  ctx.fillText("WRECKED", W / 2, H / 2 - 40);
+  ctx.fillText("WRECKED", W / 2, H / 2 - 60);
   ctx.shadowBlur = 0;
 
   // Score
   ctx.font = "bold 28px 'Trebuchet MS', sans-serif";
   ctx.fillStyle = "#fff";
-  ctx.fillText(`${state.score}m`, W / 2, H / 2 + 10);
+  ctx.fillText(`${state.score}m`, W / 2, H / 2 - 15);
 
   // Best indicator
   if (state.score >= state.bestScore && state.score > 0) {
     ctx.font = "bold 16px 'Trebuchet MS', sans-serif";
     ctx.fillStyle = "#ffcc22";
-    ctx.fillText("NEW BEST!", W / 2, H / 2 + 35);
+    ctx.fillText("NEW BEST!", W / 2, H / 2 + 8);
   }
+
+  // Stats
+  ctx.font = "13px 'Trebuchet MS', sans-serif";
+  ctx.fillStyle = "rgba(255,255,255,0.5)";
+  const stats = [];
+  if (state.totalCoins > 0) stats.push(`Coins: ${state.totalCoins}`);
+  if (state.bestStreak > 0) stats.push(`Best streak: ${state.bestStreak}`);
+  if (state.policeEvaded > 0) stats.push(`Police evaded: ${state.policeEvaded}`);
+  if (state.shieldHits > 0) stats.push(`Shield saves: ${state.shieldHits}`);
+  const zoneName = zones[state.zoneIndex] ? zones[state.zoneIndex].name : "Suburbs";
+  stats.push(`Zone: ${zoneName}`);
+  stats.forEach((s, i) => {
+    ctx.fillText(s, W / 2, H / 2 + 32 + i * 18);
+  });
 
   // Retry
   ctx.font = "15px 'Trebuchet MS', sans-serif";
   ctx.fillStyle = "rgba(255,255,255,0.5)";
-  ctx.fillText(isMobile ? "Tap to retry" : "Space or Enter to retry", W / 2, H / 2 + 70);
+  ctx.fillText(isMobile ? "Tap to retry" : "Space or Enter to retry", W / 2, H / 2 + 40 + stats.length * 18);
 
   ctx.restore();
 }
