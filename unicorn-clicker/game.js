@@ -1513,8 +1513,7 @@
   }
 
   function drawButton(x, y, w, h, r, label, color, active) {
-    ctx.fillStyle = active ? color : color.replace(')', ',0.25)').replace('rgb', 'rgba');
-    if (!active) ctx.fillStyle = hexToRGBA(color, 0.25);
+    ctx.fillStyle = active ? color : hexToRGBA(color, 0.25);
     ctx.beginPath();
     if (ctx.roundRect) ctx.roundRect(x, y, w, h, r);
     else ctx.rect(x, y, w, h);
@@ -1876,6 +1875,34 @@
       // Click outside dialog also cancels
       if (pos.x < dx || pos.x > dx + dw || pos.y < dy || pos.y > dy + dh) {
         confirmRestart = false;
+      }
+      return;
+    }
+
+    // Skins panel — handle clicks
+    if (skinsOpen) {
+      // Close X button
+      if (pos.x > p.x+p.w-40 && pos.y > p.y && pos.y < p.y+40) { skinsOpen = false; return; }
+      // Click outside panel
+      if (pos.x < p.x || pos.x > p.x+p.w || pos.y < p.y || pos.y > p.y+p.h) { skinsOpen = false; return; }
+      // Skin rows
+      const startY = p.y + 50, rowH = 80;
+      for (let i = 0; i < SKINS.length; i++) {
+        const ry = startY + i * rowH;
+        if (ry + rowH > p.y + p.h) break;
+        if (pos.y >= ry && pos.y < ry + rowH - 6) {
+          const s = SKINS[i];
+          const unlocked = state.unlockedSkins.includes(s.key);
+          if (unlocked) {
+            state.skin = s.key;
+          } else if (state.sp >= s.cost) {
+            state.sp -= s.cost;
+            state.unlockedSkins.push(s.key);
+            state.skin = s.key;
+            SFX.purchase();
+          }
+          return;
+        }
       }
       return;
     }

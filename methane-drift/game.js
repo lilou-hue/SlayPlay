@@ -2735,7 +2735,7 @@ function drawAnnouncements(dt) {
     ctx.fillStyle = `rgba(${densityColor}, ${alpha})`;
     ctx.font = '600 26px Inter, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(_t(DENSITY_I18N[a.densityKey] || 'buoyant').toUpperCase(), world.width / 2, world.height * 0.28);
+    ctx.fillText(a.text, world.width / 2, world.height * 0.28);
     a.timer -= dt;
   }
 
