@@ -241,7 +241,25 @@ function initState() {
     touchL: false,
     touchR: false,
     touchNitro: false,
+
+    // Rain particles
+    rain: [],
+
+    // Road reflector posts
+    reflectorOffset: 0,
   };
+
+  // Initialize rain drops
+  for (let i = 0; i < 80; i++) {
+    state.rain.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      speed: 600 + Math.random() * 400,
+      len: 6 + Math.random() * 10,
+      alpha: 0.1 + Math.random() * 0.2,
+    });
+  }
+
   bestEl.textContent = state.bestScore;
 }
 
@@ -814,6 +832,18 @@ function update(dt) {
   // ── Shake ──
   if (state.shakeTime > 0) state.shakeTime -= dt;
 
+  // Rain update
+  for (const drop of state.rain) {
+    drop.y += drop.speed * dt;
+    if (drop.y > H + drop.len) {
+      drop.y = -drop.len;
+      drop.x = Math.random() * W;
+    }
+  }
+
+  // Reflector post offset
+  state.reflectorOffset = (state.reflectorOffset + state.scrollSpeed * dt) % 120;
+
   // ── Engine audio ──
   audio.updateEngine(state.scrollSpeed);
 }
@@ -874,6 +904,31 @@ function draw() {
   ctx.beginPath();
   ctx.moveTo(rcx + rw / 2, 0); ctx.lineTo(rcx + rw / 2, H);
   ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Road surface texture (horizontal grooves)
+  ctx.strokeStyle = "rgba(255,255,255,0.03)";
+  ctx.lineWidth = 1;
+  for (let y = -(state.markingOffset % 8); y < H; y += 8) {
+    ctx.beginPath();
+    ctx.moveTo(rcx - rw / 2 + 2, y);
+    ctx.lineTo(rcx + rw / 2 - 2, y);
+    ctx.stroke();
+  }
+
+  // Reflector posts along road edges
+  const postSpacing = 120;
+  for (let y = -state.reflectorOffset; y < H; y += postSpacing) {
+    // Left reflector
+    const lx = rcx - rw / 2 - 8;
+    ctx.fillStyle = zoneBlend.lineColor;
+    ctx.shadowColor = zoneBlend.lineColor;
+    ctx.shadowBlur = 6;
+    ctx.fillRect(lx - 1.5, y - 3, 3, 6);
+    // Right reflector
+    const rx = rcx + rw / 2 + 5;
+    ctx.fillRect(rx - 1.5, y - 3, 3, 6);
+  }
   ctx.shadowBlur = 0;
 
   // ── Lane markings ──
@@ -999,6 +1054,16 @@ function draw() {
     drawPlayerCar();
   }
 
+  // ── Rain ──
+  ctx.lineWidth = 1;
+  for (const drop of state.rain) {
+    ctx.strokeStyle = `rgba(180,200,255,${drop.alpha})`;
+    ctx.beginPath();
+    ctx.moveTo(drop.x, drop.y);
+    ctx.lineTo(drop.x - 0.5, drop.y + drop.len);
+    ctx.stroke();
+  }
+
   // ── HUD elements on canvas ──
   drawNitroBar();
 
@@ -1122,6 +1187,24 @@ function drawPlayerCar() {
   ctx.roundRect(-CAR_W / 2 + 6, -10, CAR_W - 12, 24, 4);
   ctx.fill();
 
+  // Racing stripe (center)
+  ctx.fillStyle = "rgba(255,255,255,0.12)";
+  ctx.fillRect(-2, -CAR_H / 2, 4, CAR_H);
+
+  // Side panel lines
+  ctx.strokeStyle = "rgba(0,0,0,0.2)";
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(-CAR_W / 2 + 1, -CAR_H / 2 + 18);
+  ctx.lineTo(CAR_W / 2 - 1, -CAR_H / 2 + 18);
+  ctx.stroke();
+
+  // Roof panel (darker rectangle)
+  ctx.fillStyle = "rgba(0,0,0,0.15)";
+  ctx.beginPath();
+  ctx.roundRect(-CAR_W / 2 + 5, -CAR_H / 2 + 19, CAR_W - 10, 12, 2);
+  ctx.fill();
+
   // Windshield
   ctx.fillStyle = "rgba(130,200,255,0.5)";
   ctx.beginPath();
@@ -1130,6 +1213,11 @@ function drawPlayerCar() {
   // Windshield reflection
   ctx.fillStyle = "rgba(255,255,255,0.15)";
   ctx.fillRect(-CAR_W / 2 + 7, -CAR_H / 2 + 8, CAR_W / 2 - 4, 6);
+
+  // Side mirrors
+  ctx.fillStyle = "#dd3311";
+  ctx.fillRect(-CAR_W / 2 - 4, -CAR_H / 2 + 10, 4, 5);
+  ctx.fillRect(CAR_W / 2, -CAR_H / 2 + 10, 4, 5);
 
   // Rear window
   ctx.fillStyle = "rgba(100,160,220,0.3)";
