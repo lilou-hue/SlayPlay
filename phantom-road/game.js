@@ -13,6 +13,16 @@ const bestEl = document.getElementById("bestScore");
 const muteBtn = document.getElementById("muteButton");
 const restartBtn = document.getElementById("restartButton");
 
+/* ── i18n setup ── */
+const _t = (key) => I18N.t(key);
+I18N.createSelector(document.querySelector('.game__header'));
+I18N.applyDOM();
+
+const PR_ZONE_I18N = { Suburbs: 'prZoneSuburbs', Highway: 'prZoneHighway', Mountains: 'prZoneMountains', Desert: 'prZoneDesert', Void: 'prZoneVoid' };
+function tzn(name) { return PR_ZONE_I18N[name] ? _t(PR_ZONE_I18N[name]) : name; }
+
+window.addEventListener('langchange', () => { I18N.applyDOM(); });
+
 // ── Detect mobile ────────────────────────────────────────
 const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || ("ontouchstart" in window);
 
@@ -227,9 +237,9 @@ const zones = [
 
 // ── Power-up types ────────────────────────────────────────
 const POWERUP_TYPES = [
-  { type: "shield", color: "#44aaff", glow: "#2288ff", label: "SHIELD", duration: 8 },
-  { type: "magnet", color: "#cc44ff", glow: "#aa22dd", label: "MAGNET", duration: 6 },
-  { type: "slowmo", color: "#44ff88", glow: "#22dd66", label: "SLOW-MO", duration: 4 },
+  { type: "shield", color: "#44aaff", glow: "#2288ff", get label() { return _t('prShield'); }, duration: 8 },
+  { type: "magnet", color: "#cc44ff", glow: "#aa22dd", get label() { return _t('prMagnet'); }, duration: 6 },
+  { type: "slowmo", color: "#44ff88", glow: "#22dd66", get label() { return _t('prSlowmo'); }, duration: 4 },
 ];
 
 // ── State ────────────────────────────────────────────────
@@ -1072,14 +1082,14 @@ function update(dt) {
         state.nearMissDisplay = 1.2;
         const multText = state.multiplier > 1 ? ` x${state.multiplier}` : "";
         state.nearMissText = state.nearMissCombo > 1
-          ? `CLOSE! x${state.nearMissCombo}${multText}  +${bonus}`
-          : `CLOSE!${multText}  +${bonus}`;
+          ? `${_t('prClose')} x${state.nearMissCombo}${multText}  +${bonus}`
+          : `${_t('prClose')}${multText}  +${bonus}`;
         audio.nearMiss();
         haptic(15);
         // Streak milestones
         if (state.streak > 0 && state.streak % 5 === 0) {
           state.streakDisplay = 1.5;
-          state.streakText = `${state.streak} STREAK!`;
+          state.streakText = `${state.streak} ${_t('prStreak')}`;
           state.nitro = Math.min(1, state.nitro + 0.2);
           if (state.streak > state.bestStreak) state.bestStreak = state.streak;
         }
@@ -1711,7 +1721,7 @@ function draw() {
     ctx.fillStyle = "#ff4444";
     ctx.shadowColor = "#ff0000";
     ctx.shadowBlur = 12;
-    ctx.fillText(`POLICE! Evade: ${Math.ceil(state.policeChaseTimer)}s`, W / 2, 35);
+    ctx.fillText(`${_t('prPoliceEvade')}: ${Math.ceil(state.policeChaseTimer)}s`, W / 2, 35);
     ctx.shadowBlur = 0;
     ctx.restore();
   }
@@ -1741,11 +1751,11 @@ function draw() {
     ctx.fillStyle = zoneBlend.lineColor;
     ctx.shadowColor = zoneBlend.lineColor;
     ctx.shadowBlur = 20;
-    ctx.fillText(zones[state.zoneIndex].name.toUpperCase(), W / 2, 70);
+    ctx.fillText(tzn(zones[state.zoneIndex].name).toUpperCase(), W / 2, 70);
     ctx.font = "14px 'Trebuchet MS', sans-serif";
     ctx.fillStyle = "rgba(255,255,255,0.5)";
     ctx.shadowBlur = 0;
-    ctx.fillText(`Zone ${state.zoneIndex + 1}`, W / 2, 92);
+    ctx.fillText(`${_t('prZoneLabel')} ${state.zoneIndex + 1}`, W / 2, 92);
     ctx.restore();
   }
 
@@ -2059,7 +2069,7 @@ function drawNitroBar() {
   ctx.font = "bold 10px 'Trebuchet MS', sans-serif";
   ctx.fillStyle = "rgba(255,255,255,0.45)";
   ctx.textAlign = "left";
-  const label = isMobile ? "NITRO" : "NITRO [SPACE]";
+  const label = isMobile ? _t('prNitro') : _t('prNitroSpace');
   ctx.fillText(label, bx, by - 5);
 }
 
@@ -2122,7 +2132,7 @@ function drawMobileTouchUI() {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#fff";
-  ctx.fillText("NOS", btnX, btnY);
+  ctx.fillText(_t('prNitro'), btnX, btnY);
   ctx.textBaseline = "alphabetic";
 
   ctx.globalAlpha = 1;
@@ -2332,21 +2342,21 @@ function drawStartScreen(color) {
   ctx.fillStyle = color;
   ctx.shadowColor = color;
   ctx.shadowBlur = 30;
-  ctx.fillText("PHANTOM", W / 2, H / 2 - 50);
-  ctx.fillText("ROAD", W / 2, H / 2 - 2);
+  ctx.fillText(_t('prPhantom'), W / 2, H / 2 - 50);
+  ctx.fillText(_t('prRoad'), W / 2, H / 2 - 2);
   ctx.shadowBlur = 0;
 
   // Subtitle
   ctx.font = "16px 'Trebuchet MS', sans-serif";
   ctx.fillStyle = "rgba(255,255,255,0.6)";
-  ctx.fillText(isMobile ? "Tap to drive" : "Press any key to drive", W / 2, H / 2 + 40);
+  ctx.fillText(isMobile ? _t('prTapDrive') : _t('prKeyDrive'), W / 2, H / 2 + 40);
 
   // Controls hint
   ctx.font = "13px 'Trebuchet MS', sans-serif";
   ctx.fillStyle = "rgba(255,255,255,0.35)";
   if (isMobile) {
-    ctx.fillText("Left / right side to steer", W / 2, H / 2 + 70);
-    ctx.fillText("Chain near-misses for combo multiplier!", W / 2, H / 2 + 88);
+    ctx.fillText(_t('prSteerMobile'), W / 2, H / 2 + 70);
+    ctx.fillText(_t('prChainMobile'), W / 2, H / 2 + 88);
 
     // Fullscreen button (drawn on canvas)
     if (canFullscreen() && !document.fullscreenElement) {
@@ -2360,14 +2370,14 @@ function drawStartScreen(color) {
       ctx.globalAlpha = 0.5;
       ctx.font = "bold 12px 'Trebuchet MS', sans-serif";
       ctx.fillStyle = "#fff";
-      ctx.fillText("FULLSCREEN", W / 2, fbY + 4);
+      ctx.fillText(_t('prFullscreen'), W / 2, fbY + 4);
       ctx.globalAlpha = 1;
       // Store the button bounds for hit detection
       state._fsBtn = { x: W / 2 - 60, y: fbY - 16, w: 120, h: 32 };
     }
   } else {
-    ctx.fillText("Arrow keys to steer  |  Space for nitro", W / 2, H / 2 + 70);
-    ctx.fillText("Chain near-misses & coins for combo multiplier!", W / 2, H / 2 + 88);
+    ctx.fillText(_t('prSteerDesktop'), W / 2, H / 2 + 70);
+    ctx.fillText(_t('prChainDesktop'), W / 2, H / 2 + 88);
   }
 
   ctx.restore();
@@ -2385,7 +2395,7 @@ function drawGameOverScreen() {
   ctx.fillStyle = "#ff3322";
   ctx.shadowColor = "#ff3322";
   ctx.shadowBlur = 30;
-  ctx.fillText("WRECKED", W / 2, H / 2 - 60);
+  ctx.fillText(_t('prWrecked'), W / 2, H / 2 - 60);
   ctx.shadowBlur = 0;
 
   // Score
@@ -2397,19 +2407,19 @@ function drawGameOverScreen() {
   if (state.score >= state.bestScore && state.score > 0) {
     ctx.font = "bold 16px 'Trebuchet MS', sans-serif";
     ctx.fillStyle = "#ffcc22";
-    ctx.fillText("NEW BEST!", W / 2, H / 2 + 8);
+    ctx.fillText(_t('prNewBest'), W / 2, H / 2 + 8);
   }
 
   // Stats
   ctx.font = "13px 'Trebuchet MS', sans-serif";
   ctx.fillStyle = "rgba(255,255,255,0.5)";
   const stats = [];
-  if (state.totalCoins > 0) stats.push(`Coins: ${state.totalCoins}`);
-  if (state.bestStreak > 0) stats.push(`Best streak: ${state.bestStreak}`);
-  if (state.policeEvaded > 0) stats.push(`Police evaded: ${state.policeEvaded}`);
-  if (state.shieldHits > 0) stats.push(`Shield saves: ${state.shieldHits}`);
-  const zoneName = zones[state.zoneIndex] ? zones[state.zoneIndex].name : "Suburbs";
-  stats.push(`Zone: ${zoneName}`);
+  if (state.totalCoins > 0) stats.push(`${_t('prCoins')}: ${state.totalCoins}`);
+  if (state.bestStreak > 0) stats.push(`${_t('prBestStreak')}: ${state.bestStreak}`);
+  if (state.policeEvaded > 0) stats.push(`${_t('prPoliceEvaded')}: ${state.policeEvaded}`);
+  if (state.shieldHits > 0) stats.push(`${_t('prShieldSaves')}: ${state.shieldHits}`);
+  const zoneName = zones[state.zoneIndex] ? tzn(zones[state.zoneIndex].name) : tzn("Suburbs");
+  stats.push(`${_t('prZoneLabel')}: ${zoneName}`);
   stats.forEach((s, i) => {
     ctx.fillText(s, W / 2, H / 2 + 32 + i * 18);
   });
@@ -2417,7 +2427,7 @@ function drawGameOverScreen() {
   // Retry
   ctx.font = "15px 'Trebuchet MS', sans-serif";
   ctx.fillStyle = "rgba(255,255,255,0.5)";
-  ctx.fillText(isMobile ? "Tap to retry" : "Space or Enter to retry", W / 2, H / 2 + 40 + stats.length * 18);
+  ctx.fillText(isMobile ? _t('prTapRetry') : _t('prKeyRetry'), W / 2, H / 2 + 40 + stats.length * 18);
 
   ctx.restore();
 }

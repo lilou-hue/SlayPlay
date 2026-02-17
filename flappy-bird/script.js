@@ -1082,7 +1082,7 @@ restartButton.addEventListener("click", () => {
 const muteButton = document.getElementById("muteButton");
 if (muteButton) {
   const updateMuteLabel = () => {
-    muteButton.textContent = Audio.isMuted() ? "Unmute" : "Mute";
+    muteButton.textContent = Audio.isMuted() ? I18N.t("fbUnmute") : I18N.t("fbMute");
   };
   muteButton.addEventListener("click", () => {
     Audio.init();

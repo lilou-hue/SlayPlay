@@ -6,6 +6,24 @@
 (() => {
   "use strict";
 
+  /* ── i18n setup ── */
+  const _t = (key) => I18N.t(key);
+  I18N.createSelector(document.querySelector('.game__header'));
+  I18N.applyDOM();
+
+  const LUM_ZONE_I18N = {
+    'Sapphire Grotto': 'lumZoneSapphire',
+    'Amethyst Depths': 'lumZoneAmethyst',
+    'Emerald Abyss': 'lumZoneEmerald',
+    'Molten Core': 'lumZoneMolten',
+    'Void Heart': 'lumZoneVoid',
+  };
+  function tzn(name) { return LUM_ZONE_I18N[name] ? _t(LUM_ZONE_I18N[name]) : name; }
+
+  window.addEventListener('langchange', () => {
+    I18N.applyDOM();
+  });
+
   if (!CanvasRenderingContext2D.prototype.roundRect) {
     CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
       if (typeof r === "number") r = [r, r, r, r];
@@ -314,7 +332,7 @@
     document.getElementById("tutorialTitle").textContent = step.title;
     document.getElementById("tutorialText").textContent = step.text;
     document.getElementById("tutorialVisual").textContent = step.visual;
-    document.getElementById("tutorialBtn").textContent = tutorialStep === TUTORIAL_STEPS.length - 1 ? "Start Playing!" : "Next";
+    document.getElementById("tutorialBtn").textContent = tutorialStep === TUTORIAL_STEPS.length - 1 ? _t('startPlaying') : _t('next');
     const dotsEl = document.getElementById("tutorialDots");
     dotsEl.innerHTML = "";
     for (let i = 0; i < TUTORIAL_STEPS.length; i++) {
@@ -1246,7 +1264,7 @@
     const remaining = shieldTimer / 8;
     c.fillStyle = "rgba(0,0,0,0.4)"; c.fillRect(4, 26, 70, 12);
     c.fillStyle = "rgba(100,180,255,0.7)"; c.fillRect(4, 26, 70*Math.max(0,remaining), 12);
-    c.fillStyle = "#fff"; c.font = "bold 8px 'Trebuchet MS'"; c.textAlign = "left"; c.fillText("SHIELD", 7, 35);
+    c.fillStyle = "#fff"; c.font = "bold 8px 'Trebuchet MS'"; c.textAlign = "left"; c.fillText(_t('mdShield'), 7, 35);
   }
 
   function drawMenu(c, pal) {
@@ -1254,13 +1272,13 @@
     c.save(); c.textAlign = "center"; c.textBaseline = "middle";
     c.shadowColor = rgb(pal.crystal, 0.7); c.shadowBlur = 30;
     c.font = "bold 52px 'Trebuchet MS', sans-serif"; c.fillStyle = rgb([255,255,255], 0.95);
-    c.fillText("LUMINA", CFG.W/2, CFG.H*0.32); c.shadowBlur = 0;
+    c.fillText(_t('lumLogo'), CFG.W/2, CFG.H*0.32); c.shadowBlur = 0;
     c.font = "16px 'Trebuchet MS', sans-serif"; c.fillStyle = rgb(pal.crystal, 0.7);
-    c.fillText("D E E P   R A D I A N C E", CFG.W/2, CFG.H*0.39);
+    c.fillText(_t('lumSubtitle'), CFG.W/2, CFG.H*0.39);
     c.font = "15px 'Trebuchet MS', sans-serif"; c.fillStyle = rgb([200,210,250], 0.4+Math.sin(t*3)*0.3);
-    c.fillText(isMobile ? "Tap to Begin" : "Press Space or Tap to Begin", CFG.W/2, CFG.H*0.55);
+    c.fillText(isMobile ? _t('lumTapBegin') : _t('lumSpaceBegin'), CFG.W/2, CFG.H*0.55);
     c.font = "13px 'Trebuchet MS', sans-serif"; c.fillStyle = rgb([160,170,210], 0.5);
-    c.fillText(isMobile ? "Touch Left/Right to Move \u2022 Tap Center to Pulse" : "\u2190 \u2192  Move     Space  Pulse Light", CFG.W/2, CFG.H*0.65);
+    c.fillText(isMobile ? _t('lumControlsMobile') : _t('lumControlsDesktop'), CFG.W/2, CFG.H*0.65);
     // Preview player
     const bobY = Math.sin(t*1.5)*8;
     c.save(); c.translate(CFG.W/2, CFG.H*0.46+bobY); c.rotate(Math.sin(t*2)*0.1);
@@ -1272,8 +1290,8 @@
   function drawPaused(c) {
     c.fillStyle = "rgba(0,0,0,0.6)"; c.fillRect(0,0,CFG.W,CFG.H);
     c.textAlign = "center"; c.textBaseline = "middle";
-    c.font = "bold 36px 'Trebuchet MS', sans-serif"; c.fillStyle = "rgba(200,210,250,0.9)"; c.fillText("PAUSED", CFG.W/2, CFG.H*0.45);
-    c.font = "14px 'Trebuchet MS', sans-serif"; c.fillStyle = "rgba(200,210,250,0.5)"; c.fillText("Press Escape to Resume", CFG.W/2, CFG.H*0.53);
+    c.font = "bold 36px 'Trebuchet MS', sans-serif"; c.fillStyle = "rgba(200,210,250,0.9)"; c.fillText(_t('lumPaused'), CFG.W/2, CFG.H*0.45);
+    c.font = "14px 'Trebuchet MS', sans-serif"; c.fillStyle = "rgba(200,210,250,0.5)"; c.fillText(_t('lumPressEscResume'), CFG.W/2, CFG.H*0.53);
   }
 
   function drawGameOver(c, pal) {
@@ -1281,19 +1299,19 @@
     c.textAlign = "center"; c.textBaseline = "middle";
     c.shadowColor = rgb(pal.crystal, 0.6); c.shadowBlur = 20;
     c.font = "bold 42px 'Trebuchet MS', sans-serif"; c.fillStyle = rgb([255,255,255], 0.9); c.fillText(score, CFG.W/2, CFG.H*0.35); c.shadowBlur = 0;
-    c.font = "15px 'Trebuchet MS', sans-serif"; c.fillStyle = rgb(pal.crystal, 0.7); c.fillText("D E P T H   R E A C H E D", CFG.W/2, CFG.H*0.42);
-    c.font = "14px 'Trebuchet MS', sans-serif"; c.fillStyle = rgb([200,210,250], 0.5); c.fillText("Best: "+bestScore, CFG.W/2, CFG.H*0.48);
+    c.font = "15px 'Trebuchet MS', sans-serif"; c.fillStyle = rgb(pal.crystal, 0.7); c.fillText(_t('lumDepthReached'), CFG.W/2, CFG.H*0.42);
+    c.font = "14px 'Trebuchet MS', sans-serif"; c.fillStyle = rgb([200,210,250], 0.5); c.fillText(_t('lumBestLabel')+": "+bestScore, CFG.W/2, CFG.H*0.48);
     const zi = Math.min(Math.floor(score/CFG.ZONE_LEN), ZONES.length-1);
-    c.fillStyle = rgb(ZONES[zi].crystal, 0.6); c.fillText(ZONES[zi].name, CFG.W/2, CFG.H*0.53);
+    c.fillStyle = rgb(ZONES[zi].crystal, 0.6); c.fillText(tzn(ZONES[zi].name), CFG.W/2, CFG.H*0.53);
     c.font = "14px 'Trebuchet MS', sans-serif"; c.fillStyle = rgb([200,210,250], 0.35+Math.sin(performance.now()/1000*3)*0.25);
-    c.fillText(isMobile ? "Tap to Restart" : "Press Space or Tap to Restart", CFG.W/2, CFG.H*0.63);
+    c.fillText(isMobile ? _t('lumTapRestart') : _t('lumSpaceRestart'), CFG.W/2, CFG.H*0.63);
   }
 
   function drawZoneAnnounce(c, pal) {
     c.save(); c.textAlign = "center"; c.textBaseline = "middle"; c.globalAlpha = Math.min(1, zoneAnnounceTmr*0.8);
     c.shadowColor = rgb(pal.crystal, 0.6); c.shadowBlur = 15;
     c.font = "bold 22px 'Trebuchet MS', sans-serif"; c.fillStyle = rgb(pal.crystal, 0.9);
-    c.fillText(zoneAnnounceName, CFG.W/2, CFG.H*0.15); c.shadowBlur = 0; c.globalAlpha = 1; c.restore();
+    c.fillText(tzn(zoneAnnounceName), CFG.W/2, CFG.H*0.15); c.shadowBlur = 0; c.globalAlpha = 1; c.restore();
   }
 
   function drawTouchGuide(c, pal) {
@@ -1301,7 +1319,7 @@
     c.save(); c.globalAlpha = guideAlpha; c.textAlign = "center"; c.textBaseline = "middle";
     c.font = "22px 'Trebuchet MS', sans-serif"; c.fillStyle = rgb([200,210,250], 1);
     c.fillText("\u25C0", CFG.W*0.15, CFG.H-60); c.fillText("\u25B6", CFG.W*0.85, CFG.H-60);
-    c.font = "14px 'Trebuchet MS', sans-serif"; c.fillText("PULSE", CFG.W*0.5, CFG.H-60);
+    c.font = "14px 'Trebuchet MS', sans-serif"; c.fillText(_t('lumPulse'), CFG.W*0.5, CFG.H-60);
     if (touchActive && touchMoveDir !== 0) { c.globalAlpha = 0.06; c.fillStyle = rgb(pal.crystal, 1); if (touchMoveDir===-1) c.fillRect(0,0,CFG.W*0.33,CFG.H); else c.fillRect(CFG.W*0.67,0,CFG.W*0.33,CFG.H); }
     c.globalAlpha = 1; c.restore();
   }

@@ -5,50 +5,51 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <title>Snake</title>
     <link rel="stylesheet" href="styles.css" />
+    <script src="../i18n.js"></script>
   </head>
   <body>
     <main class="game" id="gameContainer">
       <header class="game__header">
-        <a href="/" class="back-link">&larr; Back to Games</a>
-        <h1>Snake</h1>
-        <p>Arrow keys or swipe to steer. Eat, grow, survive the closing walls.</p>
+        <a href="/" class="back-link" data-i18n="backToGames">&larr; Back to Games</a>
+        <h1 data-i18n="snakeTitle">Snake</h1>
+        <p data-i18n="snakeInstructions">Arrow keys or swipe to steer. Eat, grow, survive the closing walls.</p>
       </header>
       <section class="game__panel">
         <canvas id="gameCanvas" width="480" height="480" aria-label="Snake game"></canvas>
         <div class="game__hud">
           <div class="hud__score">
-            <span>Score</span>
+            <span data-i18n="score">Score</span>
             <strong id="score">0</strong>
           </div>
           <div class="hud__score">
-            <span>Best</span>
+            <span data-i18n="best">Best</span>
             <strong id="bestScore">0</strong>
           </div>
           <button id="muteButton" class="hud__mute" type="button" aria-label="Toggle sound">&#x1F50A;</button>
           <button id="fullscreenButton" class="hud__mute" type="button" aria-label="Toggle fullscreen">&#x26F6;</button>
-          <button id="restartButton" class="hud__button" type="button">Restart</button>
+          <button id="restartButton" class="hud__button" type="button" data-i18n="restart">Restart</button>
         </div>
 
         <!-- Settings bar -->
         <div class="settings-bar">
           <div class="setting-group">
-            <label for="themeSelect">Theme</label>
+            <label for="themeSelect" data-i18n="theme">Theme</label>
             <select id="themeSelect">
-              <option value="neon">Neon Green</option>
-              <option value="cyber">Cyber Purple</option>
-              <option value="ocean">Ocean Blue</option>
-              <option value="sunset">Sunset</option>
-              <option value="retro">Retro</option>
+              <option value="neon" data-i18n="themeNeon">Neon Green</option>
+              <option value="cyber" data-i18n="themeCyber">Cyber Purple</option>
+              <option value="ocean" data-i18n="themeOcean">Ocean Blue</option>
+              <option value="sunset" data-i18n="themeSunset">Sunset</option>
+              <option value="retro" data-i18n="themeRetro">Retro</option>
             </select>
           </div>
           <div class="setting-group">
-            <label for="skinSelect">Snake</label>
+            <label for="skinSelect" data-i18n="snakeTitle">Snake</label>
             <select id="skinSelect">
-              <option value="classic">Classic</option>
-              <option value="fire">Fire</option>
-              <option value="ice">Ice</option>
-              <option value="rainbow">Rainbow</option>
-              <option value="pixel">Pixel</option>
+              <option value="classic" data-i18n="skinClassic">Classic</option>
+              <option value="fire" data-i18n="skinFire">Fire</option>
+              <option value="ice" data-i18n="skinIce">Ice</option>
+              <option value="rainbow" data-i18n="skinRainbow">Rainbow</option>
+              <option value="pixel" data-i18n="skinPixel">Pixel</option>
             </select>
           </div>
         </div>
@@ -65,12 +66,12 @@
 
       <!-- Achievements panel -->
       <div class="achievements-panel" id="achievementsPanel">
-        <button class="achievements-toggle" id="achievementsToggle" type="button">Achievements</button>
+        <button class="achievements-toggle" id="achievementsToggle" type="button" data-i18n="achievements">Achievements</button>
         <div class="achievements-list" id="achievementsList"></div>
       </div>
 
       <footer class="game__footer">
-        <p>Tip: the walls close in every 15 points &mdash; turn up the volume!</p>
+        <p data-i18n="snakeTip">Tip: the walls close in every 15 points &mdash; turn up the volume!</p>
       </footer>
     </main>
 
@@ -86,12 +87,12 @@
     <!-- Tutorial overlay -->
     <div class="tutorial-overlay" id="tutorialOverlay">
       <div class="tutorial-card">
-        <h2 id="tutorialTitle">Welcome to Snake!</h2>
-        <p id="tutorialText">Use arrow keys or swipe to control the snake.</p>
+        <h2 id="tutorialTitle" data-i18n="snakeTut1Title">Welcome to Snake!</h2>
+        <p id="tutorialText" data-i18n="snakeTut1Text">Use arrow keys or swipe to control the snake.</p>
         <div class="tutorial-visual" id="tutorialVisual"></div>
         <div class="tutorial-dots" id="tutorialDots"></div>
-        <button class="tutorial-btn" id="tutorialBtn" type="button">Next</button>
-        <button class="tutorial-skip" id="tutorialSkip" type="button">Skip Tutorial</button>
+        <button class="tutorial-btn" id="tutorialBtn" type="button" data-i18n="next">Next</button>
+        <button class="tutorial-skip" id="tutorialSkip" type="button" data-i18n="skipTutorial">Skip Tutorial</button>
       </div>
     </div>
 

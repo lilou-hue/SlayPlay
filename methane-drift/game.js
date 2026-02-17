@@ -136,6 +136,11 @@ window.addEventListener('langchange', () => {
   if (symbiosisNode) {
     symbiosisNode.textContent = glider.symbiosisTimer > 0 ? _t('phasing') : glider.symbiosisCharge >= 1 ? _t('ready') : _t('charging');
   }
+  /* Re-translate instructions paragraph */
+  const instrEl = document.getElementById('mdInstructions');
+  if (instrEl) {
+    instrEl.innerHTML = _t('mdInstructions_1') + '<strong>' + _t('mdInstructions_bold1') + '</strong>' + _t('mdInstructions_2') + '<strong>' + _t('mdInstructions_bold2') + '</strong>' + _t('mdInstructions_3') + '<strong>' + _t('mdInstructions_bold3') + '</strong>' + _t('mdInstructions_4');
+  }
 });
 
 /* --- Accessibility: reduced motion --- */
@@ -2716,7 +2721,7 @@ function drawScorePop() {
     ctx.fillStyle = `rgba(255, 100, 100, ${alpha})`;
     ctx.font = '600 16px Inter, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('Combo Lost', world.width / 2, 110);
+    ctx.fillText(_t('mdComboLost'), world.width / 2, 110);
   }
 }
 
@@ -2817,7 +2822,7 @@ function drawDensityForecast() {
   ctx.fillStyle = `rgba(255, 220, 130, ${alpha * (0.6 + pulse)})`;
   ctx.font = '600 12px Inter, sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText('AIR CHANGING...', 22, 76);
+  ctx.fillText(_t('mdAirChanging'), 22, 76);
 
   /* Countdown bar */
   const barW = 104;
@@ -2837,7 +2842,7 @@ function drawDensityForecast() {
     const hintAlpha = alpha * Math.min(1, (frac - 0.6) * 2.5);
     ctx.fillStyle = `rgba(255, 240, 160, ${hintAlpha * 0.7})`;
     ctx.font = '500 10px Inter, sans-serif';
-    ctx.fillText('Press Space now for boost!', 22, 98);
+    ctx.fillText(_t('mdPressSpaceBoost'), 22, 98);
   }
 }
 
@@ -3040,7 +3045,7 @@ function drawText(dt) {
       }
       ctx.font = '400 13px Inter, sans-serif';
       ctx.fillStyle = 'rgba(160, 200, 240, 0.45)';
-      ctx.fillText('Tap or press Space to continue', world.width / 2, dotY + 22);
+      ctx.fillText(_t('mdTapSpaceContinue'), world.width / 2, dotY + 22);
     } else {
       ctx.font = '600 42px Inter, sans-serif';
       ctx.fillText(_t('methaneDriftLogo'), world.width / 2, world.height / 2 - 24 + float);
@@ -3061,10 +3066,10 @@ function drawText(dt) {
     ctx.fillStyle = '#d8eaff';
     ctx.textAlign = 'center';
     ctx.font = '600 30px Inter, sans-serif';
-    ctx.fillText('Paused', pcx, 60);
+    ctx.fillText(_t('paused'), pcx, 60);
     ctx.fillStyle = 'rgba(180, 210, 255, 0.6)';
     ctx.font = '500 14px Inter, sans-serif';
-    ctx.fillText('Press Escape or tap X to resume', pcx, 82);
+    ctx.fillText(_t('mdPressEscTapResume'), pcx, 82);
 
     /* Controls reference card */
     const cardX = pcx - 180;
@@ -3086,13 +3091,13 @@ function drawText(dt) {
 
     ctx.fillStyle = 'rgba(130, 220, 255, 0.8)';
     ctx.font = '600 15px Inter, sans-serif';
-    ctx.fillText('Controls', lx, ry);
+    ctx.fillText(_t('mdControls'), lx, ry);
     ry += 24;
 
     const controls = [
-      ['Space / Tap', 'Fly upward'],
-      ['Shift / Button', 'Activate shield'],
-      ['Escape', 'Pause / Resume'],
+      [_t('mdSpaceTap'), _t('mdFlyUpward')],
+      [_t('mdShiftButton'), _t('mdActivateShield')],
+      [_t('mdEscapePause'), _t('mdEscapePause')],
     ];
     ctx.font = '500 13px Inter, sans-serif';
     for (const [key, desc] of controls) {
@@ -3108,19 +3113,13 @@ function drawText(dt) {
     ry += 10;
     ctx.fillStyle = 'rgba(130, 220, 255, 0.8)';
     ctx.font = '600 15px Inter, sans-serif';
-    ctx.fillText('How to Play', lx, ry);
+    ctx.fillText(_t('mdHowToPlay'), lx, ry);
     ry += 22;
 
     const tips = [
-      'Fly through the sky and dodge obstacles to score.',
-      'Fly CLOSE to obstacles for near-miss bonus points.',
-      'Chain near-misses to build combos (x1.5 to x5 score).',
-      'Use your Shield (Shift) to become invincible briefly.',
-      'The air changes between Light, Normal, and Heavy.',
-      'Press Space RIGHT when air changes for a speed boost.',
-      'Bosses appear every 25 points \u2014 shield through them!',
-      'Geysers turn off briefly \u2014 wait for the pause.',
-      'Storms pull you in \u2014 steer away or use Shield.',
+      _t('mdTip1'), _t('mdTip2'), _t('mdTip3'),
+      _t('mdTip4'), _t('mdTip5'), _t('mdTip6'),
+      _t('mdTip7'), _t('mdTip8'), _t('mdTip9'),
     ];
     ctx.font = '400 12px Inter, sans-serif';
     ctx.fillStyle = 'rgba(180, 210, 240, 0.65)';
@@ -3163,23 +3162,23 @@ function drawText(dt) {
     ctx.fillStyle = '#d8eaff';
     ctx.textAlign = 'center';
     ctx.font = '600 32px Inter, sans-serif';
-    ctx.fillText('Game Over', cx, yPos);
+    ctx.fillText(_t('gameOver'), cx, yPos);
     yPos += 34;
 
     /* Score */
     ctx.fillStyle = 'rgba(180, 210, 255, 0.8)';
     ctx.font = '500 22px Inter, sans-serif';
-    ctx.fillText(`Score: ${world.score}`, cx, yPos);
+    ctx.fillText(`${_t('mdScoreLabel')}: ${world.score}`, cx, yPos);
     yPos += 24;
 
     ctx.font = '500 15px Inter, sans-serif';
-    ctx.fillText(`Your Best: ${world.best}`, cx, yPos);
+    ctx.fillText(`${_t('mdYourBest')}: ${world.best}`, cx, yPos);
     yPos += 22;
 
     if (world.score === world.best && world.score > 0) {
       ctx.fillStyle = 'rgba(255, 220, 120, 0.9)';
       ctx.font = '700 15px Inter, sans-serif';
-      ctx.fillText('NEW BEST SCORE!', cx, yPos);
+      ctx.fillText(_t('mdNewBestScore'), cx, yPos);
       yPos += 20;
     }
 
@@ -3189,11 +3188,11 @@ function drawText(dt) {
     ctx.font = '400 12px Inter, sans-serif';
     const rs = world.runStats;
     const summaryLines = [
-      `Obstacles dodged: ${rs.obstaclesDodged}  \u00B7  Close calls: ${rs.nearMisses}  \u00B7  Time alive: ${rs.timeAlive.toFixed(1)}s`,
-      `Best combo: ${Math.max(rs.maxCombo, world.combo)}  \u00B7  Wave rides: ${rs.densitySurfs}  \u00B7  Bosses beaten: ${rs.bossesDefeated}`,
+      `${_t('mdObstaclesDodged')}: ${rs.obstaclesDodged}  \u00B7  ${_t('mdCloseCalls')}: ${rs.nearMisses}  \u00B7  ${_t('mdTimeAlive')}: ${rs.timeAlive.toFixed(1)}s`,
+      `${_t('mdBestCombo')}: ${Math.max(rs.maxCombo, world.combo)}  \u00B7  ${_t('mdWaveRides')}: ${rs.densitySurfs}  \u00B7  ${_t('mdBossesBeaten')}: ${rs.bossesDefeated}`,
     ];
     if (rs.closestNearMiss < 999) {
-      summaryLines.push(`Closest call: ${rs.closestNearMiss.toFixed(1)}px  \u00B7  Shield uses: ${rs.symbiosisUses}`);
+      summaryLines.push(`${_t('mdClosestCall')}: ${rs.closestNearMiss.toFixed(1)}px  \u00B7  ${_t('mdShieldUses')}: ${rs.symbiosisUses}`);
     }
     for (const line of summaryLines) {
       ctx.fillText(line, cx, yPos);
@@ -3204,11 +3203,11 @@ function drawText(dt) {
     yPos += 4;
     if (rs.maxCombo >= 5) {
       ctx.fillStyle = 'rgba(255, 220, 140, 0.6)';
-      ctx.fillText(`Best moment: ${rs.maxCombo}x combo streak!`, cx, yPos);
+      ctx.fillText(`${rs.maxCombo}x ${_t('mdBestMomentCombo')}`, cx, yPos);
       yPos += 17;
     } else if (rs.densitySurfs > 0) {
       ctx.fillStyle = 'rgba(255, 220, 140, 0.6)';
-      ctx.fillText(`Best moment: ${rs.densitySurfs} wave ride${rs.densitySurfs > 1 ? 's' : ''}!`, cx, yPos);
+      ctx.fillText(`${rs.densitySurfs} ${rs.densitySurfs > 1 ? _t('mdBestMomentWaves') : _t('mdBestMomentWave')}!`, cx, yPos);
       yPos += 17;
     }
 
@@ -3217,17 +3216,17 @@ function drawText(dt) {
     ctx.fillStyle = 'rgba(160, 200, 240, 0.45)';
     ctx.font = 'italic 400 11px Inter, sans-serif';
     if (rs.nearMisses === 0) {
-      ctx.fillText('Tip: Fly close to obstacles for near-miss bonus points!', cx, yPos);
+      ctx.fillText(_t('mdTipNearMiss'), cx, yPos);
     } else if (rs.symbiosisUses === 0) {
-      ctx.fillText('Tip: Press Shift to use your Shield when things get tough!', cx, yPos);
+      ctx.fillText(_t('mdTipShield'), cx, yPos);
     } else if (rs.densitySurfs === 0 && world.score >= 5) {
-      ctx.fillText('Tip: Press Space right when the air changes for a speed boost!', cx, yPos);
+      ctx.fillText(_t('mdTipDensitySurf'), cx, yPos);
     }
     yPos += 20;
 
     ctx.fillStyle = 'rgba(150, 190, 230, 0.5)';
     ctx.font = '500 14px Inter, sans-serif';
-    ctx.fillText('Tap or press Space to try again', world.width / 2, yPos + 10);
+    ctx.fillText(_t('mdTapSpaceTryAgain'), world.width / 2, yPos + 10);
   }
 }
 
@@ -3311,24 +3310,24 @@ function drawCanvasHUD() {
   const labelY = (phasing || cooling) ? btnY + btnH / 2 + 1 : btnY + btnH / 2 + 6;
   if (phasing) {
     ctx.fillStyle = 'rgba(130, 255, 240, 0.95)';
-    ctx.fillText(`Shield ON ${glider.symbiosisTimer.toFixed(1)}s`, btnX + btnW / 2, labelY);
+    ctx.fillText(`${_t('mdShieldOn')} ${glider.symbiosisTimer.toFixed(1)}s`, btnX + btnW / 2, labelY);
   } else if (cooling) {
     ctx.fillStyle = 'rgba(160, 200, 230, 0.6)';
-    ctx.fillText(`Recharging ${Math.ceil(glider.symbiosisCooldown)}s`, btnX + btnW / 2, labelY);
+    ctx.fillText(`${_t('mdRechargingLabel')} ${Math.ceil(glider.symbiosisCooldown)}s`, btnX + btnW / 2, labelY);
   } else if (ready) {
     ctx.fillStyle = 'rgba(130, 255, 200, 0.9)';
-    ctx.fillText('Shield [Shift]', btnX + btnW / 2, labelY);
+    ctx.fillText(_t('mdShieldShift'), btnX + btnW / 2, labelY);
   } else {
     ctx.fillStyle = 'rgba(160, 180, 210, 0.4)';
-    ctx.fillText('Recharging', btnX + btnW / 2, labelY);
+    ctx.fillText(_t('mdRechargingLabel'), btnX + btnW / 2, labelY);
   }
 
   /* Shield status — top right */
   ctx.textAlign = 'right';
   ctx.font = '600 14px Inter, sans-serif';
-  const symLabel = phasing ? `Shield ON ${glider.symbiosisTimer.toFixed(1)}s`
-    : cooling ? `Recharging ${Math.ceil(glider.symbiosisCooldown)}s`
-    : glider.symbiosisCharge >= 1 ? 'Shield Ready' : 'Recharging';
+  const symLabel = phasing ? `${_t('mdShieldOn')} ${glider.symbiosisTimer.toFixed(1)}s`
+    : cooling ? `${_t('mdRechargingLabel')} ${Math.ceil(glider.symbiosisCooldown)}s`
+    : glider.symbiosisCharge >= 1 ? _t('mdShieldReadyLabel') : _t('mdRechargingLabel');
   const symColor = phasing ? 'rgba(130, 255, 240, 0.8)' :
                    cooling ? 'rgba(160, 200, 230, 0.5)' :
                    glider.symbiosisCharge >= 1 ? 'rgba(130, 255, 200, 0.7)' : 'rgba(180, 200, 230, 0.4)';
@@ -3375,7 +3374,7 @@ function drawCanvasHUD() {
     ctx.fillStyle = `rgba(255, 220, 80, ${surfAlpha * 0.8})`;
     ctx.font = '700 14px Inter, sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText('SPEED BOOST!', 20, 92);
+    ctx.fillText(_t('mdSpeedBoost'), 20, 92);
     ctx.textAlign = 'right';
   }
 
@@ -3383,7 +3382,7 @@ function drawCanvasHUD() {
   if (world.pressureAdaptation > 0) {
     ctx.fillStyle = 'rgba(255, 180, 120, 0.5)';
     ctx.font = '500 11px Inter, sans-serif';
-    ctx.fillText('Heavy Air Adapted', world.width - 20, 88);
+    ctx.fillText(_t('mdHeavyAirAdapted'), world.width - 20, 88);
   }
 
   ctx.restore();

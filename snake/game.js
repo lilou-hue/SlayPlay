@@ -14,6 +14,18 @@ const fullscreenButton = document.getElementById("fullscreenButton");
 const themeSelect = document.getElementById("themeSelect");
 const skinSelect = document.getElementById("skinSelect");
 
+/* ── i18n setup ── */
+const _t = (key) => I18N.t(key);
+I18N.createSelector(document.querySelector('.game__header'));
+I18N.applyDOM();
+window.addEventListener('langchange', () => {
+  I18N.applyDOM();
+  renderAchievementsList();
+  if (tutorialOverlay && tutorialOverlay.classList.contains('active')) {
+    renderTutorialStep();
+  }
+});
+
 const CELL = 20;
 const COLS = canvas.width / CELL;   // 24
 const ROWS = canvas.height / CELL;  // 24
@@ -320,23 +332,42 @@ let currentSkin = SKINS.classic;
 
 /* ── Achievements ─────────────────────────────────────────── */
 
+const SNAKE_ACH_I18N = {
+  first_bite: ['snakeAchFirstBite', 'snakeAchFirstBiteDesc'],
+  hungry: ['snakeAchHungry', 'snakeAchHungryDesc'],
+  glutton: ['snakeAchGlutton', 'snakeAchGluttonDesc'],
+  score_10: ['snakeAchScore10', 'snakeAchScore10Desc'],
+  score_30: ['snakeAchScore30', 'snakeAchScore30Desc'],
+  score_50: ['snakeAchScore50', 'snakeAchScore50Desc'],
+  speed_demon: ['snakeAchSpeedDemon', 'snakeAchSpeedDemonDesc'],
+  golden_touch: ['snakeAchGoldenTouch', 'snakeAchGoldenTouchDesc'],
+  survivor: ['snakeAchSurvivor', 'snakeAchSurvivorDesc'],
+  claustrophobe: ['snakeAchClaustrophobe', 'snakeAchClaustrophobeDesc'],
+  poisoned: ['snakeAchPoisoned', 'snakeAchPoisonedDesc'],
+  magnet_lover: ['snakeAchMagnetic', 'snakeAchMagneticDesc'],
+  ghost_hunter: ['snakeAchGhostHunter', 'snakeAchGhostHunterDesc'],
+  frozen: ['snakeAchBrainFreeze', 'snakeAchBrainFreezeDesc'],
+  long_snake: ['snakeAchLongSnake', 'snakeAchLongSnakeDesc'],
+  games_10: ['snakeAchDedicated', 'snakeAchDedicatedDesc'],
+};
+
 const ACHIEVEMENTS = [
-  { id: "first_bite",     icon: "\uD83C\uDF4E", title: "First Bite",       desc: "Eat your first food",          check: (s) => s.totalEaten >= 1 },
-  { id: "hungry",         icon: "\uD83D\uDD25", title: "Hungry Snake",     desc: "Eat 10 food in one game",      check: (s) => s.eatenThisGame >= 10 },
-  { id: "glutton",        icon: "\uD83C\uDF54", title: "Glutton",          desc: "Eat 25 food in one game",      check: (s) => s.eatenThisGame >= 25 },
-  { id: "score_10",       icon: "\uD83C\uDFC5", title: "Double Digits",    desc: "Score 10 points",              check: (s) => s.score >= 10 },
-  { id: "score_30",       icon: "\uD83C\uDFC6", title: "Thirty Club",      desc: "Score 30 points",              check: (s) => s.score >= 30 },
-  { id: "score_50",       icon: "\uD83D\uDC8E", title: "Half Century",     desc: "Score 50 points",              check: (s) => s.score >= 50 },
-  { id: "speed_demon",    icon: "\u26A1",       title: "Speed Demon",      desc: "Eat 3 speed foods in one game", check: (s) => s.speedEaten >= 3 },
-  { id: "golden_touch",   icon: "\u2B50",       title: "Golden Touch",     desc: "Eat 3 golden foods in one game", check: (s) => s.goldenEaten >= 3 },
-  { id: "survivor",       icon: "\uD83D\uDEE1\uFE0F",  title: "Survivor",        desc: "Survive a wall shrink",         check: (s) => s.wallShrinks >= 1 },
-  { id: "claustrophobe",  icon: "\uD83E\uDDF1", title: "Claustrophobe",    desc: "Survive 3 wall shrinks",        check: (s) => s.wallShrinks >= 3 },
-  { id: "poisoned",       icon: "\u2620\uFE0F",  title: "Toxic Taste",      desc: "Eat a poison food",            check: (s) => s.poisonEaten >= 1 },
-  { id: "magnet_lover",   icon: "\uD83E\uDDF2", title: "Magnetic",         desc: "Eat a magnet food",            check: (s) => s.magnetEaten >= 1 },
-  { id: "ghost_hunter",   icon: "\uD83D\uDC7B", title: "Ghost Hunter",     desc: "Eat a ghost food",             check: (s) => s.ghostEaten >= 1 },
-  { id: "frozen",         icon: "\u2744\uFE0F",  title: "Brain Freeze",     desc: "Eat a freeze food",            check: (s) => s.freezeEaten >= 1 },
-  { id: "long_snake",     icon: "\uD83D\uDC0D", title: "Looong Snake",     desc: "Reach 20 segments",            check: (s) => s.maxLength >= 20 },
-  { id: "games_10",       icon: "\uD83C\uDFAE", title: "Dedicated Player", desc: "Play 10 games",                check: (s) => s.gamesPlayed >= 10 },
+  { id: "first_bite",     icon: "\uD83C\uDF4E", get title() { return _t('snakeAchFirstBite'); },       get desc() { return _t('snakeAchFirstBiteDesc'); },          check: (s) => s.totalEaten >= 1 },
+  { id: "hungry",         icon: "\uD83D\uDD25", get title() { return _t('snakeAchHungry'); },          get desc() { return _t('snakeAchHungryDesc'); },              check: (s) => s.eatenThisGame >= 10 },
+  { id: "glutton",        icon: "\uD83C\uDF54", get title() { return _t('snakeAchGlutton'); },         get desc() { return _t('snakeAchGluttonDesc'); },             check: (s) => s.eatenThisGame >= 25 },
+  { id: "score_10",       icon: "\uD83C\uDFC5", get title() { return _t('snakeAchScore10'); },         get desc() { return _t('snakeAchScore10Desc'); },             check: (s) => s.score >= 10 },
+  { id: "score_30",       icon: "\uD83C\uDFC6", get title() { return _t('snakeAchScore30'); },         get desc() { return _t('snakeAchScore30Desc'); },             check: (s) => s.score >= 30 },
+  { id: "score_50",       icon: "\uD83D\uDC8E", get title() { return _t('snakeAchScore50'); },         get desc() { return _t('snakeAchScore50Desc'); },             check: (s) => s.score >= 50 },
+  { id: "speed_demon",    icon: "\u26A1",       get title() { return _t('snakeAchSpeedDemon'); },      get desc() { return _t('snakeAchSpeedDemonDesc'); },          check: (s) => s.speedEaten >= 3 },
+  { id: "golden_touch",   icon: "\u2B50",       get title() { return _t('snakeAchGoldenTouch'); },     get desc() { return _t('snakeAchGoldenTouchDesc'); },         check: (s) => s.goldenEaten >= 3 },
+  { id: "survivor",       icon: "\uD83D\uDEE1\uFE0F",  get title() { return _t('snakeAchSurvivor'); },get desc() { return _t('snakeAchSurvivorDesc'); },            check: (s) => s.wallShrinks >= 1 },
+  { id: "claustrophobe",  icon: "\uD83E\uDDF1", get title() { return _t('snakeAchClaustrophobe'); },   get desc() { return _t('snakeAchClaustrophobeDesc'); },       check: (s) => s.wallShrinks >= 3 },
+  { id: "poisoned",       icon: "\u2620\uFE0F",  get title() { return _t('snakeAchPoisoned'); },       get desc() { return _t('snakeAchPoisonedDesc'); },            check: (s) => s.poisonEaten >= 1 },
+  { id: "magnet_lover",   icon: "\uD83E\uDDF2", get title() { return _t('snakeAchMagnetic'); },        get desc() { return _t('snakeAchMagneticDesc'); },            check: (s) => s.magnetEaten >= 1 },
+  { id: "ghost_hunter",   icon: "\uD83D\uDC7B", get title() { return _t('snakeAchGhostHunter'); },     get desc() { return _t('snakeAchGhostHunterDesc'); },         check: (s) => s.ghostEaten >= 1 },
+  { id: "frozen",         icon: "\u2744\uFE0F",  get title() { return _t('snakeAchBrainFreeze'); },    get desc() { return _t('snakeAchBrainFreezeDesc'); },          check: (s) => s.freezeEaten >= 1 },
+  { id: "long_snake",     icon: "\uD83D\uDC0D", get title() { return _t('snakeAchLongSnake'); },       get desc() { return _t('snakeAchLongSnakeDesc'); },           check: (s) => s.maxLength >= 20 },
+  { id: "games_10",       icon: "\uD83C\uDFAE", get title() { return _t('snakeAchDedicated'); },       get desc() { return _t('snakeAchDedicatedDesc'); },           check: (s) => s.gamesPlayed >= 10 },
 ];
 
 let achievementStats = {
@@ -418,31 +449,11 @@ document.getElementById("achievementsToggle").addEventListener("click", () => {
 /* ── Tutorial ─────────────────────────────────────────────── */
 
 const TUTORIAL_STEPS = [
-  {
-    title: "Welcome to Snake!",
-    text: "Guide your snake to eat food and grow longer. Don't hit the walls or yourself!",
-    visual: "\uD83D\uDC0D",
-  },
-  {
-    title: "Controls",
-    text: "Use arrow keys (or WASD) on desktop, swipe or use the D-pad on mobile.",
-    visual: "\u2B06\uFE0F\u2B07\uFE0F\u2B05\uFE0F\u27A1\uFE0F",
-  },
-  {
-    title: "Food Types",
-    text: "Orange = normal (+1). Gold = bonus (+3, slow-mo). Pink = speed boost. Purple = poison (-1). Cyan = magnet (attracts food). White = ghost (pass through walls). Blue = freeze (slows time).",
-    visual: "\uD83C\uDF4E\u2B50\u26A1\u2620\uFE0F\uD83E\uDDF2\uD83D\uDC7B\u2744\uFE0F",
-  },
-  {
-    title: "Closing Walls",
-    text: "Every 15 points, the arena shrinks! The walls close in, making it harder to survive.",
-    visual: "\uD83E\uDDF1",
-  },
-  {
-    title: "Customise",
-    text: "Change colour themes and snake skins using the dropdowns. Earn achievements as you play!",
-    visual: "\uD83C\uDFA8",
-  },
+  { titleKey: "snakeTut1Title", textKey: "snakeTut1Text", visual: "\uD83D\uDC0D" },
+  { titleKey: "snakeTut2Title", textKey: "snakeTut2Text", visual: "\u2B06\uFE0F\u2B07\uFE0F\u2B05\uFE0F\u27A1\uFE0F" },
+  { titleKey: "snakeTut3Title", textKey: "snakeTut3Text", visual: "\uD83C\uDF4E\u2B50\u26A1\u2620\uFE0F\uD83E\uDDF2\uD83D\uDC7B\u2744\uFE0F" },
+  { titleKey: "snakeTut4Title", textKey: "snakeTut4Text", visual: "\uD83E\uDDF1" },
+  { titleKey: "snakeTut5Title", textKey: "snakeTut5Text", visual: "\uD83C\uDFA8" },
 ];
 
 let tutorialStep = 0;
@@ -457,11 +468,11 @@ function showTutorial() {
 
 function renderTutorialStep() {
   const step = TUTORIAL_STEPS[tutorialStep];
-  document.getElementById("tutorialTitle").textContent = step.title;
-  document.getElementById("tutorialText").textContent = step.text;
+  document.getElementById("tutorialTitle").textContent = _t(step.titleKey);
+  document.getElementById("tutorialText").textContent = _t(step.textKey);
   document.getElementById("tutorialVisual").textContent = step.visual;
   document.getElementById("tutorialBtn").textContent =
-    tutorialStep === TUTORIAL_STEPS.length - 1 ? "Start Playing!" : "Next";
+    tutorialStep === TUTORIAL_STEPS.length - 1 ? _t('startPlaying') : _t('next');
 
   // Dots
   const dotsEl = document.getElementById("tutorialDots");
@@ -1771,11 +1782,11 @@ function drawEatFlash() {
 function drawPowerUpIndicators() {
   const now = performance.now();
   const indicators = [];
-  if (now < state.speedBoostEnd) indicators.push({ label: "SPEED", color: currentTheme.foodSpeed.inner, remaining: (state.speedBoostEnd - now) / 5000 });
-  if (now < state.slowMoEnd) indicators.push({ label: "SLOW-MO", color: currentTheme.foodGolden.color, remaining: (state.slowMoEnd - now) / 3000 });
-  if (now < state.ghostModeEnd) indicators.push({ label: "GHOST", color: currentTheme.foodGhost.inner, remaining: (state.ghostModeEnd - now) / 6000 });
-  if (now < state.magnetModeEnd) indicators.push({ label: "MAGNET", color: currentTheme.foodMagnet.inner, remaining: (state.magnetModeEnd - now) / 8000 });
-  if (now < state.freezeModeEnd) indicators.push({ label: "FREEZE", color: currentTheme.foodFreeze.inner, remaining: (state.freezeModeEnd - now) / 5000 });
+  if (now < state.speedBoostEnd) indicators.push({ label: _t('puSpeed'), color: currentTheme.foodSpeed.inner, remaining: (state.speedBoostEnd - now) / 5000 });
+  if (now < state.slowMoEnd) indicators.push({ label: _t('puSlowMo'), color: currentTheme.foodGolden.color, remaining: (state.slowMoEnd - now) / 3000 });
+  if (now < state.ghostModeEnd) indicators.push({ label: _t('puGhost'), color: currentTheme.foodGhost.inner, remaining: (state.ghostModeEnd - now) / 6000 });
+  if (now < state.magnetModeEnd) indicators.push({ label: _t('puMagnet'), color: currentTheme.foodMagnet.inner, remaining: (state.magnetModeEnd - now) / 8000 });
+  if (now < state.freezeModeEnd) indicators.push({ label: _t('puFreeze'), color: currentTheme.foodFreeze.inner, remaining: (state.freezeModeEnd - now) / 5000 });
 
   for (let i = 0; i < indicators.length; i++) {
     const ind = indicators[i];
@@ -1893,10 +1904,10 @@ function gameLoop(timestamp) {
   drawPowerUpIndicators();
 
   if (state.phase === "idle") {
-    drawOverlay("Snake", "Arrow keys or swipe to start");
+    drawOverlay(_t('snakeTitle'), _t('snakeIdleSubtitle'));
   } else if (state.phase === "dead") {
-    const extra = state.score === state.best && state.score > 0 ? "New Best!" : null;
-    drawOverlay("Game Over", `Score: ${state.score}`, extra);
+    const extra = state.score === state.best && state.score > 0 ? _t('newBest') : null;
+    drawOverlay(_t('gameOver'), `${_t('score')}: ${state.score}`, extra);
   }
 
   ctx.restore();
