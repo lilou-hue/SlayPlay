@@ -757,14 +757,67 @@
     ctx.fill();
 
     // ── Mane (chunky chibi hair sections — naomilord style) ──
-    // 5 large leaf/teardrop-shaped sections, pastel rainbow, bold outlines
+    // Hair base/cap — covers the entire top of the head so no bald spots
+    const capGrad = ctx.createLinearGradient(-headR, headY - headR, headR * 0.3, headY);
+    capGrad.addColorStop(0, 'hsl(300, 65%, 78%)');
+    capGrad.addColorStop(0.4, 'hsl(340, 60%, 80%)');
+    capGrad.addColorStop(0.7, 'hsl(30, 70%, 78%)');
+    capGrad.addColorStop(1, 'hsl(260, 55%, 80%)');
+    ctx.fillStyle = capGrad;
+    ctx.beginPath();
+    // Start from right side of head, arc over the top and down left side
+    ctx.moveTo(headR * 0.35, headY + headR * 0.15);
+    // Right side going up
+    ctx.quadraticCurveTo(headR * 0.55, headY - headR * 0.5, headR * 0.2, headY - headR * 1.08);
+    // Top of head — puffed out for volume
+    ctx.quadraticCurveTo(-headR * 0.15, headY - headR * 1.25, -headR * 0.5, headY - headR * 1.1);
+    // Left-top curving down
+    ctx.quadraticCurveTo(-headR * 0.9, headY - headR * 0.95, -headR * 1.05, headY - headR * 0.5);
+    // Left side going down
+    ctx.quadraticCurveTo(-headR * 1.1, headY - headR * 0.1, -headR * 0.95, headY + headR * 0.2);
+    // Bottom edge curves back across forehead (bangs line)
+    ctx.quadraticCurveTo(-headR * 0.6, headY - headR * 0.1, -headR * 0.2, headY - headR * 0.05);
+    ctx.quadraticCurveTo(headR * 0.05, headY + headR * 0.05, headR * 0.35, headY + headR * 0.15);
+    ctx.closePath();
+    ctx.fill();
+    // Cap outline
+    ctx.strokeStyle = 'hsl(310, 50%, 55%)';
+    ctx.lineWidth = 2.2;
+    ctx.stroke();
+
+    // Bangs — chunky pointed sections across the forehead
+    const bangSections = [
+      { bx: -headR * 0.75, by: headY - headR * 0.45, tipX: -headR * 0.85, tipY: headY + headR * 0.15, bw: 10, h: 300, s: 65, l: 78 },
+      { bx: -headR * 0.4,  by: headY - headR * 0.55, tipX: -headR * 0.45, tipY: headY + headR * 0.2,  bw: 11, h: 340, s: 60, l: 80 },
+      { bx: -headR * 0.05, by: headY - headR * 0.55, tipX: -headR * 0.05, tipY: headY + headR * 0.18, bw: 10, h: 30,  s: 70, l: 78 },
+      { bx:  headR * 0.2,  by: headY - headR * 0.45, tipX:  headR * 0.25, tipY: headY + headR * 0.1,  bw: 9,  h: 260, s: 55, l: 80 },
+    ];
+
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+
+    for (const b of bangSections) {
+      const bw = b.bw * S * 0.5;
+      ctx.beginPath();
+      ctx.moveTo(b.bx - bw, b.by);
+      ctx.quadraticCurveTo(b.bx - bw * 0.6, (b.by + b.tipY) * 0.5, b.tipX, b.tipY);
+      ctx.quadraticCurveTo(b.bx + bw * 0.6, (b.by + b.tipY) * 0.5, b.bx + bw, b.by);
+      ctx.closePath();
+      ctx.fillStyle = `hsl(${b.h}, ${b.s}%, ${b.l}%)`;
+      ctx.fill();
+      ctx.strokeStyle = `hsl(${b.h}, ${b.s - 10}%, ${b.l - 25}%)`;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    // 5 large leaf/teardrop-shaped flowing sections, pastel rainbow, bold outlines
     const maneSections = [
       // {startAngle on head, length, width, hue, sway offset}
-      { ax: -0.85, ay: -0.3, len: 38, w: 16, h: 300, s: 65, l: 78, sOff: 0 },    // back — lavender-pink
-      { ax: -0.7,  ay: -0.55, len: 34, w: 15, h: 340, s: 60, l: 80, sOff: 0.7 },  // pink
-      { ax: -0.45, ay: -0.75, len: 30, w: 14, h: 30,  s: 70, l: 78, sOff: 1.4 },  // peach
-      { ax: -0.15, ay: -0.85, len: 26, w: 13, h: 180, s: 50, l: 76, sOff: 2.1 },  // mint
-      { ax: 0.1,   ay: -0.82, len: 22, w: 12, h: 260, s: 55, l: 80, sOff: 2.8 },  // periwinkle
+      { ax: -0.85, ay: -0.3, len: 38, w: 18, h: 300, s: 65, l: 78, sOff: 0 },    // back — lavender-pink
+      { ax: -0.7,  ay: -0.55, len: 34, w: 17, h: 340, s: 60, l: 80, sOff: 0.7 },  // pink
+      { ax: -0.45, ay: -0.75, len: 30, w: 16, h: 30,  s: 70, l: 78, sOff: 1.4 },  // peach
+      { ax: -0.15, ay: -0.85, len: 26, w: 15, h: 180, s: 50, l: 76, sOff: 2.1 },  // mint
+      { ax: 0.1,   ay: -0.82, len: 22, w: 14, h: 260, s: 55, l: 80, sOff: 2.8 },  // periwinkle
     ];
 
     ctx.lineJoin = 'round';
