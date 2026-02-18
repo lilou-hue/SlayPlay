@@ -18,11 +18,11 @@
 
   /* ────────────────── Skins ────────────────── */
   const SKINS = [
-    { key: 'unicorn',      name: 'Unicorn',       cost: 0,      fartDx: -40, fartDy: 10 },
-    { key: 'tuna',          name: 'Tuna',           cost: 1000,   fartDx: -50, fartDy: 5 },
-    { key: 'volleyball',    name: 'Volleyball',     cost: 5000,   fartDx: 0,   fartDy: 35 },
-    { key: 'spidermonkey',  name: 'Spidermonkey',   cost: 25000,  fartDx: -35, fartDy: 20 },
-    { key: 'chewbacca',     name: 'Chewbacca',      cost: 100000, fartDx: -35, fartDy: 15 },
+    { key: 'unicorn',      name: 'Unicorn',       cost: 0,      fartDx: -40, fartDy: 10, wingDx: 0,   wingDy: 0   },
+    { key: 'tuna',          name: 'Tuna',           cost: 1000,   fartDx: -50, fartDy: 5,  wingDx: 0,   wingDy: 10  },
+    { key: 'volleyball',    name: 'Volleyball',     cost: 5000,   fartDx: 0,   fartDy: 35, wingDx: 0,   wingDy: 15  },
+    { key: 'spidermonkey',  name: 'Spidermonkey',   cost: 25000,  fartDx: -35, fartDy: 20, wingDx: -5,  wingDy: 5   },
+    { key: 'chewbacca',     name: 'Chewbacca',      cost: 100000, fartDx: -35, fartDy: 15, wingDx: -5,  wingDy: 0   },
   ];
 
   /* ────────────────── State ────────────────── */
@@ -516,8 +516,8 @@
     // Aura (evo 3+)
     if (evo >= 3) {
       const ag = ctx.createRadialGradient(0, -10 * S, 5, 0, -10 * S, 90 * S);
-      ag.addColorStop(0, evo >= 4 ? 'rgba(255,215,0,0.15)' : 'rgba(200,160,255,0.15)');
-      ag.addColorStop(0.6, evo >= 4 ? 'rgba(255,215,0,0.05)' : 'rgba(180,100,255,0.05)');
+      ag.addColorStop(0, evo >= 5 ? 'rgba(255,230,100,0.18)' : evo >= 4 ? 'rgba(255,215,0,0.15)' : 'rgba(200,160,255,0.15)');
+      ag.addColorStop(0.6, evo >= 5 ? 'rgba(255,215,0,0.08)' : evo >= 4 ? 'rgba(255,215,0,0.05)' : 'rgba(180,100,255,0.05)');
       ag.addColorStop(1, 'transparent');
       ctx.fillStyle = ag;
       ctx.beginPath();
@@ -540,17 +540,18 @@
     }
   }
 
-  function drawEvoPostEffects(evo, bs) {
-    // Wings (evo 2+)
-    if (evo >= 2) {
+  function drawEvoPostEffects(evo, bs, skinKey) {
+    // Wings (evo 2+) — unicorn draws its own wings in drawSkinUnicorn
+    if (evo >= 2 && skinKey !== 'unicorn') {
+      const sk = SKINS.find(s => s.key === skinKey) || SKINS[0];
       const wf = Math.sin(gameTime * 4) * 15;
-      const wc = evo >= 3 ? 'rgba(180,150,255,' : 'rgba(255,220,240,';
-      ctx.save(); ctx.translate(-10 * bs, -20 * bs);
+      const wc = evo >= 5 ? 'rgba(255,240,180,' : evo >= 3 ? 'rgba(180,150,255,' : 'rgba(255,220,240,';
+      ctx.save(); ctx.translate(-10 * bs + sk.wingDx, -20 * bs + sk.wingDy);
       ctx.rotate((-30 + wf) * Math.PI / 180);
       ctx.fillStyle = wc + '0.5)';
       ctx.beginPath(); ctx.ellipse(0, -15, 14 * bs, 32 * bs, -0.2, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
-      ctx.save(); ctx.translate(10 * bs, -20 * bs);
+      ctx.save(); ctx.translate(10 * bs - sk.wingDx, -20 * bs + sk.wingDy);
       ctx.rotate((30 - wf) * Math.PI / 180);
       ctx.fillStyle = wc + '0.4)';
       ctx.beginPath(); ctx.ellipse(0, -15, 11 * bs, 28 * bs, 0.2, 0, Math.PI * 2); ctx.fill();
@@ -636,9 +637,9 @@
     ctx.lineCap = 'butt';
 
     // ── Back legs (stubby chibi) ──
-    const legCol = evo >= 3 ? '#c8b8f8' : '#f5c8d8';
-    const legShade = evo >= 3 ? '#a890d8' : '#e0a8c0';
-    const legOL = evo >= 3 ? '#8068b0' : '#c090b0';
+    const legCol = evo >= 5 ? '#fff0c0' : evo >= 3 ? '#c8b8f8' : '#f5c8d8';
+    const legShade = evo >= 5 ? '#f0d880' : evo >= 3 ? '#a890d8' : '#e0a8c0';
+    const legOL = evo >= 5 ? '#c8a030' : evo >= 3 ? '#8068b0' : '#c090b0';
     const legW = 10 * S, legH = 16 * S;
     // Back-left
     chibiEllipse(-15 * S, 26 * S, legW / 2, legH / 2, legShade, legOL, 2);
@@ -648,7 +649,13 @@
     // ── Body (small round chibi body) ──
     const bodyW = 28 * S, bodyH = 22 * S;
     const bodyY = 12 * S;
-    if (evo >= 3) {
+    if (evo >= 5) {
+      const bg = ctx.createRadialGradient(-3 * S, bodyY - 4 * S, 3, 0, bodyY, bodyW);
+      bg.addColorStop(0, '#fffbe8');
+      bg.addColorStop(0.6, '#ffe480');
+      bg.addColorStop(1, '#f0c040');
+      ctx.fillStyle = bg;
+    } else if (evo >= 3) {
       const bg = ctx.createRadialGradient(-3 * S, bodyY - 4 * S, 3, 0, bodyY, bodyW);
       bg.addColorStop(0, '#2a1060');
       bg.addColorStop(0.6, '#1a0840');
@@ -665,7 +672,7 @@
     ctx.ellipse(0, bodyY, bodyW, bodyH, 0, 0, Math.PI * 2);
     ctx.fill();
     // Body outline (soft)
-    ctx.strokeStyle = evo >= 3 ? '#6848b0' : '#c090b0';
+    ctx.strokeStyle = evo >= 5 ? '#c8a030' : evo >= 3 ? '#6848b0' : '#c090b0';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.ellipse(0, bodyY, bodyW, bodyH, 0, 0, Math.PI * 2);
@@ -688,7 +695,9 @@
         const r = 6 + (i % 3) * 6;
         const sx = Math.cos(a) * r;
         const sy = bodyY + Math.sin(a) * r * 0.6;
-        ctx.fillStyle = `rgba(255,255,255,${0.4 + Math.sin(gameTime * 3 + i) * 0.3})`;
+        ctx.fillStyle = evo >= 5
+          ? `rgba(255,215,0,${0.4 + Math.sin(gameTime * 3 + i) * 0.3})`
+          : `rgba(255,255,255,${0.4 + Math.sin(gameTime * 3 + i) * 0.3})`;
         ctx.beginPath();
         ctx.arc(sx, sy, 1.2, 0, Math.PI * 2);
         ctx.fill();
@@ -708,7 +717,7 @@
     // ── Wings (evo 2+) — cute angel wings ──
     if (evo >= 2) {
       const wingFlap = Math.sin(gameTime * 3.5) * 20;
-      const wc = evo >= 3 ? [190, 170, 255] : [255, 220, 240];
+      const wc = evo >= 5 ? [255, 240, 180] : evo >= 3 ? [190, 170, 255] : [255, 220, 240];
 
       // Left wing
       ctx.save();
@@ -756,7 +765,13 @@
     ctx.ellipse(0, bodyY - bodyH * 0.2, headR * 0.8, 6, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    if (evo >= 3) {
+    if (evo >= 5) {
+      const hg = ctx.createRadialGradient(-5 * S, headY - 6 * S, 5, 0, headY, headR);
+      hg.addColorStop(0, '#fffde0');
+      hg.addColorStop(0.6, '#ffe888');
+      hg.addColorStop(1, '#e8b830');
+      ctx.fillStyle = hg;
+    } else if (evo >= 3) {
       const hg = ctx.createRadialGradient(-5 * S, headY - 6 * S, 5, 0, headY, headR);
       hg.addColorStop(0, '#2a1268');
       hg.addColorStop(0.6, '#1a0a48');
@@ -773,7 +788,7 @@
     ctx.ellipse(0, headY, headR, headR * 0.92, 0, 0, Math.PI * 2);
     ctx.fill();
     // Head outline (soft)
-    ctx.strokeStyle = evo >= 3 ? '#6040b0' : '#c090b0';
+    ctx.strokeStyle = evo >= 5 ? '#c8a030' : evo >= 3 ? '#6040b0' : '#c090b0';
     ctx.lineWidth = 2.2;
     ctx.beginPath();
     ctx.ellipse(0, headY, headR, headR * 0.92, 0, 0, Math.PI * 2);
@@ -784,7 +799,7 @@
     ctx.ellipse(-headR * 0.25, headY - headR * 0.35, headR * 0.45, headR * 0.25, -0.3, 0, Math.PI * 2);
     ctx.fill();
     // Head lower shadow
-    ctx.fillStyle = evo >= 3 ? 'rgba(20,0,60,0.08)' : 'rgba(200,120,160,0.08)';
+    ctx.fillStyle = evo >= 5 ? 'rgba(180,140,20,0.08)' : evo >= 3 ? 'rgba(20,0,60,0.08)' : 'rgba(200,120,160,0.08)';
     ctx.beginPath();
     ctx.ellipse(0, headY + headR * 0.5, headR * 0.7, headR * 0.2, 0, 0, Math.PI * 2);
     ctx.fill();
@@ -794,7 +809,9 @@
       for (let i = 0; i < 8; i++) {
         const a = (i / 8) * Math.PI * 2 + gameTime * 0.6;
         const r = 12 + (i % 2) * 10;
-        ctx.fillStyle = `rgba(255,255,255,${0.35 + Math.sin(gameTime * 3 + i) * 0.25})`;
+        ctx.fillStyle = evo >= 5
+          ? `rgba(255,180,0,${0.35 + Math.sin(gameTime * 3 + i) * 0.25})`
+          : `rgba(255,255,255,${0.35 + Math.sin(gameTime * 3 + i) * 0.25})`;
         ctx.beginPath();
         ctx.arc(Math.cos(a) * r, headY + Math.sin(a) * r * 0.7, 1.3, 0, Math.PI * 2);
         ctx.fill();
@@ -803,18 +820,18 @@
 
     // ── Ear ──
     const earX = -14 * S, earY = headY - 26 * S;
-    ctx.fillStyle = evo >= 3 ? '#1a0a48' : '#f5c0d5';
+    ctx.fillStyle = evo >= 5 ? '#ffe080' : evo >= 3 ? '#1a0a48' : '#f5c0d5';
     ctx.beginPath();
     ctx.moveTo(earX + 8 * S, headY - 20 * S);
     ctx.quadraticCurveTo(earX - 2 * S, earY - 10 * S, earX + 4 * S, earY);
     ctx.quadraticCurveTo(earX + 14 * S, earY - 6 * S, earX + 12 * S, headY - 16 * S);
     ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = evo >= 3 ? '#6040b0' : '#c090b0';
+    ctx.strokeStyle = evo >= 5 ? '#c8a030' : evo >= 3 ? '#6040b0' : '#c090b0';
     ctx.lineWidth = 1.8;
     ctx.stroke();
     // Inner ear
-    ctx.fillStyle = evo >= 3 ? '#3820a0' : '#ffc0d8';
+    ctx.fillStyle = evo >= 5 ? '#ffd040' : evo >= 3 ? '#3820a0' : '#ffc0d8';
     ctx.beginPath();
     ctx.moveTo(earX + 9 * S, headY - 20 * S);
     ctx.quadraticCurveTo(earX + 2 * S, earY - 4 * S, earX + 6 * S, earY + 4 * S);
@@ -1227,8 +1244,8 @@
     const S = 1 + evo * 0.1;
 
     // ── Tail fin (cute rounded fork) ──
-    const tailCol = evo >= 3 ? '#8878ee' : '#7aafc8';
-    const tailDark = evo >= 3 ? '#5a48b8' : '#4a7a98';
+    const tailCol = evo >= 5 ? '#f0d060' : evo >= 3 ? '#8878ee' : '#7aafc8';
+    const tailDark = evo >= 5 ? '#b89828' : evo >= 3 ? '#5a48b8' : '#4a7a98';
     ctx.beginPath();
     ctx.moveTo(-22*S, 8*S);
     ctx.bezierCurveTo(-36*S, 2*S, -44*S, -16*S + Math.sin(gameTime*2.5)*4, -40*S, -22*S + Math.sin(gameTime*2.5)*4);
@@ -1244,7 +1261,13 @@
 
     // ── Tiny stubby body ──
     const bodyW = 22*S, bodyH = 18*S, bodyY = 10*S;
-    if (evo >= 3) {
+    if (evo >= 5) {
+      const bg = ctx.createRadialGradient(-2*S, bodyY - 3*S, 3, 0, bodyY, bodyW);
+      bg.addColorStop(0, '#fffbe8');
+      bg.addColorStop(0.6, '#ffe480');
+      bg.addColorStop(1, '#f0c040');
+      ctx.fillStyle = bg;
+    } else if (evo >= 3) {
       const bg = ctx.createRadialGradient(-2*S, bodyY - 3*S, 3, 0, bodyY, bodyW);
       bg.addColorStop(0, '#6a60d8');
       bg.addColorStop(0.6, '#4840a8');
@@ -1260,7 +1283,7 @@
     ctx.beginPath();
     ctx.ellipse(0, bodyY, bodyW, bodyH, 0, 0, Math.PI*2);
     ctx.fill();
-    ctx.strokeStyle = evo >= 3 ? '#5040a0' : '#3a7898';
+    ctx.strokeStyle = evo >= 5 ? '#a88820' : evo >= 3 ? '#5040a0' : '#3a7898';
     ctx.lineWidth = 2;
     ctx.stroke();
     // Body highlight
@@ -1269,14 +1292,14 @@
     ctx.ellipse(-bodyW*0.2, bodyY - bodyH*0.3, bodyW*0.4, bodyH*0.25, -0.3, 0, Math.PI*2);
     ctx.fill();
     // Belly
-    ctx.fillStyle = evo >= 3 ? 'rgba(200,190,255,0.35)' : 'rgba(220,240,255,0.45)';
+    ctx.fillStyle = evo >= 5 ? 'rgba(255,240,200,0.45)' : evo >= 3 ? 'rgba(200,190,255,0.35)' : 'rgba(220,240,255,0.45)';
     ctx.beginPath();
     ctx.ellipse(2*S, bodyY + 3*S, bodyW*0.6, bodyH*0.5, 0, 0, Math.PI*2);
     ctx.fill();
 
     // ── Tiny side fins (stubby chibi) ──
-    const finCol = evo >= 3 ? '#7868d8' : '#68a8c8';
-    const finOL = evo >= 3 ? '#5040a0' : '#4880a0';
+    const finCol = evo >= 5 ? '#e8c040' : evo >= 3 ? '#7868d8' : '#68a8c8';
+    const finOL = evo >= 5 ? '#a88820' : evo >= 3 ? '#5040a0' : '#4880a0';
     // Left fin
     ctx.save();
     ctx.translate(-16*S, bodyY + 2*S);
@@ -1291,18 +1314,29 @@
     ctx.restore();
 
     // ── Dorsal fin (cute rounded) ──
-    ctx.fillStyle = evo >= 3 ? '#7b68ee' : '#68a0c0';
+    ctx.fillStyle = evo >= 5 ? '#f0c848' : evo >= 3 ? '#7b68ee' : '#68a0c0';
     ctx.beginPath();
     ctx.moveTo(-4*S, bodyY - bodyH + 2*S);
     ctx.quadraticCurveTo(3*S, bodyY - bodyH - 18*S, 10*S, bodyY - bodyH + 2*S);
     ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = evo >= 3 ? '#5a48c0' : '#4880a0';
+    ctx.strokeStyle = evo >= 5 ? '#b89828' : evo >= 3 ? '#5a48c0' : '#4880a0';
     ctx.lineWidth = 1.8;
     ctx.stroke();
 
-    // Body stars (cosmic evo)
-    if (evo >= 3) {
+    // Body stars (cosmic/celestial evo)
+    if (evo >= 5) {
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2 + gameTime * 0.5;
+        const r = 5 + (i % 3) * 5;
+        const sx = Math.cos(a) * r;
+        const sy = bodyY + Math.sin(a) * r * 0.6;
+        ctx.fillStyle = `rgba(255,215,0,${0.4 + Math.sin(gameTime*3 + i)*0.3})`;
+        ctx.beginPath();
+        ctx.arc(sx, sy, 1.2, 0, Math.PI*2);
+        ctx.fill();
+      }
+    } else if (evo >= 3) {
       for (let i = 0; i < 8; i++) {
         const a = (i / 8) * Math.PI * 2 + gameTime * 0.5;
         const r = 5 + (i % 3) * 5;
@@ -1324,7 +1358,13 @@
     ctx.ellipse(0, bodyY - bodyH*0.3, headR*0.7, 5, 0, 0, Math.PI*2);
     ctx.fill();
 
-    if (evo >= 3) {
+    if (evo >= 5) {
+      const hg = ctx.createRadialGradient(-4*S, headY - 5*S, 4, 0, headY, headR);
+      hg.addColorStop(0, '#fffbe8');
+      hg.addColorStop(0.6, '#ffe480');
+      hg.addColorStop(1, '#f0c040');
+      ctx.fillStyle = hg;
+    } else if (evo >= 3) {
       const hg = ctx.createRadialGradient(-4*S, headY - 5*S, 4, 0, headY, headR);
       hg.addColorStop(0, '#5a50d0');
       hg.addColorStop(0.6, '#3830a0');
@@ -1340,7 +1380,7 @@
     ctx.beginPath();
     ctx.ellipse(0, headY, headR, headR*0.9, 0, 0, Math.PI*2);
     ctx.fill();
-    ctx.strokeStyle = evo >= 3 ? '#4838a0' : '#4080a0';
+    ctx.strokeStyle = evo >= 5 ? '#c8a030' : evo >= 3 ? '#4838a0' : '#4080a0';
     ctx.lineWidth = 2.2;
     ctx.stroke();
     // Head highlight
@@ -1349,8 +1389,17 @@
     ctx.ellipse(-headR*0.25, headY - headR*0.3, headR*0.4, headR*0.2, -0.3, 0, Math.PI*2);
     ctx.fill();
 
-    // Head stars (cosmic)
-    if (evo >= 3) {
+    // Head stars (cosmic/celestial)
+    if (evo >= 5) {
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2 + gameTime * 0.6;
+        const r = 10 + (i % 2) * 8;
+        ctx.fillStyle = `rgba(255,215,0,${0.35 + Math.sin(gameTime*3 + i)*0.25})`;
+        ctx.beginPath();
+        ctx.arc(Math.cos(a)*r, headY + Math.sin(a)*r*0.7, 1.3, 0, Math.PI*2);
+        ctx.fill();
+      }
+    } else if (evo >= 3) {
       for (let i = 0; i < 6; i++) {
         const a = (i / 6) * Math.PI * 2 + gameTime * 0.6;
         const r = 10 + (i % 2) * 8;
@@ -1376,7 +1425,7 @@
       ctx.beginPath();
       ctx.ellipse(ex, eyeY, eyeRx, eyeRy*eyeOpen, 0, 0, Math.PI*2);
       ctx.fill();
-      ctx.strokeStyle = evo >= 3 ? '#6858b0' : '#5090b0';
+      ctx.strokeStyle = evo >= 5 ? '#c8a030' : evo >= 3 ? '#6858b0' : '#5090b0';
       ctx.lineWidth = 1.8;
       ctx.stroke();
 
@@ -1385,7 +1434,11 @@
         const irisR = 6*S;
         const irisY = eyeY + 1*S;
         const irisGrad = ctx.createRadialGradient(ex, irisY - irisR*0.3, 1, ex, irisY, irisR);
-        if (evo >= 3) {
+        if (evo >= 5) {
+          irisGrad.addColorStop(0, '#ffe080');
+          irisGrad.addColorStop(0.5, '#d0a030');
+          irisGrad.addColorStop(1, '#a08020');
+        } else if (evo >= 3) {
           irisGrad.addColorStop(0, '#b8a0ff');
           irisGrad.addColorStop(0.5, '#8060d0');
           irisGrad.addColorStop(1, '#5838a8');
@@ -1419,7 +1472,7 @@
         ctx.arc(ex + 1.2*S, irisY - 4.5*S, 1*S, 0, Math.PI*2);
         ctx.fill();
         // Upper eyelid line
-        ctx.strokeStyle = evo >= 3 ? '#5848a0' : '#3878a0';
+        ctx.strokeStyle = evo >= 5 ? '#b89828' : evo >= 3 ? '#5848a0' : '#3878a0';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.arc(ex, eyeY, eyeRx, Math.PI + 0.4, Math.PI*2 - 0.4);
@@ -2276,7 +2329,7 @@
 
     drawEvoPreEffects(evo, bs);
     (skinDrawFns[state.skin] || skinDrawFns.unicorn)(bs, evo);
-    drawEvoPostEffects(evo, bs);
+    drawEvoPostEffects(evo, bs, state.skin);
 
     ctx.restore();
   }
