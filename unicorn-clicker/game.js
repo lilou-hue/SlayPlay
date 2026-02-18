@@ -1066,8 +1066,8 @@
     // Horn shape
     const hGrad = ctx.createLinearGradient(hornX, hornY, hornX, hornY - hornLen);
     hGrad.addColorStop(0, '#ffd700');
-    hGrad.addColorStop(0.4, evo >= 3 ? '#ffaa44' : '#ffe680');
-    hGrad.addColorStop(1, evo >= 3 ? '#ff88cc' : '#fffae0');
+    hGrad.addColorStop(0.4, evo >= 5 ? '#ffffff' : evo >= 3 ? '#ffaa44' : '#ffe680');
+    hGrad.addColorStop(1, evo >= 5 ? '#fff0a0' : evo >= 3 ? '#ff88cc' : '#fffae0');
     ctx.fillStyle = hGrad;
     ctx.beginPath();
     ctx.moveTo(hornX - hornW / 2, hornY);
@@ -1486,7 +1486,7 @@
 
     // ── Cute mouth (w-shape) ──
     const mouthY = eyeY + 11*S;
-    ctx.strokeStyle = evo >= 3 ? '#7060c0' : '#4088a8';
+    ctx.strokeStyle = evo >= 5 ? '#c8a030' : evo >= 3 ? '#7060c0' : '#4088a8';
     ctx.lineWidth = 1.8;
     ctx.lineCap = 'round';
     ctx.beginPath();
@@ -1525,8 +1525,8 @@
 
     // ── Stubby little legs (bouncy) ──
     const legBounce = Math.sin(gameTime*3)*2;
-    const legCol = evo >= 3 ? '#c8b8f8' : '#f0e0d0';
-    const legOL = evo >= 3 ? '#8868c0' : '#c0a898';
+    const legCol = evo >= 5 ? '#fff0c0' : evo >= 3 ? '#c8b8f8' : '#f0e0d0';
+    const legOL = evo >= 5 ? '#c8a038' : evo >= 3 ? '#8868c0' : '#c0a898';
     chibiEllipse(-10*S, 28*S + legBounce, 7*S, 10*S, legCol, legOL, 2);
     chibiEllipse(10*S, 28*S - legBounce, 7*S, 10*S, legCol, legOL, 2);
     // Leg highlights
@@ -1555,7 +1555,13 @@
     const headR = 28*S;
     const headY = -2*S;
     // Main ball
-    if (evo >= 3) {
+    if (evo >= 5) {
+      const hg = ctx.createRadialGradient(-5*S, headY - 6*S, 4, 0, headY, headR);
+      hg.addColorStop(0, '#fffbe8');
+      hg.addColorStop(0.5, '#ffe480');
+      hg.addColorStop(1, '#f0c040');
+      ctx.fillStyle = hg;
+    } else if (evo >= 3) {
       const hg = ctx.createRadialGradient(-5*S, headY - 6*S, 4, 0, headY, headR);
       hg.addColorStop(0, '#e8d8ff');
       hg.addColorStop(0.5, '#c8b0f0');
@@ -1571,12 +1577,12 @@
     ctx.beginPath();
     ctx.arc(0, headY, headR, 0, Math.PI*2);
     ctx.fill();
-    ctx.strokeStyle = evo >= 3 ? '#8868c0' : '#c0a888';
+    ctx.strokeStyle = evo >= 5 ? '#c8a030' : evo >= 3 ? '#8868c0' : '#c0a888';
     ctx.lineWidth = 2.2;
     ctx.stroke();
 
     // Volleyball seam lines (subtle, cute)
-    ctx.strokeStyle = evo >= 3 ? 'rgba(120,90,180,0.25)' : 'rgba(180,160,130,0.25)';
+    ctx.strokeStyle = evo >= 5 ? 'rgba(200,160,48,0.25)' : evo >= 3 ? 'rgba(120,90,180,0.25)' : 'rgba(180,160,130,0.25)';
     ctx.lineWidth = 1.5;
     // Vertical seam
     ctx.beginPath();
@@ -1594,8 +1600,17 @@
     ctx.ellipse(-headR*0.25, headY - headR*0.35, headR*0.4, headR*0.22, -0.3, 0, Math.PI*2);
     ctx.fill();
 
-    // Body stars (cosmic)
-    if (evo >= 3) {
+    // Body stars (cosmic/celestial)
+    if (evo >= 5) {
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2 + gameTime * 0.5;
+        const r = 10 + (i % 3) * 6;
+        ctx.fillStyle = `rgba(255,215,0,${0.4 + Math.sin(gameTime*3 + i)*0.3})`;
+        ctx.beginPath();
+        ctx.arc(Math.cos(a)*r, headY + Math.sin(a)*r*0.7, 1.3, 0, Math.PI*2);
+        ctx.fill();
+      }
+    } else if (evo >= 3) {
       for (let i = 0; i < 8; i++) {
         const a = (i / 8) * Math.PI * 2 + gameTime * 0.5;
         const r = 10 + (i % 3) * 6;
@@ -1621,7 +1636,7 @@
       ctx.beginPath();
       ctx.ellipse(ex, eyeY, eyeRx, eyeRy*eyeOpen, 0, 0, Math.PI*2);
       ctx.fill();
-      ctx.strokeStyle = evo >= 3 ? '#8870b8' : '#b0a090';
+      ctx.strokeStyle = evo >= 5 ? '#d0a840' : evo >= 3 ? '#8870b8' : '#b0a090';
       ctx.lineWidth = 1.8;
       ctx.stroke();
 
@@ -1630,7 +1645,11 @@
         const irisR = 6*S;
         const irisY = eyeY + 1*S;
         const irisGrad = ctx.createRadialGradient(ex, irisY - irisR*0.3, 1, ex, irisY, irisR);
-        if (evo >= 3) {
+        if (evo >= 5) {
+          irisGrad.addColorStop(0, '#ffe080');
+          irisGrad.addColorStop(0.5, '#d0a030');
+          irisGrad.addColorStop(1, '#a08020');
+        } else if (evo >= 3) {
           irisGrad.addColorStop(0, '#d0b8ff');
           irisGrad.addColorStop(0.5, '#a080e0');
           irisGrad.addColorStop(1, '#7050b0');
@@ -1664,7 +1683,7 @@
         ctx.arc(ex + 1.2*S, irisY - 4.5*S, 1*S, 0, Math.PI*2);
         ctx.fill();
         // Upper eyelid
-        ctx.strokeStyle = evo >= 3 ? '#7060a8' : '#908070';
+        ctx.strokeStyle = evo >= 5 ? '#c8a030' : evo >= 3 ? '#7060a8' : '#908070';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.arc(ex, eyeY, eyeRx, Math.PI + 0.4, Math.PI*2 - 0.4);
@@ -1686,7 +1705,7 @@
 
     // ── Cute w-mouth ──
     const mouthY = eyeY + 12*S;
-    ctx.strokeStyle = evo >= 3 ? '#8868c0' : '#a09080';
+    ctx.strokeStyle = evo >= 5 ? '#c8a030' : evo >= 3 ? '#8868c0' : '#a09080';
     ctx.lineWidth = 1.8;
     ctx.lineCap = 'round';
     ctx.beginPath();
@@ -1697,7 +1716,7 @@
     ctx.lineCap = 'butt';
 
     // ── Tiny headband / sweatband (cute accessory) ──
-    ctx.strokeStyle = evo >= 3 ? '#a888f0' : '#ff6060';
+    ctx.strokeStyle = evo >= 5 ? '#ffd040' : evo >= 3 ? '#a888f0' : '#ff6060';
     ctx.lineWidth = 3*S;
     ctx.beginPath();
     ctx.arc(0, headY, headR - 1, -Math.PI*0.85, -Math.PI*0.15);
@@ -1723,11 +1742,11 @@
   /* ── Skin: Spidermonkey (Chibi) ── */
   function drawSkinSpidermonkey(bs, evo) {
     const S = 1 + evo * 0.1;
-    const furColor = evo >= 3 ? '#2d1b69' : '#8B6914';
-    const furLight = evo >= 3 ? '#4c3a90' : '#c4a035';
-    const furDark = evo >= 3 ? '#1a0f40' : '#6a4a0a';
-    const bellyColor = evo >= 3 ? '#3a2868' : '#f5deb3';
-    const furOL = evo >= 3 ? '#1a0f40' : '#5a3a08';
+    const furColor = evo >= 5 ? '#c49520' : evo >= 3 ? '#2d1b69' : '#8B6914';
+    const furLight = evo >= 5 ? '#e8c040' : evo >= 3 ? '#4c3a90' : '#c4a035';
+    const furDark = evo >= 5 ? '#8a6a10' : evo >= 3 ? '#1a0f40' : '#6a4a0a';
+    const bellyColor = evo >= 5 ? '#fff0c0' : evo >= 3 ? '#3a2868' : '#f5deb3';
+    const furOL = evo >= 5 ? '#8a6a10' : evo >= 3 ? '#1a0f40' : '#5a3a08';
 
     // ── Curly tail (cute springy spiral) ──
     ctx.strokeStyle = furColor;
@@ -1757,7 +1776,13 @@
 
     // ── Small round chibi body ──
     const bodyW = 24*S, bodyH = 20*S, bodyY = 10*S;
-    if (evo >= 3) {
+    if (evo >= 5) {
+      const bg = ctx.createRadialGradient(-2*S, bodyY - 4*S, 3, 0, bodyY, bodyW);
+      bg.addColorStop(0, '#e8c040');
+      bg.addColorStop(0.6, '#c49520');
+      bg.addColorStop(1, '#8a6a10');
+      ctx.fillStyle = bg;
+    } else if (evo >= 3) {
       const bg = ctx.createRadialGradient(-2*S, bodyY - 4*S, 3, 0, bodyY, bodyW);
       bg.addColorStop(0, '#4c3a90');
       bg.addColorStop(0.6, '#2d1b69');
@@ -1787,8 +1812,17 @@
     ctx.ellipse(0, bodyY + 2*S, bodyW*0.55, bodyH*0.5, 0, 0, Math.PI*2);
     ctx.fill();
 
-    // Body stars (cosmic)
-    if (evo >= 3) {
+    // Body stars (cosmic/celestial)
+    if (evo >= 5) {
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2 + gameTime * 0.5;
+        const r = 5 + (i % 3) * 5;
+        ctx.fillStyle = `rgba(255,215,0,${0.4 + Math.sin(gameTime*3 + i)*0.3})`;
+        ctx.beginPath();
+        ctx.arc(Math.cos(a)*r, bodyY + Math.sin(a)*r*0.6, 1.2, 0, Math.PI*2);
+        ctx.fill();
+      }
+    } else if (evo >= 3) {
       for (let i = 0; i < 8; i++) {
         const a = (i / 8) * Math.PI * 2 + gameTime * 0.5;
         const r = 5 + (i % 3) * 5;
@@ -1828,7 +1862,13 @@
     ctx.ellipse(0, bodyY - bodyH*0.3, headR*0.7, 5, 0, 0, Math.PI*2);
     ctx.fill();
 
-    if (evo >= 3) {
+    if (evo >= 5) {
+      const hg = ctx.createRadialGradient(-4*S, headY - 5*S, 4, 0, headY, headR);
+      hg.addColorStop(0, '#e8c040');
+      hg.addColorStop(0.6, '#c49520');
+      hg.addColorStop(1, '#8a6a10');
+      ctx.fillStyle = hg;
+    } else if (evo >= 3) {
       const hg = ctx.createRadialGradient(-4*S, headY - 5*S, 4, 0, headY, headR);
       hg.addColorStop(0, '#4c3a90');
       hg.addColorStop(0.6, '#2d1b69');
@@ -1866,8 +1906,17 @@
     ctx.ellipse(0, headY + 6*S, 16*S, 14*S, 0, 0, Math.PI*2);
     ctx.fill();
 
-    // Head stars (cosmic)
-    if (evo >= 3) {
+    // Head stars (cosmic/celestial)
+    if (evo >= 5) {
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2 + gameTime * 0.6;
+        const r = 12 + (i % 2) * 8;
+        ctx.fillStyle = `rgba(255,215,0,${0.35 + Math.sin(gameTime*3 + i)*0.25})`;
+        ctx.beginPath();
+        ctx.arc(Math.cos(a)*r, headY + Math.sin(a)*r*0.7, 1.3, 0, Math.PI*2);
+        ctx.fill();
+      }
+    } else if (evo >= 3) {
       for (let i = 0; i < 6; i++) {
         const a = (i / 6) * Math.PI * 2 + gameTime * 0.6;
         const r = 12 + (i % 2) * 8;
@@ -1893,7 +1942,7 @@
       ctx.beginPath();
       ctx.ellipse(ex, eyeY, eyeRx, eyeRy*eyeOpen, 0, 0, Math.PI*2);
       ctx.fill();
-      ctx.strokeStyle = evo >= 3 ? '#5040a0' : '#8a6820';
+      ctx.strokeStyle = evo >= 5 ? '#c8a030' : evo >= 3 ? '#5040a0' : '#8a6820';
       ctx.lineWidth = 1.8;
       ctx.stroke();
 
@@ -1902,7 +1951,11 @@
         const irisR = 6.5*S;
         const irisY = eyeY + 1*S;
         const irisGrad = ctx.createRadialGradient(ex, irisY - irisR*0.3, 1, ex, irisY, irisR);
-        if (evo >= 3) {
+        if (evo >= 5) {
+          irisGrad.addColorStop(0, '#ffe080');
+          irisGrad.addColorStop(0.5, '#d0a030');
+          irisGrad.addColorStop(1, '#a08020');
+        } else if (evo >= 3) {
           irisGrad.addColorStop(0, '#c4b5fd');
           irisGrad.addColorStop(0.5, '#8870d0');
           irisGrad.addColorStop(1, '#5a40a0');
@@ -1936,7 +1989,7 @@
         ctx.arc(ex + 1.5*S, irisY - 5*S, 1.2*S, 0, Math.PI*2);
         ctx.fill();
         // Upper eyelid
-        ctx.strokeStyle = evo >= 3 ? '#5040a0' : '#6a4a10';
+        ctx.strokeStyle = evo >= 5 ? '#c8a030' : evo >= 3 ? '#5040a0' : '#6a4a10';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.arc(ex, eyeY, eyeRx, Math.PI + 0.4, Math.PI*2 - 0.4);
@@ -1958,7 +2011,7 @@
 
     // ── Nose (cute heart-shaped) ──
     const noseY = eyeY + 10*S;
-    ctx.fillStyle = evo >= 3 ? '#6d5aad' : '#5a3a1a';
+    ctx.fillStyle = evo >= 5 ? '#c8a030' : evo >= 3 ? '#6d5aad' : '#5a3a1a';
     ctx.beginPath();
     ctx.moveTo(0, noseY + 3*S);
     ctx.bezierCurveTo(-3*S, noseY, -4*S, noseY - 2*S, -2*S, noseY - 2*S);
@@ -1968,7 +2021,7 @@
 
     // ── Cute w-mouth ──
     const mouthY = noseY + 5*S;
-    ctx.strokeStyle = evo >= 3 ? '#4c3a90' : '#5a3a1a';
+    ctx.strokeStyle = evo >= 5 ? '#8a6a10' : evo >= 3 ? '#4c3a90' : '#5a3a1a';
     ctx.lineWidth = 1.8;
     ctx.lineCap = 'round';
     ctx.beginPath();
@@ -1979,7 +2032,7 @@
     ctx.lineCap = 'butt';
 
     // ── Tuft of head fur ──
-    const tuftCol = evo >= 3 ? '#5c4aa0' : '#d8b020';
+    const tuftCol = evo >= 5 ? '#e8c040' : evo >= 3 ? '#5c4aa0' : '#d8b020';
     for (let i = 0; i < 3; i++) {
       const angle = -Math.PI*0.5 + (i - 1)*0.3;
       const wave = Math.sin(gameTime*2 + i)*3;
@@ -2018,10 +2071,10 @@
   /* ── Skin: Chewbacca (Chibi) ── */
   function drawSkinChewbacca(bs, evo) {
     const S = 1 + evo * 0.1;
-    const furColor = evo >= 3 ? '#1a0f40' : '#6B4226';
-    const furLight = evo >= 3 ? '#2d1b69' : '#8B6340';
-    const furDark = evo >= 3 ? '#0f0a2a' : '#4a2a12';
-    const furOL = evo >= 3 ? '#0a0520' : '#3a1a08';
+    const furColor = evo >= 5 ? '#b08020' : evo >= 3 ? '#1a0f40' : '#6B4226';
+    const furLight = evo >= 5 ? '#d8a840' : evo >= 3 ? '#2d1b69' : '#8B6340';
+    const furDark = evo >= 5 ? '#806010' : evo >= 3 ? '#0f0a2a' : '#4a2a12';
+    const furOL = evo >= 5 ? '#705008' : evo >= 3 ? '#0a0520' : '#3a1a08';
 
     // ── Stubby back legs ──
     const legW = 10*S, legH = 14*S;
@@ -2033,7 +2086,13 @@
 
     // ── Small round chibi body ──
     const bodyW = 26*S, bodyH = 22*S, bodyY = 10*S;
-    if (evo >= 3) {
+    if (evo >= 5) {
+      const bg = ctx.createRadialGradient(-3*S, bodyY - 4*S, 3, 0, bodyY, bodyW);
+      bg.addColorStop(0, '#d8a840');
+      bg.addColorStop(0.6, '#b08020');
+      bg.addColorStop(1, '#806010');
+      ctx.fillStyle = bg;
+    } else if (evo >= 3) {
       const bg = ctx.createRadialGradient(-3*S, bodyY - 4*S, 3, 0, bodyY, bodyW);
       bg.addColorStop(0, '#2d1b69');
       bg.addColorStop(0.6, '#1a0f40');
@@ -2059,7 +2118,7 @@
     ctx.fill();
 
     // Cute fur texture (soft wispy lines instead of harsh)
-    ctx.strokeStyle = evo >= 3 ? 'rgba(80,60,150,0.2)' : 'rgba(90,50,20,0.15)';
+    ctx.strokeStyle = evo >= 5 ? 'rgba(180,130,30,0.2)' : evo >= 3 ? 'rgba(80,60,150,0.2)' : 'rgba(90,50,20,0.15)';
     ctx.lineWidth = 1;
     ctx.lineCap = 'round';
     for (let i = 0; i < 8; i++) {
@@ -2073,14 +2132,14 @@
     ctx.lineCap = 'butt';
 
     // ── Bandolier (cute diagonal strap with tiny pouches) ──
-    ctx.strokeStyle = evo >= 3 ? '#a78bfa' : '#8B7355';
+    ctx.strokeStyle = evo >= 5 ? '#c8a030' : evo >= 3 ? '#a78bfa' : '#8B7355';
     ctx.lineWidth = 4*S;
     ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(-18*S, bodyY - 12*S);
     ctx.lineTo(16*S, bodyY + 12*S);
     ctx.stroke();
-    ctx.strokeStyle = evo >= 3 ? '#c4b5fd' : '#a08060';
+    ctx.strokeStyle = evo >= 5 ? '#e8c040' : evo >= 3 ? '#c4b5fd' : '#a08060';
     ctx.lineWidth = 2.5*S;
     ctx.beginPath();
     ctx.moveTo(-18*S, bodyY - 12*S);
@@ -2092,11 +2151,20 @@
       const t = (i + 0.5) / 3;
       const px = -18*S + t*34*S;
       const py = bodyY - 12*S + t*24*S;
-      chibiEllipse(px, py, 3.5*S, 3*S, evo >= 3 ? '#6d28d9' : '#705030', evo >= 3 ? '#4c1d95' : '#503820', 1.2);
+      chibiEllipse(px, py, 3.5*S, 3*S, evo >= 5 ? '#c8a030' : evo >= 3 ? '#6d28d9' : '#705030', evo >= 5 ? '#a08020' : evo >= 3 ? '#4c1d95' : '#503820', 1.2);
     }
 
-    // Body stars (cosmic)
-    if (evo >= 3) {
+    // Body stars (cosmic/celestial)
+    if (evo >= 5) {
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2 + gameTime * 0.5;
+        const r = 6 + (i % 3) * 5;
+        ctx.fillStyle = `rgba(255,215,0,${0.4 + Math.sin(gameTime*3 + i)*0.3})`;
+        ctx.beginPath();
+        ctx.arc(Math.cos(a)*r, bodyY + Math.sin(a)*r*0.6, 1.2, 0, Math.PI*2);
+        ctx.fill();
+      }
+    } else if (evo >= 3) {
       for (let i = 0; i < 8; i++) {
         const a = (i / 8) * Math.PI * 2 + gameTime * 0.5;
         const r = 6 + (i % 3) * 5;
@@ -2136,7 +2204,13 @@
     ctx.ellipse(0, bodyY - bodyH*0.3, headR*0.7, 5, 0, 0, Math.PI*2);
     ctx.fill();
 
-    if (evo >= 3) {
+    if (evo >= 5) {
+      const hg = ctx.createRadialGradient(-4*S, headY - 5*S, 4, 0, headY, headR);
+      hg.addColorStop(0, '#d8a840');
+      hg.addColorStop(0.6, '#b08020');
+      hg.addColorStop(1, '#806010');
+      ctx.fillStyle = hg;
+    } else if (evo >= 3) {
       const hg = ctx.createRadialGradient(-4*S, headY - 5*S, 4, 0, headY, headR);
       hg.addColorStop(0, '#2d1b69');
       hg.addColorStop(0.6, '#1a0f40');
@@ -2162,7 +2236,7 @@
     ctx.fill();
 
     // Cute head fur wisps
-    ctx.strokeStyle = evo >= 3 ? 'rgba(60,40,120,0.2)' : 'rgba(80,40,15,0.15)';
+    ctx.strokeStyle = evo >= 5 ? 'rgba(180,130,30,0.2)' : evo >= 3 ? 'rgba(60,40,120,0.2)' : 'rgba(80,40,15,0.15)';
     ctx.lineWidth = 1;
     ctx.lineCap = 'round';
     for (let i = 0; i < 6; i++) {
@@ -2181,8 +2255,17 @@
     ctx.ellipse(0, headY + 4*S, 18*S, 12*S, 0, 0, Math.PI*2);
     ctx.fill();
 
-    // Head stars (cosmic)
-    if (evo >= 3) {
+    // Head stars (cosmic/celestial)
+    if (evo >= 5) {
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2 + gameTime * 0.6;
+        const r = 12 + (i % 2) * 8;
+        ctx.fillStyle = `rgba(255,215,0,${0.35 + Math.sin(gameTime*3 + i)*0.25})`;
+        ctx.beginPath();
+        ctx.arc(Math.cos(a)*r, headY + Math.sin(a)*r*0.7, 1.3, 0, Math.PI*2);
+        ctx.fill();
+      }
+    } else if (evo >= 3) {
       for (let i = 0; i < 6; i++) {
         const a = (i / 6) * Math.PI * 2 + gameTime * 0.6;
         const r = 12 + (i % 2) * 8;
@@ -2208,7 +2291,7 @@
       ctx.beginPath();
       ctx.ellipse(ex, eyeY, eyeRx, eyeRy*eyeOpen, 0, 0, Math.PI*2);
       ctx.fill();
-      ctx.strokeStyle = evo >= 3 ? '#4030a0' : '#5a3018';
+      ctx.strokeStyle = evo >= 5 ? '#c8a030' : evo >= 3 ? '#4030a0' : '#5a3018';
       ctx.lineWidth = 1.8;
       ctx.stroke();
 
@@ -2217,7 +2300,11 @@
         const irisR = 6*S;
         const irisY = eyeY + 1*S;
         const irisGrad = ctx.createRadialGradient(ex, irisY - irisR*0.3, 1, ex, irisY, irisR);
-        if (evo >= 3) {
+        if (evo >= 5) {
+          irisGrad.addColorStop(0, '#ffe080');
+          irisGrad.addColorStop(0.5, '#d0a030');
+          irisGrad.addColorStop(1, '#a08020');
+        } else if (evo >= 3) {
           irisGrad.addColorStop(0, '#c4b5fd');
           irisGrad.addColorStop(0.5, '#a78bfa');
           irisGrad.addColorStop(1, '#7c5fd0');
@@ -2251,7 +2338,7 @@
         ctx.arc(ex + 1.2*S, irisY - 4.5*S, 1*S, 0, Math.PI*2);
         ctx.fill();
         // Upper eyelid
-        ctx.strokeStyle = evo >= 3 ? '#3020a0' : '#3a1808';
+        ctx.strokeStyle = evo >= 5 ? '#a08020' : evo >= 3 ? '#3020a0' : '#3a1808';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.arc(ex, eyeY, eyeRx, Math.PI + 0.4, Math.PI*2 - 0.4);
@@ -2264,12 +2351,12 @@
     chibiEllipse(eyeSpacing + 4*S, eyeY + 9*S, 6*S, 3.5*S, 'rgba(255,140,140,0.25)', null);
 
     // ── Nose (wide, flat, cute) ──
-    ctx.fillStyle = evo >= 3 ? '#4c1d95' : '#2a1508';
+    ctx.fillStyle = evo >= 5 ? '#806010' : evo >= 3 ? '#4c1d95' : '#2a1508';
     ctx.beginPath();
     ctx.ellipse(0, eyeY + 10*S, 5*S, 3*S, 0, 0, Math.PI*2);
     ctx.fill();
     // Nostrils
-    ctx.fillStyle = evo >= 3 ? '#2a0a60' : '#1a0a04';
+    ctx.fillStyle = evo >= 5 ? '#604808' : evo >= 3 ? '#2a0a60' : '#1a0a04';
     ctx.beginPath();
     ctx.arc(-2*S, eyeY + 10.5*S, 1.2*S, 0, Math.PI*2);
     ctx.fill();
@@ -2279,7 +2366,7 @@
 
     // ── Cute w-mouth ──
     const mouthY = eyeY + 15*S;
-    ctx.strokeStyle = evo >= 3 ? '#2a1868' : '#3a1808';
+    ctx.strokeStyle = evo >= 5 ? '#705008' : evo >= 3 ? '#2a1868' : '#3a1808';
     ctx.lineWidth = 1.8;
     ctx.lineCap = 'round';
     ctx.beginPath();
