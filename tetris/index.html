@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tetris</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="game">
+      <header class="game__header">
+        <a href="/" class="back-link">&larr; Back to Games</a>
+        <h1>Tetris</h1>
+        <p>Arrow keys to move &amp; rotate. Space to hard drop. Shift to hold.</p>
+      </header>
+      <section class="game__panel">
+        <canvas id="gameCanvas" width="480" height="640" aria-label="Tetris game"></canvas>
+        <div class="game__hud">
+          <div class="hud__score">
+            <span>Score</span>
+            <strong id="score">0</strong>
+          </div>
+          <div class="hud__score">
+            <span>Best</span>
+            <strong id="bestScore">0</strong>
+          </div>
+          <button id="muteButton" class="hud__mute" type="button" aria-label="Toggle sound">&#x1F50A;</button>
+          <button id="restartButton" class="hud__button" type="button">Restart</button>
+        </div>
+      </section>
+      <footer class="game__footer">
+        <p>Tip: hold a piece with Shift or C. Clear 4 lines at once for a Tetris!</p>
+      </footer>
+    </main>
+    <script src="audio.js"></script>
+    <script src="game.js"></script>
+  </body>
+</html>
