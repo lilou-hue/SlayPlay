@@ -1,0 +1,67 @@
+#!/bin/bash
+# Persistent Session Menu
+# Lets you pick an existing tmux session, create a new one, or skip tmux entirely.
+
+# Only run in interactive, non-tmux shells
+if [ -n "$TMUX" ] || [ ! -t 0 ]; then
+    exit 0
+fi
+
+BOLD='\033[1m'
+CYAN='\033[36m'
+GREEN='\033[32m'
+YELLOW='\033[33m'
+DIM='\033[2m'
+RESET='\033[0m'
+
+echo ""
+echo -e "${BOLD}=== Session Menu ===${RESET}"
+echo ""
+
+# Gather existing sessions
+sessions=()
+if tmux list-sessions 2>/dev/null | grep -q .; then
+    echo -e "${CYAN}Persistent sessions:${RESET}"
+    i=1
+    while IFS= read -r line; do
+        sessions+=("$line")
+        name=$(echo "$line" | cut -d: -f1)
+        info=$(echo "$line" | cut -d: -f2-)
+        echo -e "  ${BOLD}$i)${RESET} $name ${DIM}-$info${RESET}"
+        ((i++))
+    done < <(tmux list-sessions 2>/dev/null)
+    echo ""
+fi
+
+next=$((${#sessions[@]} + 1))
+echo -e "  ${GREEN}${BOLD}n)${RESET} New persistent session"
+echo -e "  ${YELLOW}${BOLD}t)${RESET} Temporary session ${DIM}(no tmux)${RESET}"
+echo ""
+
+read -r -p "Select: " choice
+
+case "$choice" in
+    [0-9]|[0-9][0-9])
+        idx=$((choice - 1))
+        if [ "$idx" -ge 0 ] && [ "$idx" -lt "${#sessions[@]}" ]; then
+            name=$(echo "${sessions[$idx]}" | cut -d: -f1)
+            exec tmux attach-session -t "$name"
+        else
+            echo "Invalid selection, starting temporary session."
+        fi
+        ;;
+    n|N)
+        read -r -p "Session name (leave empty for default): " sname
+        if [ -n "$sname" ]; then
+            exec tmux new-session -s "$sname"
+        else
+            exec tmux new-session
+        fi
+        ;;
+    t|T|"")
+        echo -e "${DIM}Starting temporary session...${RESET}"
+        ;;
+    *)
+        echo "Invalid selection, starting temporary session."
+        ;;
+esac
