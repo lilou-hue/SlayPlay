@@ -775,7 +775,7 @@
       touchStart.x = e.clientX;
       touchStart.y = e.clientY;
       touchMoved = true;
-    } else if (dy < -threshold * 2 && Math.abs(dy) > Math.abs(dx)) {
+    } else if (dy < -threshold * 1.5 && Math.abs(dy) > Math.abs(dx) * 1.5) {
       // Swipe up — hard drop
       hardDrop();
       touchStart = null;
@@ -789,6 +789,16 @@
       return;
     }
     const elapsed = Date.now() - touchStart.time;
+    const dy = e.clientY - touchStart.y;
+    const dx = e.clientX - touchStart.x;
+
+    // Quick flick up = hard drop (even if pointermove didn't catch it)
+    if (dy < -30 && Math.abs(dy) > Math.abs(dx) * 1.5 && elapsed < 300) {
+      hardDrop();
+      touchStart = null;
+      return;
+    }
+
     if (!touchMoved && elapsed < 300) {
       // Tap = rotate
       const rect = canvas.getBoundingClientRect();
@@ -803,6 +813,75 @@
   });
 
   canvas.addEventListener("pointercancel", () => { touchStart = null; });
+
+  /* On-screen touch buttons */
+  const touchControlsEl = document.getElementById("touchControls");
+  if ("ontouchstart" in window || navigator.maxTouchPoints > 0) {
+    touchControlsEl.classList.add("visible");
+  }
+
+  let softDropInterval = null;
+  touchControlsEl.addEventListener("pointerdown", (e) => {
+    const btn = e.target.closest("[data-action]");
+    if (!btn) return;
+    e.preventDefault();
+    Audio.init();
+    Audio.resume();
+    if (state.phase === "idle") startPlaying();
+    if (state.phase !== "playing") return;
+
+    const action = btn.dataset.action;
+    switch (action) {
+      case "moveLeft":
+        moveHorizontal(-1);
+        break;
+      case "moveRight":
+        moveHorizontal(1);
+        break;
+      case "rotateCW":
+        tryRotate(1);
+        break;
+      case "rotateCCW":
+        tryRotate(-1);
+        break;
+      case "hardDrop":
+        hardDrop();
+        break;
+      case "softDrop":
+        // Start continuous soft drop while held
+        keysHeld.add("down");
+        softDropInterval = setInterval(() => {
+          if (state.phase !== "playing") {
+            clearInterval(softDropInterval);
+            softDropInterval = null;
+            keysHeld.delete("down");
+          }
+        }, 100);
+        break;
+      case "hold":
+        holdPiece();
+        break;
+    }
+  });
+
+  touchControlsEl.addEventListener("pointerup", (e) => {
+    const btn = e.target.closest("[data-action]");
+    if (btn && btn.dataset.action === "softDrop") {
+      keysHeld.delete("down");
+      if (softDropInterval) {
+        clearInterval(softDropInterval);
+        softDropInterval = null;
+      }
+    }
+  });
+
+  touchControlsEl.addEventListener("pointerleave", () => {
+    keysHeld.delete("down");
+    if (softDropInterval) {
+      clearInterval(softDropInterval);
+      softDropInterval = null;
+    }
+  });
 
   /* Mute & restart buttons */
   muteBtn.addEventListener("click", () => {

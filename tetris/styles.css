@@ -164,6 +164,64 @@ canvas {
   box-shadow: 0 2px 6px rgba(0, 210, 255, 0.15);
 }
 
+/* Touch controls — hidden by default, shown via JS on touch devices */
+.touch-controls {
+  display: none;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  width: 100%;
+  max-width: 540px;
+}
+
+.touch-controls.visible {
+  display: grid;
+}
+
+.touch-btn {
+  border: 1px solid rgba(0, 210, 255, 0.25);
+  border-radius: 12px;
+  background: rgba(8, 12, 30, 0.85);
+  backdrop-filter: blur(4px);
+  color: #c0d8ff;
+  font-size: 1.2rem;
+  font-weight: 700;
+  padding: 14px 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background 0.1s ease, transform 0.08s ease;
+}
+
+.touch-btn:active {
+  background: rgba(0, 210, 255, 0.15);
+  transform: scale(0.93);
+}
+
+.touch-btn--accent {
+  background: rgba(0, 210, 255, 0.12);
+  border-color: rgba(0, 210, 255, 0.4);
+  color: #00d4ff;
+}
+
+.touch-btn--accent:active {
+  background: rgba(0, 210, 255, 0.3);
+}
+
+.touch-btn--wide {
+  grid-column: span 2;
+  font-size: 1rem;
+  padding: 12px 0;
+}
+
+/* Last row: soft drop + hold, fill the 5-col grid evenly */
+.touch-btn--wide:nth-last-child(2) {
+  grid-column: 1 / span 3;
+}
+.touch-btn--wide:last-child {
+  grid-column: 4 / span 2;
+}
+
 .game__footer p {
   color: rgba(192, 216, 255, 0.4);
   font-size: 0.88rem;

@@ -28,6 +28,15 @@
           <button id="restartButton" class="hud__button" type="button">Restart</button>
         </div>
       </section>
+      <div class="touch-controls" id="touchControls">
+        <button class="touch-btn" data-action="moveLeft" aria-label="Move left">&larr;</button>
+        <button class="touch-btn" data-action="rotateCCW" aria-label="Rotate left">&#8634;</button>
+        <button class="touch-btn touch-btn--accent" data-action="hardDrop" aria-label="Hard drop">&darr;&darr;</button>
+        <button class="touch-btn" data-action="rotateCW" aria-label="Rotate right">&#8635;</button>
+        <button class="touch-btn" data-action="moveRight" aria-label="Move right">&rarr;</button>
+        <button class="touch-btn touch-btn--wide" data-action="softDrop" aria-label="Soft drop">&darr; Drop</button>
+        <button class="touch-btn touch-btn--wide" data-action="hold" aria-label="Hold piece">Hold</button>
+      </div>
       <footer class="game__footer">
         <p>Tip: hold a piece with Shift or C. Clear 4 lines at once for a Tetris!</p>
       </footer>
