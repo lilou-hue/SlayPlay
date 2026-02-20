@@ -1,67 +1,327 @@
 #!/bin/bash
 # Persistent Session Menu
-# Lets you pick an existing tmux session, create a new one, or skip tmux entirely.
+# Arrow-key selector for tmux sessions.
 
 # Only run in interactive, non-tmux shells
 if [ -n "$TMUX" ] || [ ! -t 0 ]; then
-    exit 0
+    return 0 2>/dev/null || exit 0
 fi
 
-BOLD='\033[1m'
-CYAN='\033[36m'
-GREEN='\033[32m'
-YELLOW='\033[33m'
-DIM='\033[2m'
-RESET='\033[0m'
+__tmux_session_menu() {
+    local BOLD='\033[1m'
+    local DIM='\033[2m'
+    local ITALIC='\033[3m'
+    local RESET='\033[0m'
+    local HIGHLIGHT='\033[7m'
+    local CYAN='\033[36m'
+    local GREEN='\033[32m'
+    local YELLOW='\033[33m'
+    local MAGENTA='\033[35m'
+    local BLUE='\033[34m'
+    local WHITE='\033[97m'
+    local GRAY='\033[90m'
 
-echo ""
-echo -e "${BOLD}=== Session Menu ===${RESET}"
-echo ""
+    # ── Welcome banner ──
+    local user greet_name hour greeting day_info up_info
+    user=$(whoami)
+    greet_name="${user^}"
+    hour=$(date +%H)
+    if [ "$hour" -lt 6 ]; then
+        greeting="Burning the midnight oil"
+    elif [ "$hour" -lt 12 ]; then
+        greeting="Good morning"
+    elif [ "$hour" -lt 17 ]; then
+        greeting="Good afternoon"
+    elif [ "$hour" -lt 21 ]; then
+        greeting="Good evening"
+    else
+        greeting="Working late"
+    fi
+    day_info=$(date +"%A, %B %d")
+    up_info=$(uptime -p 2>/dev/null | sed 's/^up //' || echo "unknown")
 
-# Gather existing sessions
-sessions=()
-if tmux list-sessions 2>/dev/null | grep -q .; then
-    echo -e "${CYAN}Persistent sessions:${RESET}"
-    i=1
-    while IFS= read -r line; do
-        sessions+=("$line")
-        name=$(echo "$line" | cut -d: -f1)
-        info=$(echo "$line" | cut -d: -f2-)
-        echo -e "  ${BOLD}$i)${RESET} $name ${DIM}-$info${RESET}"
-        ((i++))
-    done < <(tmux list-sessions 2>/dev/null)
+    # Rainbow colors
+    local R='\033[91m' O='\033[38;5;208m' Y='\033[93m' G='\033[92m' B='\033[94m' V='\033[95m'
+    local W='\033[97;1m'
+
+    # Helper: print rainbow-colored characters
+    local -a __rc=("$R" "$O" "$Y" "$G" "$B" "$V")
+    __rainbow() {
+        local char=$1 count=$2 offset=${3:-0}
+        local i
+        for ((i=0; i<count; i++)); do
+            printf '%b%s' "${__rc[(i + offset) % 6]}" "$char"
+        done
+    }
+
     echo ""
-fi
+    printf '%b' "${W}"
+    printf '                         /\n'
+    printf '                    ____/ \\_\n'
+    printf '                   / o      >%b\n' "${RESET}"
 
-next=$((${#sessions[@]} + 1))
-echo -e "  ${GREEN}${BOLD}n)${RESET} New persistent session"
-echo -e "  ${YELLOW}${BOLD}t)${RESET} Temporary session ${DIM}(no tmux)${RESET}"
-echo ""
+    # Line 4: rainbow + neck
+    printf '        '; __rainbow '~' 5 0; printf '%b     |  ___,-'"'"'%b\n' "${W}" "${RESET}"
 
-read -r -p "Select: " choice
+    # Line 5: rainbow + belly
+    printf '      '; __rainbow '~' 8 1; printf '%b  ___|_/%b\n' "${W}" "${RESET}"
 
-case "$choice" in
-    [0-9]|[0-9][0-9])
-        idx=$((choice - 1))
-        if [ "$idx" -ge 0 ] && [ "$idx" -lt "${#sessions[@]}" ]; then
-            name=$(echo "${sessions[$idx]}" | cut -d: -f1)
-            exec tmux attach-session -t "$name"
+    # Line 6: rainbow + legs
+    printf '    '; __rainbow '~' 10 2; printf '%b / /     \\ \\%b\n' "${W}" "${RESET}"
+
+    # Line 7: sparkles + legs
+    printf '   '; __rainbow '*' 1 0; printf ' '; __rainbow '*' 1 1; printf ' '; __rainbow '*' 1 2; printf ' '; __rainbow '*' 1 3; printf ' '; __rainbow '*' 1 4; printf ' '; __rainbow '*' 1 5
+    printf '%b | |       | |%b\n' "${W}" "${RESET}"
+
+    # Line 8: sparkles + hooves
+    printf '    '; __rainbow '*' 1 3; printf '  '; __rainbow '*' 1 4; printf '  '; __rainbow '*' 1 5; printf '  '; __rainbow '*' 1 0; printf '  '; __rainbow '*' 1 1
+    printf '%b |_|       |_|%b\n' "${W}" "${RESET}"
+
+    echo ""
+    printf '  %b%s, %s.%b\n' "${BOLD}${WHITE}" "$greeting" "$greet_name" "${RESET}"
+    printf '  %b%s  //  up %s%b\n' "${GRAY}" "$day_info" "$up_info" "${RESET}"
+    echo ""
+
+    # ── Build menu options ──
+    local -a options_type=()
+    local -a options_label=()
+    local -a options_extra=()
+    local -a options_icon=()
+
+    local sname nwin nattach activity
+    local cols now elapsed
+    cols=$(tput cols 2>/dev/null || echo 80)
+    now=$(date +%s)
+
+    # Helper: seconds to human-readable relative time
+    __relative_time() {
+        local secs=$1
+        if [ "$secs" -lt 60 ]; then
+            echo "just now"
+        elif [ "$secs" -lt 3600 ]; then
+            echo "$((secs / 60))m ago"
+        elif [ "$secs" -lt 86400 ]; then
+            echo "$((secs / 3600))h ago"
         else
-            echo "Invalid selection, starting temporary session."
+            echo "$((secs / 86400))d ago"
         fi
-        ;;
-    n|N)
-        read -r -p "Session name (leave empty for default): " sname
-        if [ -n "$sname" ]; then
-            exec tmux new-session -s "$sname"
+    }
+
+    # Gather per-pane info for all sessions in one call
+    local -A session_cmds=()
+    local -A session_cwd=()
+    local -A session_title=()
+    local wsess widx wactive wcmd wcwd wtitle
+    while IFS=$'\t' read -r wsess widx wactive wcmd wcwd wtitle; do
+        [ -z "$wsess" ] && continue
+        # Collect all commands per session
+        if [ -n "${session_cmds[$wsess]}" ]; then
+            session_cmds[$wsess]="${session_cmds[$wsess]}, ${wcmd}"
         else
-            exec tmux new-session
+            session_cmds[$wsess]="$wcmd"
         fi
-        ;;
-    t|T|"")
-        echo -e "${DIM}Starting temporary session...${RESET}"
-        ;;
-    *)
-        echo "Invalid selection, starting temporary session."
-        ;;
-esac
+        # Use active window's info as the session info
+        if [ "$wactive" = "1" ]; then
+            session_cwd[$wsess]="$wcwd"
+            # Strip leading spinner characters (e.g. "⠂ ") from pane title
+            wtitle="${wtitle#* }"
+            session_title[$wsess]="$wtitle"
+        fi
+    done < <(tmux list-windows -a -F $'#{session_name}\t#{window_index}\t#{window_active}\t#{pane_current_command}\t#{pane_current_path}\t#{pane_title}' 2>/dev/null)
+
+    # Build session entries
+    while IFS=$'\t' read -r sname nwin nattach activity; do
+        [ -z "$sname" ] && continue
+
+        local cwd="${session_cwd[$sname]:-}"
+        cwd="${cwd/#$HOME/\~}"
+
+        local cmds="${session_cmds[$sname]:-}"
+        local title="${session_title[$sname]:-}"
+
+        # Relative time
+        local time_str=""
+        if [ -n "$activity" ]; then
+            elapsed=$((now - activity))
+            time_str=$(__relative_time "$elapsed")
+        fi
+
+        # Build description: "Game Bug Testing | vim, bash | ~/ | 5m ago"
+        local status_parts=""
+        # Pane title is most descriptive — show it first if it differs from the command
+        if [ -n "$title" ] && [ "$title" != "$cmds" ] && [ "$title" != "$sname" ]; then
+            status_parts="$title"
+        fi
+        if [ -n "$cmds" ]; then
+            status_parts="${status_parts:+$status_parts | }$cmds"
+        fi
+        if [ -n "$cwd" ]; then
+            status_parts="${status_parts:+$status_parts | }$cwd"
+        fi
+        if [ -n "$time_str" ]; then
+            status_parts="${status_parts:+$status_parts | }$time_str"
+        fi
+        if [ "$nattach" != "0" ]; then
+            status_parts="${status_parts:+$status_parts | }attached"
+        fi
+
+        # Truncate to fit terminal width
+        local max_extra=$((cols - ${#sname} - 16))
+        if [ "$max_extra" -le 0 ]; then
+            status_parts=""
+        elif [ "${#status_parts}" -gt "$max_extra" ]; then
+            status_parts="${status_parts:0:$((max_extra - 1))}…"
+        fi
+        options_type+=("attach")
+        options_label+=("$sname")
+        options_extra+=("$status_parts")
+        options_icon+=("~")
+    done < <(tmux list-sessions -F $'#{session_name}\t#{session_windows}\t#{session_attached}\t#{session_activity}' 2>/dev/null)
+
+    options_type+=("new" "temp")
+    options_label+=("New persistent session" "Temporary session")
+    options_extra+=("" "")
+    options_icon+=("+" ".")
+
+    local total=${#options_type[@]}
+    local selected=0
+
+    draw_menu() {
+        if [ "$1" = "redraw" ]; then
+            printf '\033[%dA' "$((total + 3))"
+        fi
+
+        local sep_len=$((cols < 50 ? cols - 4 : 46))
+        local separator=""
+        local s
+        for s in $(seq 1 "$sep_len"); do separator="${separator}-"; done
+
+        printf '  %b%s%b\n' "${GRAY}" "$separator" "${RESET}"
+        echo ""
+
+        local i
+        for i in $(seq 0 $((total - 1))); do
+            local otype="${options_type[$i]}"
+            local olabel="${options_label[$i]}"
+            local oextra="${options_extra[$i]}"
+            local oicon="${options_icon[$i]}"
+
+            if [ "$i" -eq "$selected" ]; then
+                case "$otype" in
+                    attach)
+                        printf '  %b %s %s %b %s%b\n' \
+                            "${BOLD}${CYAN}${HIGHLIGHT}" "$oicon" "$olabel" "${RESET}${GRAY}" "$oextra" "${RESET}"
+                        ;;
+                    new)
+                        printf '  %b %s %s %b\n' \
+                            "${BOLD}${GREEN}${HIGHLIGHT}" "$oicon" "$olabel" "${RESET}"
+                        ;;
+                    temp)
+                        printf '  %b %s %s %b\n' \
+                            "${BOLD}${YELLOW}${HIGHLIGHT}" "$oicon" "$olabel" "${RESET}"
+                        ;;
+                esac
+            else
+                case "$otype" in
+                    attach)
+                        printf '  %b %s%b %s %b%s%b\n' \
+                            "${CYAN}" "$oicon" "${RESET}" "$olabel" "${GRAY}" "$oextra" "${RESET}"
+                        ;;
+                    new)
+                        printf '  %b %s%b %s\n' \
+                            "${GREEN}" "$oicon" "${RESET}" "$olabel"
+                        ;;
+                    temp)
+                        printf '  %b %s%b %s\n' \
+                            "${YELLOW}" "$oicon" "${RESET}" "$olabel"
+                        ;;
+                esac
+            fi
+        done
+        echo ""
+    }
+
+    # Hide cursor, restore on exit/ctrl-c
+    local _old_trap
+    _old_trap=$(trap -p INT)
+    tput civis 2>/dev/null
+    trap 'tput cnorm 2>/dev/null; unset -f draw_menu __relative_time __rainbow; if [ -n "$_old_trap" ]; then eval "$_old_trap"; else trap - INT; fi; return' INT
+
+    draw_menu "first"
+
+    local key seq
+    while true; do
+        IFS= read -rsn1 key
+        case "$key" in
+            $'\x1b')
+                read -rsn1 -t 1 seq
+                if [ "$seq" = "[" ]; then
+                    read -rsn1 -t 1 seq
+                    case "$seq" in
+                        'A')
+                            selected=$((selected - 1))
+                            [ "$selected" -lt 0 ] && selected=$((total - 1))
+                            draw_menu "redraw"
+                            ;;
+                        'B')
+                            selected=$((selected + 1))
+                            [ "$selected" -ge "$total" ] && selected=0
+                            draw_menu "redraw"
+                            ;;
+                    esac
+                fi
+                ;;
+            '')
+                break
+                ;;
+            'k')
+                selected=$((selected - 1))
+                [ "$selected" -lt 0 ] && selected=$((total - 1))
+                draw_menu "redraw"
+                ;;
+            'j')
+                selected=$((selected + 1))
+                [ "$selected" -ge "$total" ] && selected=0
+                draw_menu "redraw"
+                ;;
+            'q')
+                selected=$((total - 1))
+                break
+                ;;
+        esac
+    done
+
+    tput cnorm 2>/dev/null
+    if [ -n "$_old_trap" ]; then eval "$_old_trap"; else trap - INT; fi
+
+    local chosen_type="${options_type[$selected]}"
+    local chosen_name="${options_label[$selected]}"
+
+    unset -f draw_menu __relative_time __rainbow
+
+    case "$chosen_type" in
+        attach)
+            echo ""
+            printf '  %bResuming %s...%b\n\n' "${DIM}" "$chosen_name" "${RESET}"
+            tmux attach-session -t "$chosen_name"
+            ;;
+        new)
+            echo ""
+            local sname
+            read -r -p "  Session name (empty for default): " sname
+            if [ -n "$sname" ]; then
+                printf '\n  %bStarting %s...%b\n\n' "${DIM}" "$sname" "${RESET}"
+                tmux new-session -s "$sname"
+            else
+                printf '\n  %bStarting new session...%b\n\n' "${DIM}" "${RESET}"
+                tmux new-session
+            fi
+            ;;
+        temp)
+            printf '\n  %bStarting temporary session...%b\n\n' "${DIM}" "${RESET}"
+            ;;
+    esac
+}
+
+__tmux_session_menu
+unset -f __tmux_session_menu
