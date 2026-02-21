@@ -55,27 +55,29 @@ __tmux_session_menu() {
     }
 
     echo ""
-    printf '%b' "${W}"
-    printf '                         /\n'
-    printf '                    ____/ \\_\n'
-    printf '                   / o      >%b\n' "${RESET}"
+    printf '%b              .%b\n' "${W}" "${RESET}"
+    printf '%b             /'"'"'%b\n' "${W}" "${RESET}"
+    printf '%b            //%b\n' "${W}" "${RESET}"
+    printf '%b        .  //%b\n' "${W}" "${RESET}"
+    printf '%b        |\\//7%b\n' "${W}" "${RESET}"
+    printf "%b       / \" \\\\%b\n" "${W}" "${RESET}"
+    printf '%b      .   . .%b\n' "${W}" "${RESET}"
 
-    # Line 4: rainbow + neck
-    printf '        '; __rainbow '~' 5 0; printf '%b     |  ___,-'"'"'%b\n' "${W}" "${RESET}"
+    # Rainbow mane flowing from neck
+    printf '  '; __rainbow '~' 4 0; printf '%b | (    \\%b\n' "${W}" "${RESET}"
+    printf '  '; __rainbow '~' 4 1; printf "%b |  '._  '\\%b\n" "${W}" "${RESET}"
+    printf '  '; __rainbow '~' 4 2; printf "%b /    \\'-. )%b\n" "${W}" "${RESET}"
+    printf '  '; __rainbow '*' 1 0; printf ' '; __rainbow '*' 1 1; printf ' '; __rainbow '*' 1 2
+    printf '%b        :/%b\n' "${W}" "${RESET}"
 
-    # Line 5: rainbow + belly
-    printf '      '; __rainbow '~' 8 1; printf '%b  ___|_/%b\n' "${W}" "${RESET}"
-
-    # Line 6: rainbow + legs
-    printf '    '; __rainbow '~' 10 2; printf '%b / /     \\ \\%b\n' "${W}" "${RESET}"
-
-    # Line 7: sparkles + legs
-    printf '   '; __rainbow '*' 1 0; printf ' '; __rainbow '*' 1 1; printf ' '; __rainbow '*' 1 2; printf ' '; __rainbow '*' 1 3; printf ' '; __rainbow '*' 1 4; printf ' '; __rainbow '*' 1 5
-    printf '%b | |       | |%b\n' "${W}" "${RESET}"
-
-    # Line 8: sparkles + hooves
-    printf '    '; __rainbow '*' 1 3; printf '  '; __rainbow '*' 1 4; printf '  '; __rainbow '*' 1 5; printf '  '; __rainbow '*' 1 0; printf '  '; __rainbow '*' 1 1
-    printf '%b |_|       |_|%b\n' "${W}" "${RESET}"
+    # Body + legs
+    printf '   '; __rainbow '*' 1 3; printf ' '; __rainbow '*' 1 4
+    printf '%b  / /| |     |%b\n' "${W}" "${RESET}"
+    printf '    '; __rainbow '*' 1 5
+    printf '%b   \\ \\( )    / /%b\n' "${W}" "${RESET}"
+    printf '%b        \\ | |   / /%b\n' "${W}" "${RESET}"
+    printf '%b         L! !  / /%b\n' "${W}" "${RESET}"
+    printf '%b          [_] L[_|%b\n' "${W}" "${RESET}"
 
     echo ""
     printf '  %b%s, %s.%b\n' "${BOLD}${WHITE}" "$greeting" "$greet_name" "${RESET}"
