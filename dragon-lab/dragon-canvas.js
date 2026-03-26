@@ -46,6 +46,27 @@ window.DragonCanvas = (function () {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, W, H);
 
+    // Lab specimen display background — dark glass panel with subtle grid
+    ctx.fillStyle = 'rgba(6, 8, 18, 0.92)';
+    ctx.fillRect(0, 0, W, H);
+    // Subtle scan-line grid overlay
+    ctx.strokeStyle = 'rgba(0, 60, 50, 0.18)';
+    ctx.lineWidth = 0.5;
+    const gridStep = 28;
+    for (let gx = 0; gx < W; gx += gridStep) {
+      ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke();
+    }
+    for (let gy = 0; gy < H; gy += gridStep) {
+      ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
+    }
+    // Corner brackets (lab aesthetic)
+    const bsz = 28, bw2 = 3;
+    ctx.strokeStyle = 'rgba(0, 200, 160, 0.55)';
+    ctx.lineWidth = bw2;
+    for (const [cx2, cy2, sx, sy] of [[0,0,1,1],[W,0,-1,1],[0,H,1,-1],[W,H,-1,-1]]) {
+      ctx.beginPath(); ctx.moveTo(cx2 + sx*bsz, cy2); ctx.lineTo(cx2, cy2); ctx.lineTo(cx2, cy2 + sy*bsz); ctx.stroke();
+    }
+
     const t = animTime || 0;
 
     // --- Normalize traits ---

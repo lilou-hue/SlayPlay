@@ -153,9 +153,9 @@ window.Scene = (function () {
 
     const mat = new THREE.MeshBasicMaterial({
       map: tex,
-      transparent: true,
-      side: THREE.DoubleSide,
-      depthWrite: false
+      transparent: false,
+      side: THREE.FrontSide,
+      depthWrite: true
     });
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(planeW, planeH), mat);
     // Position so bottom of plane aligns with floor (y=0)
