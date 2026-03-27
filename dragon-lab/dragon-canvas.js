@@ -92,6 +92,8 @@ window.DragonCanvas = (function () {
     const wsF    = 0.60 + n.wingspan   * 0.80;  // wing span multiplier
     const waF    = 0.62 + n.wingArea   * 0.76;  // wing area multiplier
     const musF   = 0.58 + n.musclePower* 0.84;  // leg thickness multiplier
+    const insF   = 0.76 + n.insulation  * 0.58;  // belly/fat plumpness
+    const stomF  = 0.62 + n.stomachCapacity * 0.70;  // torso barrel depth
 
     // Breathing oscillation
     const br = Math.sin(t * 1.72) * 0.016;
@@ -380,7 +382,7 @@ window.DragonCanvas = (function () {
     }
 
     // ============================================================
-    // LAYER 3 — BODY SILHOUETTE
+    // LAYER 3 — BODY SILHOUETTE + TORSO ANATOMY OVERLAYS
     // ============================================================
     ctx.save();
     // Breathing transform (scale around body center)
@@ -388,29 +390,31 @@ window.DragonCanvas = (function () {
     ctx.scale(1 + br * 0.28, 1 + br);
     ctx.translate(-ox, -oy);
     {
-      const g = ctx.createLinearGradient(ox, oy - bh * 1.12, ox, oy + bh * 1.12);
-      g.addColorStop(0.00, rc(top_));
-      g.addColorStop(0.28, rc(skin));
-      g.addColorStop(0.70, rc(dark));
+      // Four-stop gradient: rim-lit spine → dorsal top → mid skin → dark underside
+      const g = ctx.createLinearGradient(ox, oy - bh * 1.24, ox, oy + bh * 1.22);
+      g.addColorStop(0.00, rc(lerp(top_, { r: 255, g: 255, b: 255 }, 0.10)));
+      g.addColorStop(0.16, rc(top_));
+      g.addColorStop(0.42, rc(skin));
+      g.addColorStop(0.72, rc(dark));
       g.addColorStop(1.00, rc(dark));
       ctx.fillStyle = g;
-      ctx.strokeStyle = rc(dark, 0.55);
+      ctx.strokeStyle = rc(dark, 0.44);
       ctx.lineWidth = 1.4;
 
       ctx.beginPath();
-      // Upper: tail base → shoulder → neck base
+      // ---- UPPER: tail top → haunch bump → waist dip → shoulder hump → neck ----
       ctx.moveTo(tbx, tby - tRad * 0.70);
       ctx.bezierCurveTo(
-        tbx + bw * 0.20, oy - bh * 0.85,
-        ox - bw * 0.15, oy - bh * 1.04,
-        ox + bw * 0.18, oy - bh * 1.05
+        tbx + bw * 0.18, oy - bh * (0.80 + musF * 0.05),   // haunch ctrl — rear rise
+        ox  - bw * 0.24, oy - bh * (0.90 + musF * 0.05),   // waist dip ctrl
+        ox  + bw * 0.10, oy - bh * (0.93 + musF * 0.12)    // shoulder hump peak
       );
       ctx.bezierCurveTo(
-        ox + bw * 0.58, oy - bh * 1.02,
-        nbx - W * 0.008, nby + H * 0.01,
+        ox + bw * 0.50, oy - bh * (0.92 + musF * 0.09),    // chest-shoulder ctrl
+        nbx - W * 0.010, nby + H * 0.012,
         nbx, nby
       );
-      // Neck upper side (S-curve up to head)
+      // Neck upper side (S-curve — unchanged)
       ctx.bezierCurveTo(nc1x, nc1y, nc2x, nc2y, nex, ney);
       // Head upper arc → crown
       ctx.bezierCurveTo(
@@ -441,15 +445,15 @@ window.DragonCanvas = (function () {
         nc1x - W * 0.014, nc1y + H * 0.052,
         nbx - W * 0.010, nby + H * 0.068
       );
-      // Chest → belly → haunch → tail base
+      // ---- LOWER: chest → barrel belly (insF/stomF) → haunch → tail base ----
       ctx.bezierCurveTo(
-        ox + bw * 0.52, oy + bh * 0.58,
-        ox + bw * 0.10, oy + bh * 1.02,
-        ox - bw * 0.14, oy + bh * 1.02
+        ox + bw * (0.52 + musF * 0.04), oy + bh * (0.52 + stomF * 0.05),
+        ox + bw * 0.08, oy + bh * (0.98 + insF * 0.06),
+        ox - bw * 0.08, oy + bh * (1.00 + insF * 0.07)
       );
       ctx.bezierCurveTo(
-        ox - bw * 0.52, oy + bh * 0.96,
-        tbx + bw * 0.22, oy + bh * 0.74,
+        ox - bw * 0.48, oy + bh * (0.96 + insF * 0.05),
+        tbx + bw * 0.26, oy + bh * (0.76 + insF * 0.03),
         tbx, tby + tRad * 0.70
       );
       // Around tail base stub
@@ -460,46 +464,166 @@ window.DragonCanvas = (function () {
       );
       ctx.fill();
       ctx.stroke();
+
+      // ---- SHOULDER MUSCLE PAD — wing root / front-leg socket bulge ----
+      const shlCx = ox + bw * 0.38, shlCy = oy - bh * 0.72;
+      const shlG = ctx.createRadialGradient(shlCx, shlCy, 0, shlCx, shlCy, bw * 0.38);
+      shlG.addColorStop(0.0, rc(skin, 0.44));
+      shlG.addColorStop(0.5, rc(skin, 0.18));
+      shlG.addColorStop(1.0, rc(skin, 0.0));
+      ctx.fillStyle = shlG;
+      ctx.beginPath();
+      ctx.ellipse(shlCx, shlCy, bw * (0.28 + musF * 0.09), bh * (0.56 + musF * 0.13), 0.14, 0, Math.PI * 2);
+      ctx.fill();
+
+      // ---- HAUNCH MUSCLE PAD — rear-leg attachment mass ----
+      const hchCx = ox - bw * 0.20, hchCy = oy + bh * 0.44;
+      const hchG = ctx.createRadialGradient(hchCx, hchCy, 0, hchCx, hchCy, bw * 0.32);
+      hchG.addColorStop(0.0, rc(skin, 0.36));
+      hchG.addColorStop(0.6, rc(skin, 0.13));
+      hchG.addColorStop(1.0, rc(skin, 0.0));
+      ctx.fillStyle = hchG;
+      ctx.beginPath();
+      ctx.ellipse(hchCx, hchCy, bw * (0.24 + musF * 0.09), bh * (0.60 + musF * 0.12), -0.10, 0, Math.PI * 2);
+      ctx.fill();
+
+      // ---- DORSAL RIM LIGHT — soft highlight along spine ridge ----
+      const rimG = ctx.createLinearGradient(ox - bw * 0.22, oy - bh * 0.90, ox + bw * 0.48, oy - bh * 1.05);
+      rimG.addColorStop(0.0,  rc(top_, 0.0));
+      rimG.addColorStop(0.44, rc(lerp(top_, { r: 255, g: 255, b: 255 }, 0.22), 0.34));
+      rimG.addColorStop(1.0,  rc(top_, 0.0));
+      ctx.fillStyle = rimG;
+      ctx.beginPath();
+      ctx.ellipse(ox + bw * 0.14, oy - bh * (0.95 + musF * 0.08), bw * 0.40, bh * 0.08, -0.10, 0, Math.PI * 2);
+      ctx.fill();
+
+      // ---- RIBCAGE SURFACE HINT — visible arc strokes at high musclePower ----
+      if (n.musclePower > 0.14) {
+        ctx.save();
+        const ribOp = (n.musclePower - 0.14) * 0.26;
+        const ribN = 4;
+        for (let ri = 0; ri < ribN; ri++) {
+          const tR   = 0.16 + ri / (ribN - 1) * 0.58;
+          const ribx = nbx - bw * (0.14 + tR * 1.00);
+          const riby = oy  - bh * (0.78 - tR * 0.18);
+          const ribH = bh  * (0.34 + tR * 0.24);
+          ctx.strokeStyle = rc(lerp(skin, { r: 255, g: 255, b: 255 }, 0.08), ribOp);
+          ctx.lineWidth = 0.8;
+          ctx.beginPath();
+          ctx.arc(ribx - ribH * 0.10, riby + ribH * 0.08, ribH, -Math.PI * 0.58, Math.PI * 0.08);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
     }
     ctx.restore();
 
     // ============================================================
-    // LAYER 4 — BELLY UNDERSIDE HIGHLIGHT
+    // LAYER 4 — BELLY PLATES + SCALE SEGMENTS
     // ============================================================
     ctx.save();
     ctx.translate(ox, oy);
     ctx.scale(1 + br * 0.28, 1 + br);
     ctx.translate(-ox, -oy);
     {
-      const g = ctx.createLinearGradient(ox, oy, ox, oy + bh * 1.1);
-      g.addColorStop(0.00, rc(belly, 0.00));
-      g.addColorStop(0.32, rc(belly, 0.68));
-      g.addColorStop(1.00, rc(belly, 0.30));
-      ctx.fillStyle = g;
+      // Belly plate band: organic shape that sags with insulation, widens with stomachCapacity
+      const bCy = oy + bh * (0.30 + insF * 0.05);             // band vertical centre
+      const bHH = bh * (0.54 + insF * 0.10);                   // half-height
+      const bHW = bw * (0.44 + stomF * 0.07);                  // half-width
+
+      const bg = ctx.createLinearGradient(ox, bCy - bHH, ox, bCy + bHH);
+      bg.addColorStop(0.00, rc(belly, 0.00));
+      bg.addColorStop(0.22, rc(belly, 0.70));
+      bg.addColorStop(0.58, rc(belly, 0.52));
+      bg.addColorStop(1.00, rc(belly, 0.00));
+      ctx.fillStyle = bg;
+
+      // Organic belly path: wider mid-section, tapers toward chest (right) and tail (left)
       ctx.beginPath();
-      ctx.ellipse(ox - bw * 0.07, oy + bh * 0.30, bw * 0.50, bh * 0.64, 0.06, 0, Math.PI * 2);
+      ctx.moveTo(ox + bHW, bCy);
+      ctx.bezierCurveTo(
+        ox + bHW * 0.90, bCy - bHH * 0.58,
+        ox + bHW * 0.40, bCy - bHH,
+        ox - bHW * 0.22, bCy - bHH * 0.88
+      );
+      ctx.bezierCurveTo(
+        ox - bHW * 0.72, bCy - bHH * 0.76,
+        ox - bHW * 0.96, bCy - bHH * 0.08,
+        ox - bHW * 0.96, bCy + bHH * 0.32
+      );
+      ctx.bezierCurveTo(
+        ox - bHW * 0.86, bCy + bHH,
+        ox - bHW * 0.38, bCy + bHH * 0.90,
+        ox + bHW * 0.22, bCy + bHH * 0.78
+      );
+      ctx.bezierCurveTo(
+        ox + bHW * 0.70, bCy + bHH * 0.56,
+        ox + bHW * 0.96, bCy + bHH * 0.20,
+        ox + bHW, bCy
+      );
       ctx.fill();
+
+      // Belly scale plate segments — arc strokes suggesting overlapping armour plates
+      const pN  = 5 + Math.floor(n.scaleThickness * 4);
+      const pOp = 0.16 + n.scaleThickness * 0.28;
+      for (let pli = 0; pli < pN; pli++) {
+        const tP = pli / (pN - 1);
+        const px = (ox + bHW) - tP * (bHW + bHW * 0.96);
+        const py = bCy + bHH * (0.30 + 0.16 * Math.sin(tP * Math.PI));
+        const pR = bHH * (0.28 + 0.20 * Math.sin(tP * Math.PI));
+        ctx.strokeStyle = rc(lerp(belly, { r: 255, g: 255, b: 255 }, 0.12), pOp);
+        ctx.lineWidth = 0.75;
+        ctx.beginPath();
+        ctx.arc(px, py - pR * 0.08, pR, -Math.PI * 0.66, Math.PI * 0.66);
+        ctx.stroke();
+      }
     }
     ctx.restore();
 
     // ============================================================
-    // LAYER 5 — DORSAL SPINE RIDGES
+    // LAYER 5 — DORSAL SPINE FINS (filled bezier triangles)
     // ============================================================
     {
-      const ridgeN = 6 + Math.floor(n.scaleThickness * 4);
-      for (let i = 0; i < ridgeN; i++) {
-        const tp = i / (ridgeN - 1);
-        // Spread from shoulder to tail along spine
-        const rx = nbx - W * 0.015 - tp * (bw * 1.28);
-        const ry = oy - bh * (0.98 - 0.06 * Math.sin(tp * Math.PI));
-        const rh = (5.5 + n.scaleThickness * 8.0) * sc * (0.38 + 0.94 * Math.sin(tp * Math.PI * 0.95));
+      const finN        = 6 + Math.floor(n.scaleThickness * 5);
+      const finMaxH     = (6.0 + n.scaleThickness * 11.0) * sc;
+      const spineStartX = nbx - W * 0.012;
+      const spineEndX   = tbx + bw * 0.10;
+
+      for (let fi = 0; fi < finN; fi++) {
+        const tp  = fi / (finN - 1);
+        // Distribute fins from just behind neck socket to just before tail base
+        const fx  = spineStartX - tp * (spineStartX - spineEndX);
+        const fy  = oy - bh * (0.95 + musF * 0.10 - 0.04 * Math.sin(tp * Math.PI));
+        const fh  = finMaxH * (0.28 + 0.92 * Math.sin(tp * Math.PI * 0.90 + 0.14));
+        const fw  = fh * (0.18 + 0.10 * (1 - tp));  // slightly wider toward tail
+        const lean = -fh * 0.10;                      // gentle backward lean
+
+        // Gradient: skin-matched base → bone highlight at tip
+        const fg = ctx.createLinearGradient(fx, fy, fx + lean, fy - fh);
+        fg.addColorStop(0.00, rc(top_, 0.84));
+        fg.addColorStop(0.50, rc(lerp(bone, top_, 0.46), 0.86));
+        fg.addColorStop(1.00, rc(lerp(bone, { r: 255, g: 255, b: 255 }, 0.22), 0.70));
+
         ctx.save();
-        ctx.strokeStyle = rc(bone, 0.66);
-        ctx.lineWidth = 1.7 * sc;
-        ctx.lineCap = 'round';
+        ctx.fillStyle   = fg;
+        ctx.strokeStyle = rc(bone, 0.34);
+        ctx.lineWidth   = 0.7;
         ctx.beginPath();
-        ctx.moveTo(rx, ry);
-        ctx.lineTo(rx + rh * 0.14, ry - rh);
+        ctx.moveTo(fx - fw, fy);
+        // Left edge curves up to tip
+        ctx.bezierCurveTo(
+          fx - fw * 0.60, fy - fh * 0.42,
+          fx + lean - fw * 0.18, fy - fh * 0.78,
+          fx + lean, fy - fh
+        );
+        // Right edge curves back down
+        ctx.bezierCurveTo(
+          fx + lean + fw * 0.16, fy - fh * 0.80,
+          fx + fw * 0.46, fy - fh * 0.44,
+          fx + fw, fy
+        );
+        ctx.closePath();
+        ctx.fill();
         ctx.stroke();
         ctx.restore();
       }
