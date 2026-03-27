@@ -752,6 +752,74 @@ window.DragonCanvas = (function () {
   }
 
   // ============================================================
+  // BATTLE DRAW — two dragons facing each other
+  // ============================================================
+  function drawBattle(canvas, pTraits, pTint, eTraits, eTint, animTime) {
+    const W = canvas.width, H = canvas.height;
+    const ctx = canvas.getContext('2d');
+
+    // --- Battle background ---
+    ctx.fillStyle = 'rgba(8, 5, 18, 0.96)';
+    ctx.fillRect(0, 0, W, H);
+    // Grid
+    ctx.strokeStyle = 'rgba(50, 0, 60, 0.22)';
+    ctx.lineWidth = 0.5;
+    const gs = 28;
+    for (let gx = 0; gx < W; gx += gs) {
+      ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke();
+    }
+    for (let gy = 0; gy < H; gy += gs) {
+      ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
+    }
+    // Corner brackets
+    const bsz = 24;
+    ctx.strokeStyle = 'rgba(180, 30, 220, 0.55)';
+    ctx.lineWidth = 2.5;
+    for (const [cx2, cy2, sx, sy] of [[0,0,1,1],[W,0,-1,1],[0,H,1,-1],[W,H,-1,-1]]) {
+      ctx.beginPath(); ctx.moveTo(cx2 + sx*bsz, cy2); ctx.lineTo(cx2, cy2); ctx.lineTo(cx2, cy2 + sy*bsz); ctx.stroke();
+    }
+    // Centre divider glow
+    const div = ctx.createLinearGradient(W*0.5 - 2, 0, W*0.5 + 2, 0);
+    div.addColorStop(0, 'rgba(200,40,30,0)');
+    div.addColorStop(0.5, 'rgba(200,40,30,0.38)');
+    div.addColorStop(1, 'rgba(200,40,30,0)');
+    ctx.fillStyle = div;
+    ctx.fillRect(W*0.5 - 2, H*0.06, 4, H*0.88);
+
+    // --- Draw each dragon onto its own offscreen canvas, then blit ---
+    const oc = document.createElement('canvas');
+    oc.width = W; oc.height = H;
+
+    const sc = 0.46;  // how much to scale each dragon
+
+    // Player dragon — left side, facing right (normal orientation)
+    draw(oc, pTraits, pTint, animTime);
+    ctx.save();
+    ctx.translate(W * 0.03, H * 0.06);
+    ctx.scale(sc, sc);
+    ctx.drawImage(oc, 0, 0);
+    ctx.restore();
+
+    // Enemy dragon — right side, facing left (mirror horizontally)
+    draw(oc, eTraits, eTint, animTime);
+    ctx.save();
+    ctx.translate(W * 0.97, H * 0.06);
+    ctx.scale(-sc, sc);
+    ctx.drawImage(oc, 0, 0);
+    ctx.restore();
+
+    // VS label
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.font = `bold ${Math.round(H * 0.072)}px monospace`;
+    ctx.shadowColor = 'rgba(220,40,20,0.90)';
+    ctx.shadowBlur  = 16;
+    ctx.fillStyle   = 'rgba(255,80,50,0.92)';
+    ctx.fillText('VS', W * 0.5, H * 0.55);
+    ctx.restore();
+  }
+
+  // ============================================================
   // PUBLIC API
   // ============================================================
   function create(width, height) {
@@ -761,5 +829,5 @@ window.DragonCanvas = (function () {
     return c;
   }
 
-  return { draw, create };
+  return { draw, drawBattle, create };
 })();
