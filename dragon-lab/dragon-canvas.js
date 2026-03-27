@@ -132,13 +132,14 @@ window.DragonCanvas = (function () {
     const eX  = hx + hs * 0.44,  eY  = hy  - hs * 0.07;
     const eR  = hs * 0.150;
 
-    // Tail
-    const tbx  = ox - bw * 0.90,  tby  = oy - bh * 0.10;
+    // Tail — S-curve droop with gentle animation sway
+    const tbx   = ox - bw * 0.90,  tby  = oy - bh * 0.10;
     const tlLen = W * 0.16 * tlFac;
-    const ttx  = tbx - tlLen,     tty  = tby + H * 0.018;
-    const tc1x = tbx - tlLen * 0.35, tc1y = tby + H * 0.005;
-    const tc2x = tbx - tlLen * 0.70, tc2y = tby + H * 0.018;
-    const tRad = bh * 0.29;
+    const tRad  = bh * 0.29;                                   // body attachment radius (unchanged)
+    const tSway = Math.sin(t * 1.10 + 0.55) * H * 0.011;     // idle sway amplitude
+    const tc1x  = tbx - tlLen * 0.32, tc1y = tby + H * 0.048 + tSway * 0.50;
+    const tc2x  = tbx - tlLen * 0.65, tc2y = tby + H * 0.090 + tSway;
+    const ttx   = tbx - tlLen,         tty  = tby + H * 0.064 + tSway * 0.62;
 
     // Wing
     const wSpan = W * 0.27 * wsF;
@@ -657,48 +658,202 @@ window.DragonCanvas = (function () {
     }
 
     // ============================================================
-    // LAYER 7 — TAIL
+    // LAYER 7 — TAIL  (evolved: tapered tube + dorsal spines + arrowhead blade)
     // ============================================================
     {
-      const p0 = perp(tbx, tby, tc1x, tc1y, tRad);
-      const p1 = perp(tc1x, tc1y, tc2x, tc2y, tRad * 0.52);
-      const p2 = perp(tc2x, tc2y, ttx, tty, tRad * 0.06);
+      // Radii tapering from muscular base to slim tip
+      const tR0 = tRad * (1.00 + n.musclePower * 0.36);   // base — muscle thickens it
+      const tR1 = tRad * 0.64;
+      const tR2 = tRad * 0.29;
+      const tR3 = tRad * 0.07;                              // near-tip waist
+
+      // 4 sample points along the cubic bezier for perp normals
+      function bezPt(p0x,p0y, c1x,c1y, c2x,c2y, p3x,p3y, u) {
+        const om = 1 - u;
+        return {
+          x: om*om*om*p0x + 3*om*om*u*c1x + 3*om*u*u*c2x + u*u*u*p3x,
+          y: om*om*om*p0y + 3*om*om*u*c1y + 3*om*u*u*c2y + u*u*u*p3y
+        };
+      }
+      const s0 = { x: tbx,  y: tby  };
+      const s1 = bezPt(tbx,tby, tc1x,tc1y, tc2x,tc2y, ttx,tty, 0.33);
+      const s2 = bezPt(tbx,tby, tc1x,tc1y, tc2x,tc2y, ttx,tty, 0.66);
+      const s3 = { x: ttx,  y: tty  };
+
+      const n0 = perp(s0.x, s0.y, s1.x, s1.y, tR0);
+      const n1 = perp(s0.x, s0.y, s2.x, s2.y, tR1);
+      const n2 = perp(s1.x, s1.y, s3.x, s3.y, tR2);
+      const n3 = perp(s2.x, s2.y, s3.x, s3.y, tR3);
 
       ctx.save();
-      const g = ctx.createLinearGradient(tbx, tby - tRad, tbx, tby + tRad);
-      g.addColorStop(0.00, rc(top_));
-      g.addColorStop(0.50, rc(skin));
-      g.addColorStop(1.00, rc(dark));
-      ctx.fillStyle = g;
-      ctx.strokeStyle = rc(dark, 0.38);
-      ctx.lineWidth = 0.9;
 
+      // Along-axis gradient — dark spine top, midtone belly
+      const tg = ctx.createLinearGradient(tbx, tby, ttx, tty);
+      tg.addColorStop(0.00, rc(top_, 0.90));
+      tg.addColorStop(0.28, rc(skin));
+      tg.addColorStop(0.70, rc(lerp(skin, dark, 0.42)));
+      tg.addColorStop(1.00, rc(dark, 0.88));
+      ctx.fillStyle = tg;
+      ctx.strokeStyle = rc(dark, 0.28);
+      ctx.lineWidth = 0.8;
+
+      // Upper silhouette: base → s1 → s2 → tip  (+normals)
       ctx.beginPath();
-      ctx.moveTo(tbx + p0.x, tby + p0.y);
-      ctx.bezierCurveTo(
-        tc1x + p1.x * 1.15, tc1y + p1.y * 1.15,
-        tc2x + p2.x * 2.8,  tc2y + p2.y * 2.8,
-        ttx, tty
+      ctx.moveTo(s0.x + n0.x, s0.y + n0.y);
+      ctx.quadraticCurveTo(
+        (s0.x + n0.x + s1.x + n1.x) * 0.5, (s0.y + n0.y + s1.y + n1.y) * 0.5,
+        s1.x + n1.x, s1.y + n1.y
       );
-      ctx.bezierCurveTo(
-        tc2x - p2.x * 2.8,  tc2y - p2.y * 2.8,
-        tc1x - p1.x * 1.15, tc1y - p1.y * 1.15,
-        tbx - p0.x, tby - p0.y
+      ctx.quadraticCurveTo(
+        (s1.x + n1.x + s2.x + n2.x) * 0.5, (s1.y + n1.y + s2.y + n2.y) * 0.5,
+        s2.x + n2.x, s2.y + n2.y
+      );
+      ctx.quadraticCurveTo(
+        (s2.x + n2.x + s3.x + n3.x) * 0.5, (s2.y + n2.y + s3.y + n3.y) * 0.5,
+        s3.x, s3.y
+      );
+      // Lower silhouette: tip → s2 → s1 → base  (-normals)
+      ctx.quadraticCurveTo(
+        (s3.x - n3.x + s2.x - n2.x) * 0.5, (s3.y - n3.y + s2.y - n2.y) * 0.5,
+        s2.x - n2.x, s2.y - n2.y
+      );
+      ctx.quadraticCurveTo(
+        (s2.x - n2.x + s1.x - n1.x) * 0.5, (s2.y - n2.y + s1.y - n1.y) * 0.5,
+        s1.x - n1.x, s1.y - n1.y
+      );
+      ctx.quadraticCurveTo(
+        (s1.x - n1.x + s0.x - n0.x) * 0.5, (s1.y - n1.y + s0.y - n0.y) * 0.5,
+        s0.x - n0.x, s0.y - n0.y
       );
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
 
-      // Tail spike (diamond)
-      const spL = (8 + n.tailSize * 16) * sc;
-      ctx.fillStyle = rc(bone, 0.86);
-      ctx.beginPath();
-      ctx.moveTo(ttx - spL * 0.58, tty);
-      ctx.lineTo(ttx - spL * 0.08, tty - spL * 0.34);
-      ctx.lineTo(ttx + spL * 0.24, tty);
-      ctx.lineTo(ttx - spL * 0.08, tty + spL * 0.34);
-      ctx.closePath();
-      ctx.fill();
+      // Dorsal highlight strip
+      {
+        const dg = ctx.createLinearGradient(tbx, tby, ttx, tty);
+        dg.addColorStop(0.00, rc(lerp(top_, {r:255,g:255,b:255}, 0.28), 0.55));
+        dg.addColorStop(0.60, rc(top_, 0.18));
+        dg.addColorStop(1.00, rc(top_, 0.00));
+        ctx.strokeStyle = dg;
+        ctx.lineWidth = tR0 * 0.32;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(s0.x + n0.x * 0.55, s0.y + n0.y * 0.55);
+        ctx.quadraticCurveTo(
+          (s0.x+n0.x*0.5 + s1.x+n1.x*0.5)*0.5, (s0.y+n0.y*0.5 + s1.y+n1.y*0.5)*0.5,
+          s1.x + n1.x * 0.50, s1.y + n1.y * 0.50
+        );
+        ctx.quadraticCurveTo(
+          (s1.x+n1.x*0.5 + s2.x+n2.x*0.5)*0.5, (s1.y+n1.y*0.5 + s2.y+n2.y*0.5)*0.5,
+          s2.x + n2.x * 0.44, s2.y + n2.y * 0.44
+        );
+        ctx.stroke();
+      }
+
+      // Dorsal tail spines (2–5, driven by scaleThickness)
+      {
+        const nSpines = 2 + Math.round(n.scaleThickness * 3);
+        for (let i = 0; i < nSpines; i++) {
+          const u = 0.08 + (i / (nSpines - 0.5)) * 0.56;   // spread along first 65% of tail
+          const sp = bezPt(tbx,tby, tc1x,tc1y, tc2x,tc2y, ttx,tty, u);
+          const uN  = Math.min(u + 0.05, 1);
+          const sp2 = bezPt(tbx,tby, tc1x,tc1y, tc2x,tc2y, ttx,tty, uN);
+          const sn  = perp(sp.x, sp.y, sp2.x, sp2.y, 1);
+          const spR = tR0 * (1 - u * 0.72);
+          const spH = spR * (1.10 + n.scaleThickness * 1.40);  // fin height
+          const spW = spR * 0.52;
+
+          // Direction of normal (dorsal side)
+          const nx = sn.x / (Math.hypot(sn.x, sn.y) || 1);
+          const ny = sn.y / (Math.hypot(sn.x, sn.y) || 1);
+
+          // Fin base tangent vector
+          const bx = -ny, by = nx;    // tangent along spine
+
+          const tipX = sp.x + nx * spH;
+          const tipY = sp.y + ny * spH;
+
+          const spg = ctx.createLinearGradient(sp.x, sp.y, tipX, tipY);
+          spg.addColorStop(0.00, rc(dark, 0.82));
+          spg.addColorStop(0.60, rc(lerp(skin, top_, 0.55), 0.70));
+          spg.addColorStop(1.00, rc(bone, 0.56));
+
+          ctx.fillStyle = spg;
+          ctx.strokeStyle = rc(dark, 0.22);
+          ctx.lineWidth = 0.7;
+          ctx.beginPath();
+          ctx.moveTo(sp.x - bx * spW, sp.y - by * spW);
+          ctx.quadraticCurveTo(
+            sp.x + nx * spH * 0.40 - bx * spW * 0.20,
+            sp.y + ny * spH * 0.40 - by * spW * 0.20,
+            tipX, tipY
+          );
+          ctx.quadraticCurveTo(
+            sp.x + nx * spH * 0.40 + bx * spW * 0.20,
+            sp.y + ny * spH * 0.40 + by * spW * 0.20,
+            sp.x + bx * spW, sp.y + by * spW
+          );
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+      }
+
+      // Arrowhead blade at tip — driven by tailSize + boneDensity
+      {
+        const bladeLen  = (10 + n.tailSize * 22) * sc;
+        const bladeW    = (3.5 + n.tailSize * 5.5) * sc;
+        const barbLen   = bladeLen * (0.30 + n.boneDensity * 0.28);
+
+        // Tail direction at tip: use s2→s3 vector
+        const dx = s3.x - s2.x, dy = s3.y - s2.y;
+        const dlen = Math.hypot(dx, dy) || 1;
+        const ux = dx / dlen, uy = dy / dlen;   // forward unit
+        const px = -uy,       py =  ux;           // perp unit
+
+        const tipX  = s3.x + ux * bladeLen;
+        const tipY  = s3.y + uy * bladeLen;
+        const wingLX = s3.x - ux * bladeLen * 0.22 + px * bladeW;
+        const wingLY = s3.y - uy * bladeLen * 0.22 + py * bladeW;
+        const wingRX = s3.x - ux * bladeLen * 0.22 - px * bladeW;
+        const wingRY = s3.y - uy * bladeLen * 0.22 - py * bladeW;
+        const barbLX = s3.x - ux * barbLen + px * bladeW * 0.44;
+        const barbLY = s3.y - uy * barbLen + py * bladeW * 0.44;
+        const barbRX = s3.x - ux * barbLen - px * bladeW * 0.44;
+        const barbRY = s3.y - uy * barbLen - py * bladeW * 0.44;
+
+        const bg = ctx.createLinearGradient(s3.x, s3.y, tipX, tipY);
+        bg.addColorStop(0.00, rc(lerp(skin, bone, 0.40), 0.88));
+        bg.addColorStop(0.55, rc(bone, 0.82));
+        bg.addColorStop(1.00, rc(lerp(bone, {r:255,g:255,b:255}, 0.25), 0.72));
+        ctx.fillStyle = bg;
+        ctx.strokeStyle = rc(dark, 0.46);
+        ctx.lineWidth = 1.0;
+
+        ctx.beginPath();
+        ctx.moveTo(tipX, tipY);
+        ctx.lineTo(wingLX, wingLY);
+        ctx.lineTo(barbLX, barbLY);
+        ctx.lineTo(s3.x - ux * tRad * 0.55 + px * tR3 * 0.5, s3.y - uy * tRad * 0.55 + py * tR3 * 0.5);
+        ctx.lineTo(s3.x - ux * tRad * 0.55 - px * tR3 * 0.5, s3.y - uy * tRad * 0.55 - py * tR3 * 0.5);
+        ctx.lineTo(barbRX, barbRY);
+        ctx.lineTo(wingRX, wingRY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Blade centerline highlight
+        ctx.save();
+        ctx.strokeStyle = rc(lerp(bone,{r:255,g:255,b:255},0.45), 0.50);
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(s3.x, s3.y);
+        ctx.lineTo(tipX, tipY);
+        ctx.stroke();
+        ctx.restore();
+      }
+
       ctx.restore();
     }
 
