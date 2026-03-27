@@ -181,6 +181,147 @@ window.DragonCanvas = (function () {
     const pe = perp(nbx, nby, nex, ney, nrEnd);
 
     // ============================================================
+    // LOCAL HELPER — draw one segmented toe + knuckle + digital pad + filled claw
+    // Closes over: ctx, n, dark, skin, bone, belly, lerp, rc, perp, clawLen
+    // ============================================================
+    const drawToe = (bx, by, ang, toeLen, toeW) => {
+      const proxFrac = 0.55;
+      const mx = bx + Math.cos(ang) * toeLen * proxFrac;
+      const my = by + Math.sin(ang) * toeLen * proxFrac;
+      const tx = bx + Math.cos(ang) * toeLen;
+      const ty = by + Math.sin(ang) * toeLen;
+
+      const pW = toeW * 1.04;
+      const dW = toeW * 0.78;
+      const tW = toeW * 0.50;
+
+      const pB   = perp(bx, by, mx, my, pW);
+      const pMid = perp(bx, by, mx, my, dW * 0.95);
+      const dK   = perp(mx, my, tx, ty, dW);
+      const dT   = perp(mx, my, tx, ty, tW);
+
+      // Proximal phalanx
+      ctx.fillStyle   = rc(dark, 0.90);
+      ctx.strokeStyle = rc(dark, 0.26);
+      ctx.lineWidth   = 0.65;
+      ctx.beginPath();
+      ctx.moveTo(bx + pB.x, by + pB.y);
+      ctx.quadraticCurveTo(
+        (bx + mx) * 0.5 + pMid.x * 1.10, (by + my) * 0.5 + pMid.y * 1.10,
+        mx + dK.x, my + dK.y
+      );
+      ctx.lineTo(mx - dK.x, my - dK.y);
+      ctx.quadraticCurveTo(
+        (bx + mx) * 0.5 - pMid.x * 0.90, (by + my) * 0.5 - pMid.y * 0.90,
+        bx - pB.x, by - pB.y
+      );
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Knuckle joint
+      ctx.beginPath();
+      ctx.arc(mx, my, toeW * (0.50 + n.boneDensity * 0.22), 0, Math.PI * 2);
+      ctx.fillStyle = rc(lerp(skin, bone, 0.35), 0.90);
+      ctx.fill();
+
+      // Distal phalanx (tapers toward tip)
+      ctx.fillStyle = rc(dark, 0.88);
+      ctx.beginPath();
+      ctx.moveTo(mx + dK.x, my + dK.y);
+      ctx.quadraticCurveTo(
+        (mx + tx) * 0.5 + dT.x * 1.06, (my + ty) * 0.5 + dT.y * 1.06,
+        tx + dT.x * 0.56, ty + dT.y * 0.56
+      );
+      ctx.lineTo(tx - dT.x * 0.56, ty - dT.y * 0.56);
+      ctx.quadraticCurveTo(
+        (mx + tx) * 0.5 - dT.x * 0.88, (my + ty) * 0.5 - dT.y * 0.88,
+        mx - dK.x, my - dK.y
+      );
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Digital pad — ventral cushion at distal tip
+      const pn  = perp(mx, my, tx, ty, 1);
+      const pnL = Math.hypot(pn.x, pn.y) || 1;
+      const pnx = pn.x / pnL, pny = pn.y / pnL;
+      ctx.fillStyle = rc(lerp(belly, dark, 0.26), 0.60);
+      ctx.beginPath();
+      ctx.ellipse(
+        tx - pnx * toeW * 0.58, ty - pny * toeW * 0.58,
+        toeW * 0.52, toeW * 0.34,
+        ang, 0, Math.PI * 2
+      );
+      ctx.fill();
+
+      // Dorsal scale arcs (scaleThickness-driven)
+      if (n.scaleThickness > 0.20) {
+        const nS  = 1 + Math.floor(n.scaleThickness * 2);
+        const sOp = (n.scaleThickness - 0.20) * 0.34;
+        ctx.strokeStyle = rc(lerp(skin, { r: 255, g: 255, b: 255 }, 0.12), sOp);
+        ctx.lineWidth   = 0.50;
+        for (let si = 0; si < nS; si++) {
+          const su = 0.14 + si / (nS + 0.5) * 0.68;
+          const sx = bx + Math.cos(ang) * toeLen * su;
+          const sy = by + Math.sin(ang) * toeLen * su;
+          const sr = toeW * (0.62 - si * 0.06);
+          ctx.beginPath();
+          ctx.arc(sx + pnx * sr * 0.15, sy + pny * sr * 0.15, sr, ang + Math.PI * 0.52, ang - Math.PI * 0.52 + Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+
+      // Filled claw — tapered crescent with hook, driven by boneDensity
+      const clW  = toeW * (0.42 + n.boneDensity * 0.24);
+      const hookD = clawLen * (0.20 + n.boneDensity * 0.22);
+      const ceX  = tx + Math.cos(ang) * clawLen;
+      const ceY  = ty + Math.sin(ang) * clawLen + hookD;
+      const cc1x = tx + Math.cos(ang) * clawLen * 0.42;
+      const cc1y = ty + Math.sin(ang) * clawLen * 0.42 + hookD * 0.28;
+      const cc2x = tx + Math.cos(ang) * clawLen * 0.76;
+      const cc2y = ty + Math.sin(ang) * clawLen * 0.76 + hookD * 0.66;
+      const cp   = perp(tx, ty, ceX, ceY, clW);
+
+      const cg = ctx.createLinearGradient(tx, ty, ceX, ceY);
+      cg.addColorStop(0.00, rc(lerp(skin, bone, 0.44), 0.88));
+      cg.addColorStop(0.50, rc(bone, 0.84));
+      cg.addColorStop(1.00, rc(lerp(bone, { r: 255, g: 255, b: 255 }, 0.22), 0.66));
+      ctx.fillStyle   = cg;
+      ctx.strokeStyle = rc(dark, 0.38);
+      ctx.lineWidth   = 0.70;
+      ctx.beginPath();
+      ctx.moveTo(tx + cp.x, ty + cp.y);
+      ctx.bezierCurveTo(
+        cc1x + cp.x * 0.60, cc1y + cp.y * 0.60,
+        cc2x + cp.x * 0.24, cc2y + cp.y * 0.24,
+        ceX, ceY
+      );
+      ctx.bezierCurveTo(
+        cc2x - cp.x * 0.24, cc2y - cp.y * 0.24,
+        cc1x - cp.x * 0.60, cc1y - cp.y * 0.60,
+        tx - cp.x, ty - cp.y
+      );
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Claw dorsal highlight
+      ctx.save();
+      ctx.strokeStyle = rc(lerp(bone, { r: 255, g: 255, b: 255 }, 0.42), 0.40);
+      ctx.lineWidth   = 0.55;
+      ctx.beginPath();
+      ctx.moveTo(tx, ty);
+      ctx.bezierCurveTo(
+        cc1x + cp.x * 0.18, cc1y + cp.y * 0.18,
+        cc2x + cp.x * 0.06, cc2y + cp.y * 0.06,
+        ceX, ceY
+      );
+      ctx.stroke();
+      ctx.restore();
+    };
+
+    // ============================================================
     // LAYER 1 — WING MEMBRANE (behind everything)
     // ============================================================
     {
@@ -348,36 +489,12 @@ window.DragonCanvas = (function () {
       ctx.closePath();
       ctx.fill();
 
-      // ---- Toes × 3 + curved claws ----
+      // ---- Paws × 3 (evolved: segmented + knuckle + digital pad + filled claw) ----
       const hlToeAngles = [-0.30, 0.04, 0.38];
       const hlToeLen = legW * 1.18;
       const hlToeW   = legW * 0.25;
       for (const ang of hlToeAngles) {
-        const tAng = Math.PI * 0.07 + ang;
-        const tEx = hlMx + Math.cos(tAng) * hlToeLen;
-        const tEy = hlMy + Math.sin(tAng) * hlToeLen;
-        const ptS = perp(hlMx, hlMy, tEx, tEy, hlToeW);
-        // Toe bone
-        ctx.fillStyle = rc(dark, 0.90);
-        ctx.beginPath();
-        ctx.moveTo(hlMx + ptS.x, hlMy + ptS.y);
-        ctx.lineTo(tEx + ptS.x * 0.28, tEy + ptS.y * 0.28);
-        ctx.lineTo(tEx - ptS.x * 0.28, tEy - ptS.y * 0.28);
-        ctx.lineTo(hlMx - ptS.x, hlMy - ptS.y);
-        ctx.closePath();
-        ctx.fill();
-        // Claw arc (curves downward at tip)
-        ctx.beginPath();
-        ctx.moveTo(tEx, tEy);
-        ctx.bezierCurveTo(
-          tEx + Math.cos(tAng) * clawLen * 0.42, tEy + Math.sin(tAng) * clawLen * 0.42 + clawLen * 0.24,
-          tEx + Math.cos(tAng) * clawLen * 0.82, tEy + Math.sin(tAng) * clawLen * 0.82 + clawLen * 0.10,
-          tEx + Math.cos(tAng) * clawLen,         tEy + Math.sin(tAng) * clawLen
-        );
-        ctx.strokeStyle = rc(bone, 0.90);
-        ctx.lineWidth = hlToeW * 0.84;
-        ctx.lineCap = 'round';
-        ctx.stroke();
+        drawToe(hlMx, hlMy, Math.PI * 0.07 + ang, hlToeLen, hlToeW);
       }
       ctx.restore();
     }
@@ -595,7 +712,7 @@ window.DragonCanvas = (function () {
         // Distribute fins from just behind neck socket to just before tail base
         const fx  = spineStartX - tp * (spineStartX - spineEndX);
         const fy  = oy - bh * (0.95 + musF * 0.10 - 0.04 * Math.sin(tp * Math.PI));
-        const fh  = finMaxH * (0.28 + 0.92 * Math.sin(tp * Math.PI * 0.90 + 0.14));
+        const fh  = finMaxH * Math.max(0.08, Math.sin(tp * Math.PI));   // tapers to zero at both ends
         const fw  = fh * (0.18 + 0.10 * (1 - tp));  // slightly wider toward tail
         const lean = -fh * 0.10;                      // gentle backward lean
 
@@ -662,7 +779,7 @@ window.DragonCanvas = (function () {
     // ============================================================
     {
       // Radii tapering from muscular base to slim tip
-      const tR0 = tRad * (1.00 + n.musclePower * 0.36);   // base — muscle thickens it
+      const tR0 = tRad * (0.64 + n.musclePower * 0.14);   // base — matched to torso stub opening
       const tR1 = tRad * 0.64;
       const tR2 = tRad * 0.29;
       const tR3 = tRad * 0.07;                              // near-tip waist
@@ -937,36 +1054,12 @@ window.DragonCanvas = (function () {
       ctx.closePath();
       ctx.fill();
 
-      // ---- Toes × 3 + curved claws ----
+      // ---- Paws × 3 (evolved: segmented + knuckle + digital pad + filled claw) ----
       const flToeAngles = [-0.26, 0.06, 0.38];
       const flToeLen = legW * 1.10;
       const flToeW   = legW * 0.23;
       for (const ang of flToeAngles) {
-        const tAng = Math.PI * 0.06 + ang;
-        const tEx = flMx + Math.cos(tAng) * flToeLen;
-        const tEy = flMy + Math.sin(tAng) * flToeLen;
-        const ptfS = perp(flMx, flMy, tEx, tEy, flToeW);
-        // Toe bone
-        ctx.fillStyle = rc(dark, 0.88);
-        ctx.beginPath();
-        ctx.moveTo(flMx + ptfS.x, flMy + ptfS.y);
-        ctx.lineTo(tEx + ptfS.x * 0.26, tEy + ptfS.y * 0.26);
-        ctx.lineTo(tEx - ptfS.x * 0.26, tEy - ptfS.y * 0.26);
-        ctx.lineTo(flMx - ptfS.x, flMy - ptfS.y);
-        ctx.closePath();
-        ctx.fill();
-        // Claw arc
-        ctx.beginPath();
-        ctx.moveTo(tEx, tEy);
-        ctx.bezierCurveTo(
-          tEx + Math.cos(tAng) * clawLen * 0.40, tEy + Math.sin(tAng) * clawLen * 0.40 + clawLen * 0.22,
-          tEx + Math.cos(tAng) * clawLen * 0.80, tEy + Math.sin(tAng) * clawLen * 0.80 + clawLen * 0.09,
-          tEx + Math.cos(tAng) * clawLen,         tEy + Math.sin(tAng) * clawLen
-        );
-        ctx.strokeStyle = rc(bone, 0.90);
-        ctx.lineWidth = flToeW * 0.80;
-        ctx.lineCap = 'round';
-        ctx.stroke();
+        drawToe(flMx, flMy, Math.PI * 0.06 + ang, flToeLen, flToeW);
       }
       ctx.restore();
     }
