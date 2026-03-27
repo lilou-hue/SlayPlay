@@ -149,14 +149,24 @@ window.DragonCanvas = (function () {
     const wtx  = ox + bw * 0.08,  wty  = oy - bh * 0.74;
     const wbx  = ox - bw * 0.26,  wby  = oy - bh * 0.36;
 
-    // Legs
-    const lgW = (3.8 + n.musclePower * 5.0) * sc * musF;
-    const flRx = ox + bw * 0.52,  flRy = oy + bh * 0.90;
-    const flKx = flRx - W * 0.012, flKy = flRy + H * 0.074;
-    const flFx = flKx + W * 0.008, flFy = flKy + H * 0.058;
-    const hlRx = ox - bw * 0.34,  hlRy = oy + bh * 0.90;
-    const hlKx = hlRx + W * 0.004, hlKy = hlRy + H * 0.076;
-    const hlFx = hlKx - W * 0.016, hlFy = hlKy + H * 0.056;
+    // Legs — digitigrade theropod stance
+    // legW: muscle thickness driven by musclePower + bodyMass scale
+    const legW    = (4.6 + n.musclePower * 7.8) * sc;
+    const lgW     = legW;                                       // alias for wing arm bone
+    const clawLen = (5.5 + n.boneDensity * 11.0) * sc;
+    const kSpur   = legW * (0.28 + n.boneDensity * 0.55);      // hind knee spur length
+
+    // Front leg (foreground) — hip socket slightly inside body front
+    const flHx = ox + bw * 0.50,  flHy = oy + bh * 0.82;      // hip socket
+    const flKx = flHx + W*0.014,  flKy = flHy + H*0.090;      // knee
+    const flAx = flKx - W*0.006,  flAy = flKy + H*0.066;      // ankle (raised heel)
+    const flMx = flAx + W*0.026,  flMy = flAy + H*0.020;      // metatarsal / toe base
+
+    // Hind leg (mid-ground) — big haunch thigh
+    const hlHx = ox - bw * 0.28,  hlHy = oy + bh * 0.82;      // hip socket
+    const hlKx = hlHx + W*0.010,  hlKy = hlHy + H*0.098;      // knee
+    const hlAx = hlKx - W*0.012,  hlAy = hlKy + H*0.062;      // ankle
+    const hlMx = hlAx + W*0.022,  hlMy = hlAy + H*0.018;      // metatarsal / toe base
 
     // Fuel sac
     const fsR  = (4.5 + n.fuelGlandSize * 8.5) * sc;
@@ -237,21 +247,135 @@ window.DragonCanvas = (function () {
     }
 
     // ============================================================
-    // LAYER 2 — HIND LEG (behind body)
+    // LAYER 2 — HIND LEG (behind body, digitigrade theropod)
     // ============================================================
     {
       ctx.save();
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = rc(skin, 0.88);
-      ctx.lineWidth = lgW * 1.12;
-      ctx.beginPath(); ctx.moveTo(hlRx, hlRy); ctx.lineTo(hlKx, hlKy); ctx.stroke();
-      ctx.strokeStyle = rc(dark, 0.85);
-      ctx.lineWidth = lgW * 0.82;
-      ctx.beginPath(); ctx.moveTo(hlKx, hlKy); ctx.lineTo(hlFx, hlFy); ctx.stroke();
-      ctx.fillStyle = rc(bone, 0.78);
+
+      // Gradient shared across full leg: top=dark body colour → bottom=skin
+      const hlGrad = ctx.createLinearGradient(hlHx, hlHy, hlMx, hlMy + H*0.06);
+      hlGrad.addColorStop(0.00, rc(top_));
+      hlGrad.addColorStop(0.40, rc(skin));
+      hlGrad.addColorStop(1.00, rc(dark));
+
+      // ---- Thigh (hip → knee)  ——  wide haunch ----
+      const hlThighW = legW * 1.38;
+      const phH = perp(hlHx, hlHy, hlKx, hlKy, hlThighW);
+      const phK = perp(hlHx, hlHy, hlKx, hlKy, legW * 0.84);
+      const hlThighMx = (hlHx + hlKx) * 0.5, hlThighMy = (hlHy + hlKy) * 0.5;
+      const phMid = perp(hlHx, hlHy, hlKx, hlKy, hlThighW * 0.97);
+      ctx.fillStyle = hlGrad;
+      ctx.strokeStyle = rc(dark, 0.28);
+      ctx.lineWidth = 0.7;
       ctx.beginPath();
-      ctx.ellipse(hlFx, hlFy, lgW * 0.92, lgW * 0.40, -0.18, 0, Math.PI * 2);
+      ctx.moveTo(hlHx + phH.x, hlHy + phH.y);
+      // Outer (muscle-bulge) side
+      ctx.quadraticCurveTo(
+        hlThighMx + phMid.x * 1.22, hlThighMy + phMid.y * 1.22,
+        hlKx + phK.x, hlKy + phK.y
+      );
+      ctx.lineTo(hlKx - phK.x, hlKy - phK.y);
+      // Inner side
+      ctx.quadraticCurveTo(
+        hlThighMx - phMid.x * 0.78, hlThighMy - phMid.y * 0.78,
+        hlHx - phH.x, hlHy - phH.y
+      );
+      ctx.closePath();
       ctx.fill();
+      ctx.stroke();
+
+      // ---- Knee cap circle ----
+      ctx.beginPath();
+      ctx.arc(hlKx, hlKy, legW * 0.74, 0, Math.PI * 2);
+      ctx.fillStyle = rc(lerp(skin, bone, 0.38), 0.92);
+      ctx.fill();
+
+      // ---- Knee spur (bone spike, hind leg only) ----
+      // Spur tip = backward along thigh direction, upward
+      const hlThighDx = hlHx - hlKx, hlThighDy = hlHy - hlKy;
+      const hlThighLen = Math.sqrt(hlThighDx*hlThighDx + hlThighDy*hlThighDy) || 1;
+      const hlBackX = hlThighDx / hlThighLen, hlBackY = hlThighDy / hlThighLen;
+      const hlPerpX = -hlBackY, hlPerpY = hlBackX;  // perp rotated left
+      const spurTx = hlKx + hlBackX * legW * 0.30 + hlPerpX * kSpur;
+      const spurTy = hlKy + hlBackY * legW * 0.30 + hlPerpY * kSpur;
+      ctx.beginPath();
+      ctx.moveTo(hlKx + hlPerpX * legW * 0.55, hlKy + hlPerpY * legW * 0.55);
+      ctx.lineTo(spurTx, spurTy);
+      ctx.lineTo(hlKx - hlPerpX * legW * 0.30, hlKy - hlPerpY * legW * 0.30);
+      ctx.closePath();
+      ctx.fillStyle = rc(bone, 0.85);
+      ctx.fill();
+
+      // ---- Shin (knee → ankle) ----
+      const pshK = perp(hlKx, hlKy, hlAx, hlAy, legW * 0.76);
+      const pshA = perp(hlKx, hlKy, hlAx, hlAy, legW * 0.44);
+      const hlShinMx = (hlKx + hlAx) * 0.5, hlShinMy = (hlKy + hlAy) * 0.5;
+      const pshMid = perp(hlKx, hlKy, hlAx, hlAy, legW * 0.68);
+      ctx.fillStyle = hlGrad;
+      ctx.beginPath();
+      ctx.moveTo(hlKx + pshK.x, hlKy + pshK.y);
+      ctx.quadraticCurveTo(
+        hlShinMx + pshMid.x * 0.92, hlShinMy + pshMid.y * 0.92,
+        hlAx + pshA.x, hlAy + pshA.y
+      );
+      ctx.lineTo(hlAx - pshA.x, hlAy - pshA.y);
+      ctx.quadraticCurveTo(
+        hlShinMx - pshMid.x * 0.72, hlShinMy - pshMid.y * 0.72,
+        hlKx - pshK.x, hlKy - pshK.y
+      );
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // ---- Ankle knob ----
+      ctx.beginPath();
+      ctx.arc(hlAx, hlAy, legW * 0.46, 0, Math.PI * 2);
+      ctx.fillStyle = rc(lerp(skin, bone, 0.30), 0.88);
+      ctx.fill();
+
+      // ---- Metatarsal (ankle → toe base) ----
+      const pmeA = perp(hlAx, hlAy, hlMx, hlMy, legW * 0.50);
+      const pmeM = perp(hlAx, hlAy, hlMx, hlMy, legW * 0.34);
+      ctx.fillStyle = rc(dark, 0.92);
+      ctx.beginPath();
+      ctx.moveTo(hlAx + pmeA.x, hlAy + pmeA.y);
+      ctx.lineTo(hlMx + pmeM.x, hlMy + pmeM.y);
+      ctx.lineTo(hlMx - pmeM.x, hlMy - pmeM.y);
+      ctx.lineTo(hlAx - pmeA.x, hlAy - pmeA.y);
+      ctx.closePath();
+      ctx.fill();
+
+      // ---- Toes × 3 + curved claws ----
+      const hlToeAngles = [-0.30, 0.04, 0.38];
+      const hlToeLen = legW * 1.18;
+      const hlToeW   = legW * 0.25;
+      for (const ang of hlToeAngles) {
+        const tAng = Math.PI * 0.07 + ang;
+        const tEx = hlMx + Math.cos(tAng) * hlToeLen;
+        const tEy = hlMy + Math.sin(tAng) * hlToeLen;
+        const ptS = perp(hlMx, hlMy, tEx, tEy, hlToeW);
+        // Toe bone
+        ctx.fillStyle = rc(dark, 0.90);
+        ctx.beginPath();
+        ctx.moveTo(hlMx + ptS.x, hlMy + ptS.y);
+        ctx.lineTo(tEx + ptS.x * 0.28, tEy + ptS.y * 0.28);
+        ctx.lineTo(tEx - ptS.x * 0.28, tEy - ptS.y * 0.28);
+        ctx.lineTo(hlMx - ptS.x, hlMy - ptS.y);
+        ctx.closePath();
+        ctx.fill();
+        // Claw arc (curves downward at tip)
+        ctx.beginPath();
+        ctx.moveTo(tEx, tEy);
+        ctx.bezierCurveTo(
+          tEx + Math.cos(tAng) * clawLen * 0.42, tEy + Math.sin(tAng) * clawLen * 0.42 + clawLen * 0.24,
+          tEx + Math.cos(tAng) * clawLen * 0.82, tEy + Math.sin(tAng) * clawLen * 0.82 + clawLen * 0.10,
+          tEx + Math.cos(tAng) * clawLen,         tEy + Math.sin(tAng) * clawLen
+        );
+        ctx.strokeStyle = rc(bone, 0.90);
+        ctx.lineWidth = hlToeW * 0.84;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+      }
       ctx.restore();
     }
 
@@ -455,21 +579,116 @@ window.DragonCanvas = (function () {
     }
 
     // ============================================================
-    // LAYER 8 — FRONT LEG
+    // LAYER 8 — FRONT LEG (foreground, digitigrade)
     // ============================================================
     {
       ctx.save();
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = rc(skin, 0.92);
-      ctx.lineWidth = lgW;
-      ctx.beginPath(); ctx.moveTo(flRx, flRy); ctx.lineTo(flKx, flKy); ctx.stroke();
-      ctx.strokeStyle = rc(dark, 0.88);
-      ctx.lineWidth = lgW * 0.74;
-      ctx.beginPath(); ctx.moveTo(flKx, flKy); ctx.lineTo(flFx, flFy); ctx.stroke();
-      ctx.fillStyle = rc(bone, 0.80);
+
+      const flGrad = ctx.createLinearGradient(flHx, flHy, flMx, flMy + H*0.05);
+      flGrad.addColorStop(0.00, rc(top_));
+      flGrad.addColorStop(0.38, rc(skin));
+      flGrad.addColorStop(1.00, rc(dark));
+
+      // ---- Thigh (hip → knee) — slimmer than hind ----
+      const flThighW = legW * 1.10;
+      const pfH = perp(flHx, flHy, flKx, flKy, flThighW);
+      const pfK = perp(flHx, flHy, flKx, flKy, legW * 0.76);
+      const flThighMx = (flHx + flKx) * 0.5, flThighMy = (flHy + flKy) * 0.5;
+      const pfMid = perp(flHx, flHy, flKx, flKy, flThighW * 0.90);
+      ctx.fillStyle = flGrad;
+      ctx.strokeStyle = rc(dark, 0.28);
+      ctx.lineWidth = 0.7;
       ctx.beginPath();
-      ctx.ellipse(flFx, flFy, lgW * 0.90, lgW * 0.38, 0.18, 0, Math.PI * 2);
+      ctx.moveTo(flHx + pfH.x, flHy + pfH.y);
+      ctx.quadraticCurveTo(
+        flThighMx + pfMid.x * 1.10, flThighMy + pfMid.y * 1.10,
+        flKx + pfK.x, flKy + pfK.y
+      );
+      ctx.lineTo(flKx - pfK.x, flKy - pfK.y);
+      ctx.quadraticCurveTo(
+        flThighMx - pfMid.x * 0.80, flThighMy - pfMid.y * 0.80,
+        flHx - pfH.x, flHy - pfH.y
+      );
+      ctx.closePath();
       ctx.fill();
+      ctx.stroke();
+
+      // ---- Knee cap (smooth — no spur on front leg) ----
+      ctx.beginPath();
+      ctx.arc(flKx, flKy, legW * 0.64, 0, Math.PI * 2);
+      ctx.fillStyle = rc(lerp(skin, bone, 0.30), 0.90);
+      ctx.fill();
+
+      // ---- Shin (knee → ankle) ----
+      const pfsK = perp(flKx, flKy, flAx, flAy, legW * 0.68);
+      const pfsA = perp(flKx, flKy, flAx, flAy, legW * 0.40);
+      const flShinMx = (flKx + flAx) * 0.5, flShinMy = (flKy + flAy) * 0.5;
+      const pfsMid = perp(flKx, flKy, flAx, flAy, legW * 0.60);
+      ctx.fillStyle = flGrad;
+      ctx.beginPath();
+      ctx.moveTo(flKx + pfsK.x, flKy + pfsK.y);
+      ctx.quadraticCurveTo(
+        flShinMx + pfsMid.x * 0.86, flShinMy + pfsMid.y * 0.86,
+        flAx + pfsA.x, flAy + pfsA.y
+      );
+      ctx.lineTo(flAx - pfsA.x, flAy - pfsA.y);
+      ctx.quadraticCurveTo(
+        flShinMx - pfsMid.x * 0.68, flShinMy - pfsMid.y * 0.68,
+        flKx - pfsK.x, flKy - pfsK.y
+      );
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // ---- Ankle knob ----
+      ctx.beginPath();
+      ctx.arc(flAx, flAy, legW * 0.40, 0, Math.PI * 2);
+      ctx.fillStyle = rc(lerp(skin, bone, 0.28), 0.86);
+      ctx.fill();
+
+      // ---- Metatarsal (ankle → toe base) ----
+      const pfmA = perp(flAx, flAy, flMx, flMy, legW * 0.45);
+      const pfmM = perp(flAx, flAy, flMx, flMy, legW * 0.30);
+      ctx.fillStyle = rc(dark, 0.92);
+      ctx.beginPath();
+      ctx.moveTo(flAx + pfmA.x, flAy + pfmA.y);
+      ctx.lineTo(flMx + pfmM.x, flMy + pfmM.y);
+      ctx.lineTo(flMx - pfmM.x, flMy - pfmM.y);
+      ctx.lineTo(flAx - pfmA.x, flAy - pfmA.y);
+      ctx.closePath();
+      ctx.fill();
+
+      // ---- Toes × 3 + curved claws ----
+      const flToeAngles = [-0.26, 0.06, 0.38];
+      const flToeLen = legW * 1.10;
+      const flToeW   = legW * 0.23;
+      for (const ang of flToeAngles) {
+        const tAng = Math.PI * 0.06 + ang;
+        const tEx = flMx + Math.cos(tAng) * flToeLen;
+        const tEy = flMy + Math.sin(tAng) * flToeLen;
+        const ptfS = perp(flMx, flMy, tEx, tEy, flToeW);
+        // Toe bone
+        ctx.fillStyle = rc(dark, 0.88);
+        ctx.beginPath();
+        ctx.moveTo(flMx + ptfS.x, flMy + ptfS.y);
+        ctx.lineTo(tEx + ptfS.x * 0.26, tEy + ptfS.y * 0.26);
+        ctx.lineTo(tEx - ptfS.x * 0.26, tEy - ptfS.y * 0.26);
+        ctx.lineTo(flMx - ptfS.x, flMy - ptfS.y);
+        ctx.closePath();
+        ctx.fill();
+        // Claw arc
+        ctx.beginPath();
+        ctx.moveTo(tEx, tEy);
+        ctx.bezierCurveTo(
+          tEx + Math.cos(tAng) * clawLen * 0.40, tEy + Math.sin(tAng) * clawLen * 0.40 + clawLen * 0.22,
+          tEx + Math.cos(tAng) * clawLen * 0.80, tEy + Math.sin(tAng) * clawLen * 0.80 + clawLen * 0.09,
+          tEx + Math.cos(tAng) * clawLen,         tEy + Math.sin(tAng) * clawLen
+        );
+        ctx.strokeStyle = rc(bone, 0.90);
+        ctx.lineWidth = flToeW * 0.80;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+      }
       ctx.restore();
     }
 
