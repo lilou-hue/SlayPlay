@@ -117,21 +117,20 @@ window.DragonCanvas = (function () {
       n[tr.id] = (traits[tr.id] - tr.min) / (tr.max - tr.min);
     });
 
-    // ---- Color palette (HSL-based so tint colour is always faithfully rendered) ----
+    // ---- Color palette (HSL-based — tint is the literal body colour) ----
     const tint = hex2rgb(tintHex || '#2a8870');
     const hsl  = rgbToHsl(tint.r, tint.g, tint.b);
     const h    = hsl.h;
-    // For achromatic inputs (white/grey/black) keep s=0 so result stays neutral.
-    // For chromatic inputs enforce a minimum saturation so dull colours still read.
-    const s    = hsl.s < 0.05 ? 0 : Math.max(0.18, hsl.s);
-    // Enforce minimum luminance so very dark inputs still show body shape.
-    const l    = Math.max(0.32, hsl.l);
+    // Achromatic (white/grey/black): keep neutral. Chromatic: full saturation preserved.
+    const s    = hsl.s < 0.05 ? 0 : Math.max(0.25, hsl.s);
+    // Enforce enough luminance that shape is always readable.
+    const l    = Math.max(0.38, hsl.l);
 
-    const skin  = hslToRgb(h, Math.min(1, s * 1.05), l * 0.88);                  // main body
-    const top_  = hslToRgb(h, Math.min(1, s * 1.30), Math.min(0.92, l * 1.55));  // dorsal highlight
-    const dark  = hslToRgb(h, Math.min(1, s * 0.85), l * 0.22);                  // deep shadow
-    const belly = hslToRgb(h, Math.min(1, s * 0.70), Math.min(0.96, l * 2.00));  // light underside
-    const mem   = hslToRgb(h, Math.min(1, s * 1.10), l * 0.58);                  // wing membrane
+    const skin  = hslToRgb(h, s,                        l);                        // main body — the tint itself
+    const top_  = hslToRgb(h, Math.min(1, s * 1.20),    Math.min(0.94, l * 1.65)); // bright highlight
+    const dark  = hslToRgb(h, Math.min(1, s * 0.90),    l * 0.18);                 // deep shadow
+    const belly = hslToRgb(h, Math.min(1, s * 0.55),    Math.min(0.97, l * 2.20)); // near-white underside
+    const mem   = hslToRgb(h, Math.min(1, s * 1.15),    l * 0.65);                 // wing membrane
     const bone  = { r: 64, g: 62, b: 48 };
     const eye_c = { r: 100, g: 255, b: 185 };
 
