@@ -123,15 +123,15 @@ window.DragonCanvas = (function () {
     const h    = hsl.h;
     // For achromatic inputs (white/grey/black) keep s=0 so result stays neutral.
     // For chromatic inputs enforce a minimum saturation so dull colours still read.
-    const s    = hsl.s < 0.05 ? 0 : Math.max(0.12, hsl.s);
+    const s    = hsl.s < 0.05 ? 0 : Math.max(0.18, hsl.s);
     // Enforce minimum luminance so very dark inputs still show body shape.
-    const l    = Math.max(0.28, hsl.l);
+    const l    = Math.max(0.32, hsl.l);
 
-    const skin  = hslToRgb(h, s * 0.85, l * 0.75);                              // main body
-    const top_  = hslToRgb(h, Math.min(1, s * 1.05), Math.min(0.88, l * 1.25)); // dorsal highlight
-    const dark  = hslToRgb(h, s * 0.60, l * 0.25);                              // deep shadow
-    const belly = hslToRgb(h, s * 0.50, Math.min(0.93, l * 1.60));              // light underside
-    const mem   = hslToRgb(h, s * 0.80, l * 0.50);                              // wing membrane
+    const skin  = hslToRgb(h, Math.min(1, s * 1.05), l * 0.88);                  // main body
+    const top_  = hslToRgb(h, Math.min(1, s * 1.30), Math.min(0.92, l * 1.55));  // dorsal highlight
+    const dark  = hslToRgb(h, Math.min(1, s * 0.85), l * 0.22);                  // deep shadow
+    const belly = hslToRgb(h, Math.min(1, s * 0.70), Math.min(0.96, l * 2.00));  // light underside
+    const mem   = hslToRgb(h, Math.min(1, s * 1.10), l * 0.58);                  // wing membrane
     const bone  = { r: 64, g: 62, b: 48 };
     const eye_c = { r: 100, g: 255, b: 185 };
 
@@ -178,8 +178,8 @@ window.DragonCanvas = (function () {
     const crx = hx + hs * 0.10,  cry = hy  - hs * 0.58;
     // Horn
     const hnL = hs * (0.72 + n.boneDensity * 0.60);
-    // Eye
-    const eX  = hx + hs * 0.44,  eY  = hy  - hs * 0.07;
+    // Eye — positioned on the forward face plane, not at the neck joint
+    const eX  = hx + hs * 0.70,  eY  = hy  - hs * 0.16;
     const eR  = hs * 0.150;
 
     // Tail — S-curve droop with gentle animation sway
