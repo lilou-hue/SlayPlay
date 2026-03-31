@@ -11,10 +11,19 @@ window.App = (function() {
   let battleState = null;
   let battlePlaybackTimer = null;
   let battleTickIndex = 0;
+  let currentTint = '#2a8870';
 
   // Debounce timer for slider updates
   let updateTimer = null;
   const DEBOUNCE_MS = 50;
+
+  // Colour swatches shown in the picker
+  const COLOUR_SWATCHES = [
+    '#ffffff', '#aaaaaa', '#222222',
+    '#cc2222', '#ff6600', '#ddaa00',
+    '#44aa55', '#2a8870', '#4488dd',
+    '#8866aa', '#dd6688', '#d4a820'
+  ];
 
   // --------------------------------------------------------
   // INITIALIZATION
@@ -45,6 +54,9 @@ window.App = (function() {
     // Render presets
     window.UI.renderPresets(onPresetSelect);
 
+    // Render colour picker
+    renderColourPicker();
+
     // Render habitat selector
     window.UI.renderHabitatSelector(onHabitatSelect);
 
@@ -68,14 +80,48 @@ window.App = (function() {
   // TINT COLOR
   // --------------------------------------------------------
   function getTintColor() {
-    // Check if current dragon matches a preset
-    for (const key of Object.keys(window.DragonData.PRESETS)) {
-      const preset = window.DragonData.PRESETS[key];
-      if (JSON.stringify(currentDragon.traits) === JSON.stringify(preset.traits)) {
-        return preset.tintColor;
-      }
+    return currentTint;
+  }
+
+  function onTintChange(hex) {
+    currentTint = hex;
+    // Update custom input value to stay in sync
+    const input = document.getElementById('custom-colour-input');
+    if (input) input.value = hex;
+    // Update swatch active state
+    document.querySelectorAll('.colour-swatch').forEach(sw => {
+      sw.classList.toggle('active', sw.dataset.colour === hex);
+    });
+    window.Scene.updateDragon(currentDragon.traits, currentTint);
+  }
+
+  // --------------------------------------------------------
+  // COLOUR PICKER UI
+  // --------------------------------------------------------
+  function renderColourPicker() {
+    const container = document.getElementById('colour-swatches');
+    if (!container) return;
+
+    container.innerHTML = '';
+    COLOUR_SWATCHES.forEach(colour => {
+      const swatch = document.createElement('button');
+      swatch.className = 'colour-swatch' + (colour === currentTint ? ' active' : '');
+      swatch.dataset.colour = colour;
+      swatch.style.background = colour;
+      swatch.title = colour;
+      // White swatch needs a border to be visible on dark bg
+      if (colour === '#ffffff') swatch.style.borderColor = '#555';
+      swatch.addEventListener('click', () => onTintChange(colour));
+      container.appendChild(swatch);
+    });
+
+    const input = document.getElementById('custom-colour-input');
+    if (input) {
+      input.value = currentTint;
+      input.addEventListener('input', (e) => {
+        onTintChange(e.target.value);
+      });
     }
-    return '#3a6e5a'; // default tint
   }
 
   // --------------------------------------------------------
@@ -124,6 +170,10 @@ window.App = (function() {
   function onPresetSelect(presetKey) {
     currentDragon = window.Dragon.fromPreset(presetKey);
     window.UI.updateSliders(currentDragon.traits);
+
+    // Sync tint to preset colour
+    const presetTint = window.DragonData.PRESETS[presetKey].tintColor;
+    if (presetTint) onTintChange(presetTint);
 
     // Rebuild fire design panel by re-rendering sliders
     window.UI.renderSliders(

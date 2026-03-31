@@ -163,6 +163,35 @@ body {
 }
 .preset-btn:hover { background: #1a1a30; color: #aab; border-color: #3a3a4a; }
 
+/* ---- COLOUR PICKER ---- */
+.colour-picker-section { margin-bottom: 14px; }
+.colour-picker-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.colour-swatches { display: flex; gap: 5px; flex-wrap: wrap; }
+.colour-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.12s, border-color 0.12s;
+  flex-shrink: 0;
+}
+.colour-swatch:hover { transform: scale(1.20); }
+.colour-swatch.active { border-color: #ffffff; box-shadow: 0 0 0 1px rgba(255,255,255,0.3); }
+#custom-colour-input {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #333;
+  cursor: pointer;
+  padding: 0;
+  background: none;
+  flex-shrink: 0;
+  outline: none;
+}
+#custom-colour-input::-webkit-color-swatch-wrapper { padding: 0; border-radius: 50%; }
+#custom-colour-input::-webkit-color-swatch { border: none; border-radius: 50%; }
+
 /* ---- SLIDERS ---- */
 .sliders-container { display: flex; flex-direction: column; gap: 2px; }
 .slider-group { margin-bottom: 10px; }

@@ -30,6 +30,48 @@ window.DragonCanvas = (function () {
     return `rgba(${c.r},${c.g},${c.b},${a})`;
   }
 
+  // ---- HSL helpers (for hue-preserving palette derivation) ----
+  function rgbToHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h = 0, s = 0;
+    const l = (max + min) / 2;
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+        case g: h = ((b - r) / d + 2) / 6; break;
+        case b: h = ((r - g) / d + 4) / 6; break;
+      }
+    }
+    return { h, s, l };
+  }
+
+  function hslToRgb(h, s, l) {
+    s = Math.max(0, Math.min(1, s));
+    l = Math.max(0, Math.min(1, l));
+    if (s === 0) {
+      const v = Math.round(l * 255);
+      return { r: v, g: v, b: v };
+    }
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    const hue2 = (t) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1 / 6) return p + (q - p) * 6 * t;
+      if (t < 1 / 2) return q;
+      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+      return p;
+    };
+    return {
+      r: Math.round(hue2(h + 1 / 3) * 255),
+      g: Math.round(hue2(h) * 255),
+      b: Math.round(hue2(h - 1 / 3) * 255)
+    };
+  }
+
   // ---- Geometry helpers ----
   // Unit perpendicular from segment AB, length len
   function perp(ax, ay, bx, by, len) {
@@ -75,13 +117,21 @@ window.DragonCanvas = (function () {
       n[tr.id] = (traits[tr.id] - tr.min) / (tr.max - tr.min);
     });
 
-    // ---- Color palette ----
-    const tint  = hex2rgb(tintHex || '#2a8870');
-    const skin  = lerp({ r: 22, g: 64, b: 50 }, tint, 0.45);
-    const top_  = lerp({ r: 34, g: 90, b: 70 }, tint, 0.55);
-    const dark  = lerp({ r: 10, g: 30, b: 22 }, tint, 0.25);
-    const belly = lerp({ r: 40, g: 88, b: 68 }, tint, 0.38);
-    const mem   = lerp({ r: 88, g: 32, b: 24 }, tint, 0.2);
+    // ---- Color palette (HSL-based so tint colour is always faithfully rendered) ----
+    const tint = hex2rgb(tintHex || '#2a8870');
+    const hsl  = rgbToHsl(tint.r, tint.g, tint.b);
+    const h    = hsl.h;
+    // For achromatic inputs (white/grey/black) keep s=0 so result stays neutral.
+    // For chromatic inputs enforce a minimum saturation so dull colours still read.
+    const s    = hsl.s < 0.05 ? 0 : Math.max(0.12, hsl.s);
+    // Enforce minimum luminance so very dark inputs still show body shape.
+    const l    = Math.max(0.28, hsl.l);
+
+    const skin  = hslToRgb(h, s * 0.85, l * 0.75);                              // main body
+    const top_  = hslToRgb(h, Math.min(1, s * 1.05), Math.min(0.88, l * 1.25)); // dorsal highlight
+    const dark  = hslToRgb(h, s * 0.60, l * 0.25);                              // deep shadow
+    const belly = hslToRgb(h, s * 0.50, Math.min(0.93, l * 1.60));              // light underside
+    const mem   = hslToRgb(h, s * 0.80, l * 0.50);                              // wing membrane
     const bone  = { r: 64, g: 62, b: 48 };
     const eye_c = { r: 100, g: 255, b: 185 };
 
