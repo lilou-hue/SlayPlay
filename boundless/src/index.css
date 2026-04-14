@@ -1,0 +1,282 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: Georgia, 'Times New Roman', serif;
+  background: #1a1a1a;
+  color: #d4c9b0;
+  min-height: 100vh;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid #333;
+}
+
+.app-header h1 {
+  font-size: 1.4rem;
+  font-weight: normal;
+  letter-spacing: 0.08em;
+  color: #e8dfc5;
+}
+
+.week-label {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.app-main {
+  display: flex;
+  flex: 1;
+  gap: 0;
+}
+
+/* Qualities sidebar */
+.qualities {
+  width: 200px;
+  flex-shrink: 0;
+  padding: 1.5rem 1rem;
+  border-right: 1px solid #2a2a2a;
+  background: #161616;
+}
+
+.qualities h3 {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+.qualities ul {
+  list-style: none;
+}
+
+.qualities li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid #222;
+}
+
+.q-label {
+  font-size: 0.8rem;
+  color: #aaa;
+}
+
+.q-value {
+  font-size: 1rem;
+  color: #e8dfc5;
+  font-weight: bold;
+  min-width: 1.5rem;
+  text-align: right;
+}
+
+.hidden-note {
+  margin-top: 1.2rem;
+  font-size: 0.7rem;
+  color: #444;
+  font-style: italic;
+}
+
+/* Play area */
+.play-area {
+  flex: 1;
+  padding: 1.5rem 2rem;
+  overflow-y: auto;
+}
+
+/* Hand */
+.hand-status {
+  font-size: 0.8rem;
+  color: #777;
+  margin-bottom: 1.2rem;
+  letter-spacing: 0.04em;
+}
+
+.hand-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 600px;
+}
+
+/* Card */
+.card {
+  border: 1px solid #333;
+  background: #1e1e1e;
+  border-radius: 2px;
+  transition: border-color 0.15s;
+}
+
+.card:hover:not(.card--expired):not(.card--played) {
+  border-color: #555;
+}
+
+.card--expired {
+  opacity: 0.35;
+  border-color: #252525;
+}
+
+.card--played {
+  border-color: #2a3a2a;
+  background: #1a201a;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.card--expired .card-header,
+.card--played .card-header {
+  cursor: default;
+}
+
+.card-title {
+  font-size: 0.95rem;
+  color: #c8bfa8;
+}
+
+.card--expired .card-title {
+  color: #555;
+}
+
+.card-tag {
+  font-size: 0.7rem;
+  color: #555;
+  letter-spacing: 0.08em;
+}
+
+.card-toggle {
+  font-size: 0.6rem;
+  color: #555;
+}
+
+.card-body {
+  padding: 0 1rem 1rem;
+  border-top: 1px solid #272727;
+}
+
+.card-prose {
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: #bdb4a0;
+  margin: 0.9rem 0 1rem;
+}
+
+.resolve-prose {
+  font-size: 0.85rem;
+  color: #888;
+  font-style: italic;
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.8rem;
+  border-left: 2px solid #333;
+}
+
+/* Choices */
+.choices {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.choice-btn {
+  width: 100%;
+  text-align: left;
+  background: #252525;
+  border: 1px solid #333;
+  color: #c0b89a;
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 0.55rem 0.8rem;
+  cursor: pointer;
+  border-radius: 1px;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.choice-btn:hover:not(:disabled) {
+  background: #2e2e2e;
+  border-color: #555;
+}
+
+.choice-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Week End */
+.week-end {
+  max-width: 540px;
+}
+
+.week-end h2 {
+  font-size: 1.1rem;
+  font-weight: normal;
+  color: #c8bfa8;
+  margin-bottom: 1.2rem;
+}
+
+.delayed-messages {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.4rem;
+}
+
+.delayed-msg {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #a09080;
+  padding: 0.7rem 1rem;
+  border-left: 2px solid #4a3a2a;
+  background: #1d1812;
+}
+
+.end-week-btn {
+  background: #252525;
+  border: 1px solid #444;
+  color: #c0b89a;
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 0.6rem 1.4rem;
+  cursor: pointer;
+  border-radius: 1px;
+  transition: background 0.12s;
+}
+
+.end-week-btn:hover {
+  background: #2e2e2e;
+  border-color: #666;
+}
+
+/* Game Over */
+.week-end--game-over h2 {
+  color: #a09080;
+}
+
+.ich-reveal {
+  margin-top: 1.5rem;
+  padding: 1.2rem;
+  border: 1px solid #2a2a2a;
+  background: #161616;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #bdb4a0;
+  font-style: italic;
+}
