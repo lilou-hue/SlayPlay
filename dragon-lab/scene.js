@@ -51,10 +51,10 @@ window.Scene = (function () {
     scene.fog = new THREE.Fog(0x06060f, 16, 36);
 
     camera = new THREE.PerspectiveCamera(44, container.clientWidth / container.clientHeight, 0.1, 100);
-    camera.position.set(0, 2.5, 9);
+    camera.position.set(0, 3.5, 12);
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.target.set(0, 1.0, 0);
+    controls.target.set(0, 2.0, 0);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
     controls.maxPolarAngle = Math.PI * 0.82;
@@ -81,12 +81,15 @@ window.Scene = (function () {
       function (gltf) {
         glbTemplate = gltf.scene;
 
-        // Normalise: fit in a ~3-unit bounding box
+        // Normalise: fit in a ~5-unit bounding box
         var box = new THREE.Box3().setFromObject(glbTemplate);
         var sz  = new THREE.Vector3();
         box.getSize(sz);
-        var s = 3.0 / Math.max(sz.x, sz.y, sz.z);
+        var s = 5.0 / Math.max(sz.x, sz.y, sz.z);
         glbTemplate.scale.setScalar(s);
+
+        // Face toward camera (+Z) — Meshy AI exports facing away by default
+        glbTemplate.rotation.y = Math.PI;
 
         // Ground (Y) and centre (X/Z)
         box.setFromObject(glbTemplate);
@@ -178,47 +181,23 @@ window.Scene = (function () {
   function applyTraits(mesh, traits) {
     if (!traits) return;
 
-    // Whole-body mass
-    var massScale = 0.75 + nt('bodyMass', traits.bodyMass) * 0.5;
-    mesh.scale.x *= massScale;
-    mesh.scale.y *= massScale;
-    mesh.scale.z *= massScale;
+    // The GLB is a static mesh with no skeleton or morph targets.
+    // Trait variation is approximated via non-uniform root scale:
+    //   X axis (width) — wing span, body girth
+    //   Y axis (height) — neck length, overall height
+    //   Z axis (depth) — body length, tail size
+    var mass    = 0.75 + nt('bodyMass',       traits.bodyMass)       * 0.50;
+    var wingX   = 0.70 + nt('wingspan',       traits.wingspan)       * 0.60;
+    var wingZ   = 0.80 + nt('wingArea',       traits.wingArea)       * 0.40;
+    var neckY   = 0.80 + nt('neckLength',     traits.neckLength)     * 0.40;
+    var tailZ   = 0.80 + nt('tailSize',       traits.tailSize)       * 0.40;
+    var glandZ  = 0.92 + (nt('stomachCapacity', traits.stomachCapacity) +
+                          nt('fuelGlandSize',   traits.fuelGlandSize)) * 0.08;
 
-    mesh.traverse(function (obj) {
-      var n = obj.name ? obj.name.toLowerCase() : '';
-
-      if (/wing|feather/.test(n)) {
-        var span = 0.5  + nt('wingspan',  traits.wingspan)  * 1.1;
-        var area = 0.55 + nt('wingArea',  traits.wingArea)  * 0.95;
-        obj.scale.x *= span;
-        obj.scale.z *= area;
-        obj.scale.y *= (span + area) * 0.5;
-      }
-
-      if (/tail/.test(n)) {
-        var ts = 0.55 + nt('tailSize', traits.tailSize) * 0.95;
-        obj.scale.y *= ts;
-        obj.scale.z *= ts;
-      }
-
-      if (/neck/.test(n)) {
-        obj.scale.y *= 0.6 + nt('neckLength', traits.neckLength) * 0.9;
-      }
-
-      if (/head|skull/.test(n)) {
-        var hs = 0.88 + nt('intelligence', traits.intelligence) * 0.24;
-        obj.scale.x *= hs;
-        obj.scale.y *= hs;
-        obj.scale.z *= hs;
-      }
-
-      if (/spine|torso|belly|chest/.test(n)) {
-        var bs = 0.82 + (nt('stomachCapacity', traits.stomachCapacity) +
-                         nt('fuelGlandSize',   traits.fuelGlandSize))   * 0.19;
-        obj.scale.x *= bs;
-        obj.scale.z *= bs;
-      }
-    });
+    // Combine into a single non-uniform scale applied once to the mesh root
+    mesh.scale.x *= mass * wingX;
+    mesh.scale.y *= mass * neckY;
+    mesh.scale.z *= mass * wingZ * tailZ * glandZ;
   }
 
   // --------------------------------------------------------
@@ -231,7 +210,10 @@ window.Scene = (function () {
       if (!obj.isMesh) return;
       var processMat = function (m) {
         var nm = m.clone();
-        nm.color.multiply(color); // blend tint with baked texture colour
+        // Lerp from white toward tint at 50% — keeps texture contrast visible
+        // (multiply would make the dark teal default wash out all detail)
+        nm.color.set(1, 1, 1);
+        nm.color.lerp(color, 0.5);
         nm._owned = true;
         if (m._owned) m.dispose();
         return nm;
