@@ -33,6 +33,9 @@ window.App = (function() {
     const saved = window.Dragon.loadCurrent();
     currentDragon = saved || window.Dragon.create();
 
+    // Restore saved tint color if present
+    if (currentDragon.tintColor) currentTint = currentDragon.tintColor;
+
     // Init Three.js scene
     const canvasContainer = document.getElementById('canvas-container');
     if (canvasContainer) {
@@ -85,6 +88,7 @@ window.App = (function() {
 
   function onTintChange(hex) {
     currentTint = hex;
+    currentDragon.tintColor = hex;
     // Update custom input value to stay in sync
     const input = document.getElementById('custom-colour-input');
     if (input) input.value = hex;
@@ -93,6 +97,7 @@ window.App = (function() {
       sw.classList.toggle('active', sw.dataset.colour === hex);
     });
     window.Scene.updateDragon(currentDragon.traits, currentTint);
+    autoSave();
   }
 
   // --------------------------------------------------------
@@ -202,6 +207,12 @@ window.App = (function() {
   // BATTLE
   // --------------------------------------------------------
   function onBattleStart(enemyKey, arenaKey, speed) {
+    // Clear any in-progress playback before starting a new battle
+    if (battlePlaybackTimer) {
+      clearInterval(battlePlaybackTimer);
+      battlePlaybackTimer = null;
+    }
+
     const archetype = window.DragonData.ENEMY_ARCHETYPES[enemyKey];
     battleState = window.Battle.create(currentDragon, enemyKey, arenaKey);
 

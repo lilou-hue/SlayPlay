@@ -448,28 +448,31 @@ window.UI = (function() {
     const panel = document.getElementById('battle-display');
     if (!panel) return;
 
-    const p = state.player;
-    const e = state.enemy;
+    const tick = state.log[tickIndex];
+    const ps = tick ? tick.playerState : state.player;
+    const es = tick ? tick.enemyState : state.enemy;
+    const playerAction = tick ? tick.playerAction : null;
+    const enemyAction = tick ? tick.enemyAction : null;
 
     panel.innerHTML = `
       <div class="battle-hud">
         <div class="combatant-hud player-hud">
-          <div class="combatant-name">${p.name}</div>
-          ${renderBar('HP', p.hp, 100, 'hp')}
-          ${renderBar('Stamina', p.stamina, 100, 'stamina')}
-          ${renderBar('Fire System', p.fireSystem, 100, 'fire')}
-          <div class="last-action">Action: ${p.lastAction ? window.Battle.getActionLabel(p.lastAction) : '—'}</div>
+          <div class="combatant-name">${state.player.name}</div>
+          ${renderBar('HP', ps.hp, 100, 'hp')}
+          ${renderBar('Stamina', ps.stamina, 100, 'stamina')}
+          ${renderBar('Fire System', ps.fireSystem, 100, 'fire')}
+          <div class="last-action">Action: ${playerAction ? window.Battle.getActionLabel(playerAction) : '—'}</div>
         </div>
         <div class="battle-vs">VS</div>
         <div class="combatant-hud enemy-hud">
-          <div class="combatant-name">${e.name}</div>
-          ${renderBar('HP', e.hp, 100, 'hp')}
-          ${renderBar('Stamina', e.stamina, 100, 'stamina')}
-          ${renderBar('Fire System', e.fireSystem, 100, 'fire')}
-          <div class="last-action">Action: ${e.lastAction ? window.Battle.getActionLabel(e.lastAction) : '—'}</div>
+          <div class="combatant-name">${state.enemy.name}</div>
+          ${renderBar('HP', es.hp, 100, 'hp')}
+          ${renderBar('Stamina', es.stamina, 100, 'stamina')}
+          ${renderBar('Fire System', es.fireSystem, 100, 'fire')}
+          <div class="last-action">Action: ${enemyAction ? window.Battle.getActionLabel(enemyAction) : '—'}</div>
         </div>
       </div>
-      <div class="battle-tick-counter">Round ${state.tick} / ${DATA.BATTLE_CONFIG.maxTicks}</div>
+      <div class="battle-tick-counter">Round ${tick ? tick.tick : state.tick} / ${DATA.BATTLE_CONFIG.maxTicks}</div>
       <div class="battle-log" id="battle-log">
         ${state.log.slice(Math.max(0, tickIndex - 6), tickIndex + 1).map(tick =>
           `<div class="log-entry"><span class="log-tick">R${tick.tick}</span> ${tick.events.join(' ')}</div>`
