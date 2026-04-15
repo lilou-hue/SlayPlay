@@ -21,6 +21,7 @@ export const INITIAL_STATE = {
   expired: [],            // card ids that expired this week
   log: [],                // [{ week, cardId, choiceId, prose }]
   weekMessages: [],       // prose lines shown at week end
+  lastDeltas: null,       // { cardId, deltas: { quality: delta } } — shown after play
 };
 
 function startNewWeek(state) {
@@ -88,7 +89,16 @@ export function reducer(state, action) {
       if (!choice) return state;
 
       // Apply immediate effects
+      const prevQualities = { ...state.qualities };
       let next = applyEffects(state, choice.effects || {}, choice.hiddenEffects || {});
+
+      // Compute quality deltas for display
+      const deltaQualities = {};
+      for (const k of Object.keys(prevQualities)) {
+        const delta = (next.qualities[k] ?? 0) - prevQualities[k];
+        if (delta !== 0) deltaQualities[k] = delta;
+      }
+      next = { ...next, lastDeltas: { cardId, deltas: deltaQualities } };
 
       // Queue delayed effects
       const newPending = (choice.delayed || []).map((d) => ({

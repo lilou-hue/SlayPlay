@@ -1,8 +1,8 @@
 import Card from './Card.jsx';
 
 export default function Hand({ hand, played, expired, state, dispatch }) {
-  const playedIds = new Set(played.map((e) => e.id));
-  const expiredIds = new Set(expired.map((e) => e.id));
+  const playedIds = new Set(played);
+  const expiredIds = new Set(expired);
 
   const playsRemaining = 2 - played.length;
 

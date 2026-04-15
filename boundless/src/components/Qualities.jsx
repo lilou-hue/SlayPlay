@@ -5,7 +5,17 @@ const QUALITY_LABELS = {
   operationalCalm: 'Operational Calm',
 };
 
-export default function Qualities({ qualities }) {
+function ichDreadLine(ich) {
+  if (ich >= 8) return null;
+  if (ich >= 5) return 'The office has been quieter than usual.';
+  if (ich >= 3) return 'People have stopped asking each other how they\'re doing.';
+  if (ich >= 1) return 'Something is wrong. No one is saying what.';
+  return 'Two people gave notice in the same week.';
+}
+
+export default function Qualities({ qualities, hidden }) {
+  const dreadLine = ichDreadLine(hidden.internalCultureHealth);
+
   return (
     <aside className="qualities">
       <h3>Qualities</h3>
@@ -17,7 +27,7 @@ export default function Qualities({ qualities }) {
           </li>
         ))}
       </ul>
-      <p className="hidden-note">Some things are not shown here.</p>
+      {dreadLine && <p className="dread-note">{dreadLine}</p>}
     </aside>
   );
 }

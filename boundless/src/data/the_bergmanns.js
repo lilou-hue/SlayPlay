@@ -5,7 +5,7 @@ export const the_bergmanns = {
   weight: 3,
   stages: {
     s1: {
-      prose: `The Bergmanns have been with the cohort for two weeks. Lena Bergmann emails late on a Wednesday: their daughter isn't adjusting. The other kids have formed a group. Her daughter is outside it. She wants to know what you're going to do about it.`,
+      prose: `It's nine o'clock on a Wednesday evening. Lena Bergmann emails: her daughter isn't adjusting. The other children have formed a group. Hers is outside it. She wants to know what you're going to do about it.`,
       choices: [
         {
           id: 'direct',
@@ -46,8 +46,8 @@ export const the_bergmanns = {
 
     s2_engaged: {
       // Prose shifts if ICH is already degraded from The Offer
-      prose: `The call went well. Lena Bergmann is direct but not aggressive — she's scared, which is more manageable. She asks if your staff actually like working here. You weren't expecting that question.`,
-      proseLowICH: `The call went well enough. Lena asks — halfway through, almost casually — if your staff actually like working here. You hear something in her voice. She's testing the signal.`,
+      prose: `The call went well. Lena Bergmann is direct but not aggressive — she's frightened, which is more manageable than angry. Halfway through, she asks if your staff actually like working here. You weren't expecting that question.`,
+      proseLowICH: `The call went well enough. Halfway through, Lena asks — almost casually — whether your staff actually like working here. Something in how she says it. She's listening for more than your answer.`,
       choices: [
         {
           id: 'honest',
@@ -71,7 +71,7 @@ export const the_bergmanns = {
     },
 
     s2_delegated: {
-      prose: `Ana handled it. The Bergmanns seem settled for now. Lena sends a short thank-you to the group chat, addressed to Ana by name. Not to you.`,
+      prose: `Ana handled it. The Bergmanns seem settled for now. This morning Lena sends a short thank-you to the group chat. It's addressed to Ana by name. Not to you.`,
       choices: [
         {
           id: 'fine',
@@ -95,7 +95,7 @@ export const the_bergmanns = {
     },
 
     s2_waiting: {
-      prose: `Lena emailed again. She cc'd her partner this time. The tone is different — less asking, more documenting. The daughter still hasn't found her footing. Another family told Lena they'd had similar concerns, but "figured you'd get to it."`,
+      prose: `Lena emailed again. She cc'd her partner this time. The tone is different — less asking, more documenting. The daughter still hasn't found her footing. Another family told Lena they'd had similar concerns, but figured you'd get around to it.`,
       choices: [
         {
           id: 'address_now',

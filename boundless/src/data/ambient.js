@@ -8,7 +8,7 @@ export const ambient_cards = [
     weight: 1,
     stages: {
       default: {
-        prose: `A vendor invoice from last month is still unpaid. Your accounting tool flagged it. The vendor hasn't followed up yet.`,
+        prose: `A vendor invoice — forty-three days old — sits unpaid in your accounting tool. The vendor hasn't followed up yet. In your experience, that means they're about to.`,
         choices: [
           {
             id: 'pay_now',
@@ -47,7 +47,7 @@ export const ambient_cards = [
     weight: 1,
     stages: {
       default: {
-        prose: `Three families have mentioned the co-working internet in passing. One of them mentioned it twice. The building manager is hard to reach.`,
+        prose: `Three families have mentioned the co-working internet in passing. One of them mentioned it twice. The building manager hasn't returned your message from last week. Or the week before that.`,
         choices: [
           {
             id: 'escalate',
@@ -88,7 +88,7 @@ export const ambient_cards = [
     weight: 1,
     stages: {
       default: {
-        prose: `No crises this week. One family said, unprompted, that this is the best thing they've done. You're not sure what to do with that.`,
+        prose: `No crises this week. On Thursday, a family tells you — unprompted, to your face — that this is the best thing they've done in years. You stand there for a moment. You're not quite sure what to do with that.`,
         choices: [
           {
             id: 'note_it',

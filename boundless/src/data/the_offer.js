@@ -5,7 +5,7 @@ export const the_offer = {
   weight: 3,
   stages: {
     s1: {
-      prose: `Ana finds you between things on Tuesday. She mentions, almost carefully, that she's received an offer. Not a resignation. A mention. She's giving you something — you're just not sure what it is.`,
+      prose: `It's Tuesday. Ana finds you between things — between one meeting and the next — and mentions, almost carefully, that she's received an offer. Not a resignation. A mention. She's giving you something. You're not yet sure what.`,
       choices: [
         {
           id: 'negotiate',
@@ -60,7 +60,7 @@ export const the_offer = {
     },
 
     s2a: {
-      prose: `Ana stayed. No number was named, but the conversation happened. This week you notice Dayo — your newest hire — asking Ana questions he used to bring to you.`,
+      prose: `Ana stayed. No number was ever named, but the conversation happened. This week you notice Dayo — your newest hire — asking Ana questions he used to bring to you. You are not sure when that started.`,
       choices: [
         {
           id: 'surface',
@@ -93,7 +93,7 @@ export const the_offer = {
     },
 
     s2b: {
-      prose: `Ana took the week. She's back. She didn't take the job — she didn't say why. She just showed up Monday like nothing happened, except she's moved her desk slightly.`,
+      prose: `She took a week. She's back. She didn't take the job — she never said why. She just appeared on Monday like nothing had changed, except she's moved her desk slightly. You pretend not to notice. She pretends not to notice that you noticed.`,
       choices: [
         {
           id: 'acknowledge',
@@ -117,7 +117,7 @@ export const the_offer = {
     },
 
     s2c: {
-      prose: `Two weeks since the conversation. Ana never mentioned the offer again. You don't know if she took it and hasn't told you, or decided not to and considers it closed. She's still here. Last Thursday she reorganized the family intake process without asking.`,
+      prose: `Two weeks since the conversation. Ana hasn't mentioned the offer again. You don't know if she took it quietly, or decided against it, or considers the whole thing closed. She's still here. Last Thursday she reorganised the family intake process without asking.`,
       choices: [
         {
           id: 'wait_quietly',
@@ -133,8 +133,8 @@ export const the_offer = {
 
     s3: {
       // Prose changes if The Bergmanns is also active — checked in component
-      prose: `A family asks Ana directly: "Are you staying?" They heard something. Kids talk.`,
-      proseBergmannsActive: `The Bergmanns ask Ana directly, in front of the kids: "Are you staying?" Lena Bergmann heard something from another family. She wanted to ask before anyone else did.`,
+      prose: `A family asks Ana directly — in front of you, in front of everyone. "Are you staying?" Kids talk. So do parents.`,
+      proseBergmannsActive: `The Bergmanns ask Ana directly, in front of the other families: "Are you staying?" Lena Bergmann heard something from another family. She wanted to ask before the rumours did it for her.`,
       choices: [
         {
           id: 'let_her',
@@ -174,7 +174,7 @@ export const the_offer = {
     },
 
     s3_departure: {
-      prose: `Ana requests a meeting. She's written something. She reads it to you, which you didn't expect. It's not angry. It's clear.`,
+      prose: `Ana requests a meeting. She has something written. She reads it to you, which you didn't expect. It isn't angry. It's clear in the way that makes anger feel almost easier to receive.`,
       choices: [
         {
           id: 'listen',

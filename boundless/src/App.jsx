@@ -21,7 +21,7 @@ export default function App() {
       </header>
 
       <main className="app-main">
-        <Qualities qualities={qualities} />
+        <Qualities qualities={qualities} hidden={hidden} />
 
         <div className="play-area">
           {(phase === 'draw' || phase === 'playing') && (
