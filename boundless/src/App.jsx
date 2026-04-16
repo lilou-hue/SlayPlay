@@ -16,7 +16,10 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Boundless</h1>
+        <div className="app-title">
+          <h1>Boundless</h1>
+          <span className="app-tagline">You lead a cohort. Every decision settles somewhere.</span>
+        </div>
         <div className="week-pips">
           {[1, 2, 3, 4, 5].map((n) => (
             <span
@@ -29,7 +32,7 @@ export default function App() {
       </header>
 
       <main className="app-main">
-        <Qualities qualities={qualities} hidden={hidden} />
+        <Qualities qualities={qualities} hidden={hidden} lastDeltas={state.lastDeltas} />
 
         <div className="play-area">
           {(phase === 'draw' || phase === 'playing') && (

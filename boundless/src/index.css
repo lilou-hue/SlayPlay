@@ -23,11 +23,24 @@ body {
   border-bottom: 1px solid #2e2418;
 }
 
+.app-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
 .app-header h1 {
   font-size: 1.4rem;
   font-weight: normal;
   letter-spacing: 0.08em;
   color: #e8dfc5;
+}
+
+.app-tagline {
+  font-size: 0.7rem;
+  color: #5a4a30;
+  font-style: italic;
+  letter-spacing: 0.04em;
 }
 
 .week-pips {
@@ -91,6 +104,18 @@ body {
   line-height: 1.4;
 }
 
+@keyframes flashUp {
+  0%   { color: #e8dfc5; }
+  25%  { color: #6ab85a; }
+  100% { color: #e8dfc5; }
+}
+
+@keyframes flashDown {
+  0%   { color: #e8dfc5; }
+  25%  { color: #c85040; }
+  100% { color: #e8dfc5; }
+}
+
 .q-value {
   font-size: 1.3rem;
   color: #e8dfc5;
@@ -98,6 +123,15 @@ body {
   min-width: 2rem;
   text-align: right;
   line-height: 1;
+  transition: color 0.1s;
+}
+
+.q-value--flash-up {
+  animation: flashUp 0.9s ease-out both;
+}
+
+.q-value--flash-down {
+  animation: flashDown 0.9s ease-out both;
 }
 
 .dread-note {
@@ -165,23 +199,23 @@ body {
 }
 
 .card-body {
-  padding: 1rem 1.2rem 1.1rem;
+  padding: 1.4rem 1.5rem 1.3rem;
 }
 
 .card-title {
   display: block;
-  font-size: 0.7rem;
-  letter-spacing: 0.14em;
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #5a4a2a;
-  margin-bottom: 0.8rem;
+  color: #9a7a40;
+  margin-bottom: 1rem;
 }
 
 .card-prose {
-  font-size: 0.95rem;
-  line-height: 1.75;
+  font-size: 0.97rem;
+  line-height: 1.8;
   color: #cfc4a8;
-  margin-bottom: 1.1rem;
+  margin-bottom: 1.3rem;
 }
 
 .resolve-prose {
@@ -224,20 +258,27 @@ body {
 }
 
 /* Quality deltas */
+@keyframes deltaFadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .quality-deltas {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  font-size: 0.78rem;
-  margin-top: 0.75rem;
+  font-size: 0.82rem;
+  font-weight: bold;
+  margin-top: 0.85rem;
+  animation: deltaFadeIn 0.25s ease-out both;
 }
 
 .delta--positive {
-  color: #6a9e5a;
+  color: #6ab85a;
 }
 
 .delta--negative {
-  color: #b86040;
+  color: #c85040;
 }
 
 /* Week End */
