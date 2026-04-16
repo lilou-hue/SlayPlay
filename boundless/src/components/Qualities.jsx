@@ -18,7 +18,6 @@ export default function Qualities({ qualities, hidden }) {
 
   return (
     <aside className="qualities">
-      <h3>Qualities</h3>
       <ul>
         {Object.entries(QUALITY_LABELS).map(([key, label]) => (
           <li key={key}>

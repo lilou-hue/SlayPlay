@@ -11,12 +11,14 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  max-width: 1100px;
+  margin: 0 auto;
 }
 
 .app-header {
   display: flex;
-  align-items: baseline;
-  gap: 1rem;
+  align-items: center;
+  gap: 1.2rem;
   padding: 1rem 2rem;
   border-bottom: 1px solid #2e2418;
 }
@@ -28,9 +30,32 @@ body {
   color: #e8dfc5;
 }
 
+.week-pips {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.week-pip {
+  width: 18px;
+  height: 3px;
+  background: #2e2418;
+  border-radius: 1px;
+  transition: background 0.2s;
+}
+
+.week-pip--done {
+  background: #7a5a14;
+}
+
+.week-pip--current {
+  background: #c8962a;
+}
+
 .week-label {
-  font-size: 0.85rem;
-  color: #7a6a50;
+  font-size: 0.8rem;
+  color: #5a4a30;
+  letter-spacing: 0.06em;
 }
 
 .app-main {
@@ -41,19 +66,11 @@ body {
 
 /* Qualities sidebar */
 .qualities {
-  width: 200px;
+  width: 240px;
   flex-shrink: 0;
-  padding: 1.5rem 1rem;
+  padding: 2rem 1.2rem;
   border-right: 1px solid #2a2016;
   background: #181410;
-}
-
-.qualities h3 {
-  font-size: 0.75rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #5a4a30;
-  margin-bottom: 1rem;
 }
 
 .qualities ul {
@@ -64,51 +81,63 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  padding: 0.4rem 0;
-  border-bottom: 1px solid #221e14;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid #1e1a10;
 }
 
 .q-label {
-  font-size: 0.8rem;
-  color: #9a8860;
+  font-size: 0.78rem;
+  color: #7a6a50;
+  line-height: 1.4;
 }
 
 .q-value {
-  font-size: 1rem;
+  font-size: 1.3rem;
   color: #e8dfc5;
   font-weight: bold;
-  min-width: 1.5rem;
+  min-width: 2rem;
   text-align: right;
+  line-height: 1;
 }
 
 .dread-note {
   margin-top: 1.4rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid #2a2016;
   font-size: 0.75rem;
   color: #7a5e40;
   font-style: italic;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 /* Play area */
 .play-area {
   flex: 1;
-  padding: 1.5rem 2rem;
+  padding: 2rem;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 /* Hand */
+.hand {
+  width: 100%;
+  max-width: 640px;
+}
+
 .hand-status {
   font-size: 0.8rem;
-  color: #6a5840;
-  margin-bottom: 1.2rem;
-  letter-spacing: 0.04em;
+  color: #5a4a30;
+  margin-bottom: 1.4rem;
+  letter-spacing: 0.05em;
+  font-style: italic;
 }
 
 .hand-cards {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  max-width: 600px;
 }
 
 /* Card */
@@ -135,30 +164,17 @@ body {
   opacity: 0.65;
 }
 
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 1rem;
-}
-
 .card-body {
   padding: 1rem 1.2rem 1.1rem;
 }
 
 .card-title {
   display: block;
-  font-size: 0.72rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #7a6a4a;
-  margin-bottom: 0.75rem;
-}
-
-.card-tag {
   font-size: 0.7rem;
-  color: #4a3a20;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #5a4a2a;
+  margin-bottom: 0.8rem;
 }
 
 .card-prose {
@@ -226,14 +242,16 @@ body {
 
 /* Week End */
 .week-end {
-  max-width: 540px;
+  width: 100%;
+  max-width: 560px;
 }
 
 .week-end h2 {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: normal;
-  color: #c8bfa8;
-  margin-bottom: 1.2rem;
+  color: #9a8860;
+  letter-spacing: 0.06em;
+  margin-bottom: 1.4rem;
 }
 
 .delayed-messages {
@@ -241,7 +259,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-  margin-bottom: 1.4rem;
+  margin-bottom: 1.6rem;
 }
 
 .delayed-msg {
@@ -254,26 +272,26 @@ body {
 }
 
 .end-week-btn {
-  background: #221c10;
-  border: 1px solid #3a2e18;
-  color: #b8a878;
+  background: none;
+  border: none;
+  color: #7a6040;
   font-family: inherit;
-  font-size: 0.9rem;
-  padding: 0.6rem 1.4rem;
+  font-size: 0.85rem;
+  font-style: italic;
+  padding: 0;
   cursor: pointer;
-  border-radius: 1px;
-  transition: background 0.12s;
   letter-spacing: 0.04em;
+  transition: color 0.12s;
+  text-decoration: none;
 }
 
 .end-week-btn:hover {
-  background: #2a2418;
-  border-color: #5a4a28;
+  color: #c8a860;
 }
 
 /* Game Over */
 .week-end--game-over h2 {
-  color: #a09080;
+  color: #7a6a50;
 }
 
 .ich-reveal {

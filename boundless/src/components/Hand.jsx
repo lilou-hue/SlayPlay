@@ -6,12 +6,17 @@ export default function Hand({ hand, played, expired, state, dispatch }) {
 
   const playsRemaining = 2 - played.length;
 
+  const statusText =
+    playsRemaining === 2
+      ? 'Two decisions remain this week.'
+      : playsRemaining === 1
+        ? 'One decision remains.'
+        : 'The week is spent. End it when ready.';
+
   return (
     <div className="hand">
       <div className="hand-status">
-        {playsRemaining > 0
-          ? `Play ${playsRemaining} more card${playsRemaining > 1 ? 's' : ''}.`
-          : 'End the week when ready.'}
+        {statusText}
       </div>
       <div className="hand-cards">
         {hand.map((entry) => (

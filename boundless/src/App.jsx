@@ -17,7 +17,15 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <h1>Boundless</h1>
-        <span className="week-label">Week {week}</span>
+        <div className="week-pips">
+          {[1, 2, 3, 4, 5].map((n) => (
+            <span
+              key={n}
+              className={`week-pip${n < week ? ' week-pip--done' : ''}${n === week ? ' week-pip--current' : ''}`}
+            />
+          ))}
+        </div>
+        <span className="week-label">Week {week} of 5</span>
       </header>
 
       <main className="app-main">
