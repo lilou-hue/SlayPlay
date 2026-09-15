@@ -27,9 +27,20 @@ code — the game looks for them by name at runtime.
 | `audio/ambient/` | Loopable room tone, wind, water. |
 | `audio/sfx/` | One-shots. `knock_wall` is the single most important sound in the game. |
 
+### Recording the voices yourself
+
+Human-recorded audio drops in exactly like everything else — the filename from
+`ASSETS_NEEDED.md`, into `audio/sfx/`. No conversion, no code change, nothing to
+register.
+
+Record **dry and close**, with no reverb and no panning baked in. The game places
+each sound: a beat can ask for it `from: 'above'`, `'behind'`, `'inside_wall'` or
+`'far'`, and it is positioned and levelled at playback. A file that already has a
+room on it cannot be moved into a different one.
+
 ## Optional variants
 
-Two suffixes are picked up automatically, and neither is ever required:
+Three suffixes are picked up automatically, and none of them is ever required:
 
 - `<background>_frayed` and `<background>_gone` — the same room redrawn slightly,
   then badly, wrong. Used in place of the plain file once the protagonist is
@@ -38,6 +49,20 @@ Two suffixes are picked up automatically, and neither is ever required:
 - `<cg>_<skintone>` — for the handful of shots where the player's hands or body
   are visible: `blood_mirror_olive`, `blood_mirror_deep`. The plain file is the
   fallback, so supplying only that is completely fine.
+- `<expression>_s2` / `_s3` / `_s4` in `characters/sister/` — Lily, drawn further
+  gone. As the house takes more of her the game asks for the highest stage you
+  have supplied and falls back through `_s3` → `_s2` → the plain file, so you can
+  draw stage 3 without drawing stage 2.
+
+  The four stages are described in `HORROR_BIBLE.md`. Briefly: **1** tired and
+  pale; **2** grey nails, a tremor, a gesture that was never hers; **3** standing
+  too still, a smile held a few seconds too long, posture starting to resemble a
+  wall child's; **4** visibly altered, joints wrong. The most frightening
+  versions are the ones that look almost normal — something is only wrong after
+  you have been looking a while.
+
+  This is the only way her deterioration is ever shown. The engine does not
+  filter, tint or distort the stage-1 drawing, and a test fails if it starts to.
 
 ## Naming
 
