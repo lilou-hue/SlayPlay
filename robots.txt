@@ -6,4 +6,8 @@ Disallow: /node_modules/
 # reviewed; delete this line when the preview is removed
 Disallow: /arcade/wet-lab-preview/
 
+# temporary staging build of DON'T KNOCK BACK, kept out of the index while it
+# is reviewed; delete this line when the preview is removed
+Disallow: /arcade/dont-knock-back-preview/
+
 Sitemap: https://slayplay.io/sitemap.xml
