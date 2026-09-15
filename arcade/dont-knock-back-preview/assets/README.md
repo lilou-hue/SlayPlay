@@ -17,7 +17,7 @@ code — the game looks for them by name at runtime.
 | Folder | Spec |
 | --- | --- |
 | `backgrounds/` | 16:9, 1920×1080 or larger. Interiors lit by one candle or torch. Corners are darkened in-engine, so don't pre-vignette. |
-| `characters/<name>/` | Tall transparent PNGs, bottom-centre anchored, ~900×1600. Keep the head and body in the same position across a character's expressions or they'll jump when the expression switches. One file per expression. |
+| `characters/<name>/` | Tall transparent PNGs, bottom-center anchored, ~900×1600. Keep the head and body in the same position across a character's expressions or they'll jump when the expression switches. One file per expression. |
 | `entities/listener/` | Same as characters, but it should never be fully legible. Partial, cropped, too tall for the frame. |
 | `cg/` | Full-screen 16:9 illustrations — the big moments. |
 | `overlays/` | Full-frame PNGs with transparency, layered over the scene (cracks, damp, moving wallpaper, handprints). |
@@ -55,7 +55,7 @@ Three suffixes are picked up automatically, and none of them is ever required:
   draw stage 3 without drawing stage 2.
 
   The four stages are described in `HORROR_BIBLE.md`. Briefly: **1** tired and
-  pale; **2** grey nails, a tremor, a gesture that was never hers; **3** standing
+  pale; **2** gray nails, a tremor, a gesture that was never hers; **3** standing
   too still, a smile held a few seconds too long, posture starting to resemble a
   wall child's; **4** visibly altered, joints wrong. The most frightening
   versions are the ones that look almost normal — something is only wrong after
