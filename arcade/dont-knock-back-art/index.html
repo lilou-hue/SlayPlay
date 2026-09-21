@@ -125,10 +125,10 @@
   <h1>Knock Back Plates</h1>
   <p class="standfirst">Every background generated this session, shown against the approved original it had to stay continuous with. Generated through the local Sprites instance on the same model and style pipeline as the existing game art.</p>
   <p class="tally">
-    <span><b>12</b> of 16 drawn</span>
-    <span><b>12</b> installed into the game</span>
+    <span><b>14</b> of 16 drawn</span>
+    <span><b>14</b> installed into the game</span>
     <span><b>3</b> generating now</span>
-    <span><b>1</b> queued</span>
+    <span><b>2</b> in flight</span>
     <span>21 Sep 2026</span>
   </p>
 </header>
@@ -364,20 +364,67 @@
 </section>
 
 <section class="batch">
-  <div class="batch-head"><h2>Batch E</h2><span class="chip run">generating</span></div>
-  <p class="batch-note">Each of these waited on a plate from an earlier batch, so nothing was generated before the thing it has to match.</p>
-  <ul class="queue">
-    <li><span class="k">backgrounds/hallway_morning</span><span class="w">waits on batch A</span></li>
-    <li><span class="k">cg/fingernail_marks</span><span class="w">waits on the opened wall</span></li>
-    <li><span class="k">backgrounds/crawlspace_dark</span><span class="w">waits on under_stairs</span></li>
-  </ul>
+  <div class="batch-head"><h2>Batch E</h2><span class="chip done">two installed</span><span class="chip run">one re-rolling</span></div>
+  <p class="batch-note">Each of these waited on a plate from an earlier batch, so nothing was generated before the thing it has to match. One of the three came back wrong and is being re-rolled.</p>
+
+  <article class="plate">
+    <div class="plate-head"><h3>Fingernail marks</h3><span class="key">cg/fingernail_marks</span></div>
+    <div class="shot"><img src="images/fingernail_marks.webp" alt="A bare pine stud in torchlight with three groups of four fingernail gouges torn down it, the wood splintered at the bottom of every stroke."></div>
+    <div class="meta">
+      <div>
+        <p class="verdict">The best plate in the set. This is chapter two's single piece of gore and the brief is unusually exact about it — <em>three groups of four parallel scratches, four side by side, then four below that, then four below that again, each group shorter and more ragged than the one above, the wood torn up into fine pale splinters at the bottom of every stroke.</em></p>
+        <p class="verdict">All of it is there, including the part that is easy to lose: the light rakes across the wood at an angle, so the gouges read as <em>depth</em> rather than as drawn lines. And there is no blood in it. The horror is entirely in what the marks imply about how long somebody was at that stud.</p>
+        <dl class="facts">
+          <dt>Used by</dt><dd>c2s02_hollow</dd>
+          <dt>Installed</dt><dd>public/assets/cg/fingernail_marks.webp</dd>
+        </dl>
+      </div>
+      <figure class="ref">
+        <figcaption>Inherits from</figcaption>
+        <img src="images/parlor_wall_open.webp" alt="The parlour with the wall opened.">
+        <span class="refname">the opened wall</span>
+      </figure>
+    </div>
+  </article>
+
+  <article class="plate">
+    <div class="plate-head"><h3>Hallway, morning</h3><span class="key">backgrounds/hallway_morning</span></div>
+    <div class="shot"><img src="images/hallway_morning.webp" alt="The long hallway in flat grey morning light, runner on the boards, the window at the far end."></div>
+    <div class="meta">
+      <div>
+        <p class="verdict">This completes the hallway in three lights — night, dusk, morning — all on the same bearing and the same one-point perspective. The runner, the pictures, the window and the lighter rectangle with its picture hook are all where the other two put them.</p>
+        <p class="verdict">It got the hardest instruction right: <em>no warm light anywhere in the frame.</em> There is not a single amber pixel in it, which is what makes a grey morning read as worse than the candlelit night.</p>
+        <p class="verdict"><span class="flag">The doors are pale again</span> — third plate running to inherit that from the approved <code>hallway_night</code> original where the spec asks for four-panel dark doors. At this point it is the spec that is out of date, not the art.</p>
+        <dl class="facts">
+          <dt>Used by</dt><dd>c2s01_bread</dd>
+          <dt>Installed</dt><dd>public/assets/backgrounds/hallway_morning.webp</dd>
+        </dl>
+      </div>
+      <figure class="ref">
+        <figcaption>Inherits from</figcaption>
+        <img src="images/hallway_night.webp" alt="The approved hallway at night.">
+        <span class="refname">hallway_night</span>
+      </figure>
+    </div>
+  </article>
+
+  <article class="plate">
+    <div class="plate-head"><h3>Crawlspace, dark</h3><span class="key">backgrounds/crawlspace_dark</span></div>
+    <div class="meta" style="grid-template-columns:1fr">
+      <div>
+        <p class="verdict"><span class="flag">Rejected and re-rolling.</span> The brief asks for the inside of a crawlspace under a staircase <em>seen lying flat on the elbows, joists close overhead</em>. The first attempt came back as a full-height cellar you could walk through.</p>
+        <p class="verdict">That is not a cosmetic miss. Chapter two's one shock is the flashlight beam finding a face <em>much closer than the space can hold</em> — the scare is a geometry violation, and a geometry violation needs a space with known, tight geometry. In a cavern there is nothing to violate.</p>
+        <p class="verdict"><strong>Worth knowing about this pipeline:</strong> two re-rolls launched in the same instant came back byte-identical — same MD5. Rolling the same brief twice at once buys nothing. Rolls separated in time do vary, so a third is running on its own.</p>
+      </div>
+    </div>
+  </article>
 </section>
 
 <section class="batch">
-  <div class="batch-head"><h2>Batch F</h2><span class="chip wait">queued</span></div>
-  <p class="batch-note">The chapter's one shock, and the last plate in the set. It has to match the crawlspace it appears in, so it goes last.</p>
+  <div class="batch-head"><h2>Batch F</h2><span class="chip run">generating</span></div>
+  <p class="batch-note">The last plate in the set, and the chapter's only shock.</p>
   <ul class="queue">
-    <li><span class="k">cg/crawlspace_face</span><span class="w">waits on crawlspace_dark</span></li>
+    <li><span class="k">cg/crawlspace_face</span><span class="w">roster: the wall children</span></li>
   </ul>
 </section>
 
