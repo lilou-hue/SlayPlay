@@ -1,0 +1,289 @@
+<title>Knock Back Plates</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Newsreader:opsz,wght@6..72,300;6..72,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --ground:#12100e; --surface:#1a1815; --sunk:#0c0a09;
+    --rule:#2c2822; --rule-soft:#211e1a;
+    --ink:#ded7c9; --ink-dim:#a49b8d; --ink-faint:#7b7367;
+    --amber:#c9924f; --green:#6b7d75; --rust:#9c5b42;
+    --display:"Fraunces",Georgia,"Times New Roman",serif;
+    --body:"Newsreader",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{
+    background:var(--ground); color:var(--ink);
+    font-family:var(--body); font-size:17px; line-height:1.6;
+    font-weight:300; margin:0; padding-inline:20px; padding-block:0;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px;margin:0 auto}
+  img{max-width:100%;display:block}
+  a{color:var(--amber)}
+
+  /* masthead */
+  header.top{padding-block:56px 40px;border-bottom:1px solid var(--rule)}
+  .eyebrow{
+    font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--ink-faint);margin:0 0 18px;
+  }
+  h1{
+    font-family:var(--display);font-weight:600;font-variation-settings:"opsz" 120,"SOFT" 20;
+    font-size:clamp(2.4rem,7vw,3.6rem);line-height:1.02;letter-spacing:-.02em;
+    margin:0 0 16px;text-wrap:balance;color:var(--ink);
+  }
+  .standfirst{font-size:1.1rem;color:var(--ink-dim);max-width:60ch;margin:0}
+  .tally{
+    display:flex;flex-wrap:wrap;gap:8px 28px;margin-top:28px;
+    font-family:var(--mono);font-size:12px;letter-spacing:.04em;
+  }
+  .tally b{color:var(--ink);font-weight:500}
+  .tally span{color:var(--ink-faint)}
+
+  /* batch heading */
+  .batch{padding-block:52px 8px}
+  .batch-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+  .batch-head h2{
+    font-family:var(--display);font-weight:600;font-variation-settings:"opsz" 40;
+    font-size:1.5rem;margin:0;letter-spacing:-.01em;
+  }
+  .chip{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+    padding:3px 9px;border:1px solid var(--rule);border-radius:2px;color:var(--ink-faint);
+    display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
+  }
+  .chip::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
+  .chip.done{color:var(--green);border-color:#32403a}
+  .chip.run{color:var(--amber)}
+  .chip.run{border-color:#4a3a24}
+  .chip.wait{color:var(--ink-faint)}
+  .batch-note{color:var(--ink-faint);font-size:.95rem;margin:0;max-width:62ch}
+
+  /* plate */
+  .plate{padding-block:36px;border-bottom:1px solid var(--rule-soft)}
+  .plate:last-child{border-bottom:none}
+  .shot{background:var(--sunk);border:1px solid var(--rule);border-radius:2px;overflow:hidden}
+  .plate-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .plate-head h3{
+    font-family:var(--display);font-weight:600;font-variation-settings:"opsz" 60;
+    font-size:1.3rem;margin:0;letter-spacing:-.01em;
+  }
+  .star{color:var(--rust)}
+  .key{font-family:var(--mono);font-size:12px;color:var(--ink-faint);word-break:break-all}
+
+  .meta{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:32px;align-items:start;margin-top:22px}
+  .verdict{margin:0;font-size:1.02rem;max-width:62ch}
+  .verdict + .verdict{margin-top:12px}
+  .flag{color:var(--amber)}
+  .facts{
+    font-family:var(--mono);font-size:11.5px;line-height:1.75;color:var(--ink-faint);
+    margin:16px 0 0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 16px;
+  }
+  .facts dt{color:#5f5951;letter-spacing:.06em;text-transform:uppercase;font-size:10px;padding-top:3px}
+  .facts dd{margin:0;word-break:break-word}
+
+  figure.ref{margin:0;border-top:1px solid var(--rule);padding-top:14px}
+  figure.ref img{border:1px solid var(--rule);border-radius:2px;opacity:.82}
+  figure.ref figcaption{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+    color:#5f5951;margin-bottom:10px;
+  }
+  figure.ref .refname{font-family:var(--mono);font-size:11.5px;color:var(--ink-faint);
+    text-transform:none;letter-spacing:0;margin-top:9px;display:block}
+  .noref{
+    font-family:var(--mono);font-size:11.5px;color:var(--ink-faint);line-height:1.7;
+    border-top:1px solid var(--rule);padding-top:14px;
+  }
+
+  /* queue */
+  .queue{list-style:none;padding:0;margin:18px 0 0;display:grid;gap:1px;background:var(--rule-soft);border:1px solid var(--rule-soft)}
+  .queue li{background:var(--ground);padding:11px 14px;display:flex;justify-content:space-between;gap:16px;align-items:baseline;flex-wrap:wrap}
+  .queue .k{font-family:var(--mono);font-size:12px;color:var(--ink-dim)}
+  .queue .w{font-size:.92rem;color:var(--ink-faint);text-align:right}
+
+  /* footer */
+  footer{margin-top:56px;border-top:1px solid var(--rule);padding-block:34px 72px}
+  footer h2{font-family:var(--display);font-weight:600;font-size:1.25rem;margin:0 0 14px}
+  footer p{color:var(--ink-dim);max-width:64ch;margin:0 0 14px;font-size:1rem}
+  code{font-family:var(--mono);font-size:.84em;color:var(--ink);background:var(--surface);
+    padding:2px 5px;border-radius:2px;border:1px solid var(--rule)}
+
+  @media (max-width:760px){
+    .meta{grid-template-columns:1fr;gap:22px}
+    figure.ref img{max-width:320px}
+  }
+</style>
+
+<div class="wrap">
+<header class="top">
+  <p class="eyebrow">Don't Knock Back · chapters one &amp; two</p>
+  <h1>Knock Back Plates</h1>
+  <p class="standfirst">Every background generated this session, shown against the approved original it had to stay continuous with. Generated through the local Sprites instance on the same model and style pipeline as the existing game art.</p>
+  <p class="tally">
+    <span><b>6</b> of 16 drawn</span>
+    <span><b>6</b> installed into the game</span>
+    <span><b>3</b> generating now</span>
+    <span><b>7</b> queued</span>
+    <span>21 Sep 2026</span>
+  </p>
+</header>
+
+<section class="batch">
+  <div class="batch-head"><h2>Batch A</h2><span class="chip done">installed</span></div>
+  <p class="batch-note">The three rooms that already existed in some other light. Each one inherits a promoted continuity original, so the test is whether the furniture survived the repaint.</p>
+
+  <article class="plate">
+    <div class="plate-head"><h3>Bedroom, late night <span class="star">★</span></h3><span class="key">backgrounds/bedroom_night_late</span></div>
+    <div class="shot"><img src="images/bedroom_night_late.webp" alt="The bedroom at late night, bed and window, very low light."></div>
+    <div class="meta">
+      <div>
+        <p class="verdict">Room continuity holds — same bed, same window, same wallpaper, same weight of dark.</p>
+        <p class="verdict"><span class="flag">It missed its one framing instruction.</span> The brief asks for <em>the wall beside the bed filling more of the frame than before</em>, and the camera has not moved. This is the shot the three knocks come out of, so the wall <em>is</em> the subject. It's the only priority shot in the set. I'd regenerate it.</p>
+        <dl class="facts">
+          <dt>Used by</dt><dd>c2s07_she_comes_back · c1s07_three_knocks</dd>
+          <dt>Installed</dt><dd>public/assets/backgrounds/bedroom_night_late.webp</dd>
+        </dl>
+      </div>
+      <figure class="ref">
+        <figcaption>Inherits from</figcaption>
+        <img src="images/bedroom_night.webp" alt="The approved bedroom at night.">
+        <span class="refname">bedroom_night</span>
+      </figure>
+    </div>
+  </article>
+
+  <article class="plate">
+    <div class="plate-head"><h3>Entrance hall, morning</h3><span class="key">backgrounds/entrance_hall_morning</span></div>
+    <div class="shot"><img src="images/entrance_hall_morning.webp" alt="The entrance hall in grey morning light, coats on hooks, tiled floor."></div>
+    <div class="meta">
+      <div>
+        <p class="verdict">Textbook repaint. Same coats on the same hooks, same hall table, same cracked encaustic tile in the same place. Only the light changed, which is the entire job.</p>
+        <dl class="facts">
+          <dt>Used by</dt><dd>c2s01_bread · c1s05_missing</dd>
+          <dt>Installed</dt><dd>public/assets/backgrounds/entrance_hall_morning.webp</dd>
+        </dl>
+      </div>
+      <figure class="ref">
+        <figcaption>Inherits from</figcaption>
+        <img src="images/entrance_hall_dusk.webp" alt="The approved entrance hall at dusk.">
+        <span class="refname">entrance_hall_dusk</span>
+      </figure>
+    </div>
+  </article>
+
+  <article class="plate">
+    <div class="plate-head"><h3>Hallway, dusk</h3><span class="key">backgrounds/hallway_dusk</span></div>
+    <div class="shot"><img src="images/hallway_dusk.webp" alt="The long hallway at dusk, runner on the boards, doors either side."></div>
+    <div class="meta">
+      <div>
+        <p class="verdict">Same runner, same pictures, same lighter rectangle on the wallpaper where the painting used to hang — which is canon from chapter one onward and had to survive.</p>
+        <p class="verdict"><span class="flag">One disagreement, not a fault.</span> The manifest spec asks for <em>four-panel dark doors</em>; these came out pale. So did the doors in the approved original it inherited from. The spec and the canon original contradict each other, and the original won. Flagging rather than fixing.</p>
+        <dl class="facts">
+          <dt>Used by</dt><dd>c1s06_bathroom</dd>
+          <dt>Installed</dt><dd>public/assets/backgrounds/hallway_dusk.webp</dd>
+        </dl>
+      </div>
+      <figure class="ref">
+        <figcaption>Inherits from</figcaption>
+        <img src="images/hallway_night.webp" alt="The approved hallway at night, lit by one candle.">
+        <span class="refname">hallway_night</span>
+      </figure>
+    </div>
+  </article>
+</section>
+
+<section class="batch">
+  <div class="batch-head"><h2>Batch B</h2><span class="chip done">installed</span></div>
+  <p class="batch-note">Two rooms that change state, and the first room in the game drawn from nothing.</p>
+
+  <article class="plate">
+    <div class="plate-head"><h3>Parlour, wall opened</h3><span class="key">backgrounds/parlor_wall_open</span></div>
+    <div class="shot"><img src="images/parlor_wall_open.webp" alt="The parlour with a strip of wallpaper torn away, bare studs and a dark cavity behind it."></div>
+    <div class="meta">
+      <div>
+        <p class="verdict">The room is faithful down to the props — same handless clock, same photo and folded cloth on the mantel, same dust sheets over the same two chairs, same rug, same brass knob on the door. The torn strip, the bare studs and the curl of paper on the floor all read exactly right, and the opening stays a black band rather than becoming a lit corridor.</p>
+        <p class="verdict"><span class="flag">One deviation.</span> The brief wanted the camera <em>close and square to the opened wall</em>; it kept the wide parlour framing instead. That buys continuity at the cost of intimacy. Your call whether the trade is worth a second pass.</p>
+        <dl class="facts">
+          <dt>Used by</dt><dd>c2s02_hollow</dd>
+          <dt>Installed</dt><dd>public/assets/backgrounds/parlor_wall_open.webp</dd>
+        </dl>
+      </div>
+      <figure class="ref">
+        <figcaption>Inherits from</figcaption>
+        <img src="images/parlor_morning.webp" alt="The approved parlour in morning light.">
+        <span class="refname">parlor_morning</span>
+      </figure>
+    </div>
+  </article>
+
+  <article class="plate">
+    <div class="plate-head"><h3>Box room, night</h3><span class="key">backgrounds/box_room_night</span></div>
+    <div class="shot"><img src="images/box_room_night.webp" alt="A box room under a sloped ceiling, stacked furniture, two rows of papers pinned above a card table with a reel-to-reel machine."></div>
+    <div class="meta">
+      <div>
+        <p class="verdict">The first room here with no prior original, so it carries the house on palette alone — and it holds. Same green-grey walls, same cream skirting, same dark boards, same night window.</p>
+        <p class="verdict">It got the detail that mattered: <em>two rows of pinned paper, one at chest height and one much lower.</em> That lower row is the whole point of the scene. The reel is threaded and about a third used, as asked.</p>
+        <p class="verdict">Softer than the brief's <em>hard cone with everything outside it black</em> — the left half reads as ambient dim rather than torchlight. But the room reads, and it's a background with text over it.</p>
+        <dl class="facts">
+          <dt>Used by</dt><dd>c2s06_what_it_kept</dd>
+          <dt>Installed</dt><dd>public/assets/backgrounds/box_room_night.webp</dd>
+        </dl>
+      </div>
+      <div class="noref"><strong style="color:var(--ink-dim)">No continuity original.</strong><br>First design. Inherits the house palette and the ART_BIBLE style layer only.</div>
+    </div>
+  </article>
+
+  <article class="plate">
+    <div class="plate-head"><h3>Hallway, night, far</h3><span class="key">backgrounds/hallway_night_far</span></div>
+    <div class="shot"><img src="images/hallway_night_far.webp" alt="The hallway at night from far back, the candle a small distant point, foreground dark and empty."></div>
+    <div class="meta">
+      <div>
+        <p class="verdict">Does precisely what the brief asks. The candle is reduced to a distant warm point, the foreground is dark and empty, and the near doorway frames the shot. <em>"Nothing is in the foreground — and it must look like there could be."</em></p>
+        <p class="verdict"><span class="flag">Nothing in the game uses it.</span> It's declared in <code>tools/art-manifest.ts:273</code> as the stalking shot, but the comment at <code>src/content/chapter01/s03_first_signs.ts:271</code> says that beat was rewritten onto <code>landing_night</code> instead. So it's a finished shot in hand with no scene. I've left it installed rather than delete a designed frame.</p>
+        <dl class="facts">
+          <dt>Used by</dt><dd>nothing — orphan</dd>
+          <dt>Installed</dt><dd>public/assets/backgrounds/hallway_night_far.webp</dd>
+        </dl>
+      </div>
+      <figure class="ref">
+        <figcaption>Inherits from</figcaption>
+        <img src="images/hallway_night.webp" alt="The approved hallway at night.">
+        <span class="refname">hallway_night</span>
+      </figure>
+    </div>
+  </article>
+</section>
+
+<section class="batch">
+  <div class="batch-head"><h2>Batch C</h2><span class="chip run">generating</span></div>
+  <p class="batch-note">In flight now. Three at a time is the instance's ceiling.</p>
+  <ul class="queue">
+    <li><span class="k">backgrounds/coat_closet_dark</span><span class="w">inherits entrance hall</span></li>
+    <li><span class="k">backgrounds/kitchen_night</span><span class="w">first design, palette only</span></li>
+    <li><span class="k">cg/doorframe_uncrossed</span><span class="w">inherits the doorway child CG</span></li>
+  </ul>
+</section>
+
+<section class="batch">
+  <div class="batch-head"><h2>Batches D–F</h2><span class="chip wait">queued</span></div>
+  <p class="batch-note">Ordered so nothing is generated before the thing it has to match. The last three batches each wait on a plate from an earlier one.</p>
+  <ul class="queue">
+    <li><span class="k">items/phone</span><span class="w">D · prop</span></li>
+    <li><span class="k">items/house_flashlight</span><span class="w">D · prop</span></li>
+    <li><span class="k">backgrounds/under_stairs</span><span class="w">D · inherits entrance hall</span></li>
+    <li><span class="k">backgrounds/hallway_morning</span><span class="w">E · waits on batch A</span></li>
+    <li><span class="k">cg/fingernail_marks</span><span class="w">E · waits on the opened wall</span></li>
+    <li><span class="k">backgrounds/crawlspace_dark</span><span class="w">E · waits on under_stairs</span></li>
+    <li><span class="k">cg/crawlspace_face</span><span class="w">F · waits on crawlspace_dark</span></li>
+  </ul>
+</section>
+
+<footer>
+  <h2>Why these aren't on acceleration1st.com</h2>
+  <p>That domain serves the <strong>production</strong> Sprites instance — port 3210, data in <code>/var/lib/acceleration1st/sprites</code> — which is deliberately still sitting on the 15 September snapshot, untouched, as asked.</p>
+  <p>Everything above was generated in the <strong>development</strong> instance on port 3211 with data in <code>~/sprites/data</code>. That port binds to loopback only and is never put behind the authenticated proxy, so it has no web address at all. This page is how it gets out.</p>
+  <h2>Seeing them in the game</h2>
+  <p>All six are already installed as real game assets under <code>public/assets/backgrounds/</code> and written into <code>art/manifest.json</code>. A preview build puts them in front of you in the scenes themselves rather than on a contact sheet.</p>
+</footer>
+</div>
