@@ -63,6 +63,10 @@
   /* plate */
   .plate{padding-block:36px;border-bottom:1px solid var(--rule-soft)}
   .plate:last-child{border-bottom:none}
+  .shot.prop{background:#191714;display:grid;place-items:center;padding:28px}
+  .shot.prop img{max-width:340px}
+  .props{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media (max-width:640px){.props{grid-template-columns:1fr}}
   .shot{background:var(--sunk);border:1px solid var(--rule);border-radius:2px;overflow:hidden}
   .plate-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
   .plate-head h3{
@@ -121,10 +125,10 @@
   <h1>Knock Back Plates</h1>
   <p class="standfirst">Every background generated this session, shown against the approved original it had to stay continuous with. Generated through the local Sprites instance on the same model and style pipeline as the existing game art.</p>
   <p class="tally">
-    <span><b>9</b> of 16 drawn</span>
-    <span><b>9</b> installed into the game</span>
+    <span><b>12</b> of 16 drawn</span>
+    <span><b>12</b> installed into the game</span>
     <span><b>3</b> generating now</span>
-    <span><b>4</b> queued</span>
+    <span><b>1</b> queued</span>
     <span>21 Sep 2026</span>
   </p>
 </header>
@@ -315,23 +319,75 @@
 </section>
 
 <section class="batch">
-  <div class="batch-head"><h2>Batch D</h2><span class="chip run">generating</span></div>
-  <p class="batch-note">The last batch that does not wait on anything. Two props and the corner of the entrance hall under the stairs.</p>
+  <div class="batch-head"><h2>Batch D</h2><span class="chip done">installed</span></div>
+  <p class="batch-note">The corner of the hall under the stairs, and the two objects the player carries. Both props are briefed on the safe style layer and came back on transparency, as items must.</p>
+
+  <article class="plate">
+    <div class="plate-head"><h3>Under the stairs</h3><span class="key">backgrounds/under_stairs</span></div>
+    <div class="shot"><img src="images/under_stairs.webp" alt="The corner of the entrance hall beside the staircase, the understairs cupboard door open on coats, a carpet sweeper and a flashlight on a shelf."></div>
+    <div class="meta">
+      <div>
+        <p class="verdict">The continuity that mattered here is the floor, and it holds — the same ochre, black and cream encaustic tile as the entrance hall, laid in the same pattern. The waist-high four-panel door stands open on one loose hinge, with coats on a low rail, a carpet sweeper and the shelf behind them.</p>
+        <p class="verdict"><strong>It also settled an open conflict.</strong> The room brief calls for <em>a heavy old rubber-cased flashlight</em> on that shelf; the dedicated item brief calls for <em>brushed metal with a ribbed grip and a wide bell head</em>. Same object, same scene, two descriptions. The torch it drew on the shelf reads as the same bell-head metal object as the icon below, so the two now agree without anyone having to choose.</p>
+        <p class="verdict"><span class="flag">Framing is a touch wide.</span> The brief asks for <em>low, kneeling, close to the little door</em>; the camera stands a step further back than that.</p>
+        <dl class="facts">
+          <dt>Used by</dt><dd>c2s04_crawlspace</dd>
+          <dt>Installed</dt><dd>public/assets/backgrounds/under_stairs.webp</dd>
+        </dl>
+      </div>
+      <figure class="ref">
+        <figcaption>Inherits from</figcaption>
+        <img src="images/entrance_hall_dusk.webp" alt="The approved entrance hall at dusk.">
+        <span class="refname">entrance_hall_dusk</span>
+      </figure>
+    </div>
+  </article>
+
+  <article class="plate">
+    <div class="plate-head"><h3>The two props</h3><span class="key">items/house_flashlight · items/phone</span></div>
+    <div class="props">
+      <div class="shot prop"><img src="images/house_flashlight.webp" alt="A mid-century metal flashlight with a ribbed grip and wide bell head, on transparency."></div>
+      <div class="shot prop"><img src="images/phone.webp" alt="A modern smartphone in a soft green case, screen dark, a hairline crack across one corner."></div>
+    </div>
+    <div class="meta">
+      <div>
+        <p class="verdict">The flashlight is the brief exactly: heavy mid-century American, brushed metal barrel, ribbed grip, wide bell head, the metal dulled and thumb-polished at the switch.</p>
+        <p class="verdict">The phone looks out of place beside a reel-to-reel and a carpet sweeper, and is supposed to. Its brief reads <em>an ordinary modern smartphone in a soft case with a corner scuff, screen dark, a hairline crack across one corner of the glass</em> — all four present, and the faded green case sits inside the safe palette.</p>
+        <p class="verdict">Both arrived with a real alpha channel and both went through the defringe step on the way in — 101 keyed edge pixels off the flashlight, 563 off the phone. That residue is invisible at 1:1 and becomes a coloured halo the moment a sprite is scaled, so it only ever gets caught by something that looks for it every time.</p>
+        <dl class="facts">
+          <dt>Installed</dt><dd>public/assets/items/house_flashlight.webp · public/assets/items/phone.webp</dd>
+        </dl>
+      </div>
+      <div class="noref"><strong style="color:var(--ink-dim)">No continuity original.</strong><br>First designs. Safe-room style layer, single object on transparency.</div>
+    </div>
+  </article>
+</section>
+
+<section class="batch">
+  <div class="batch-head"><h2>Batch E</h2><span class="chip run">generating</span></div>
+  <p class="batch-note">Each of these waited on a plate from an earlier batch, so nothing was generated before the thing it has to match.</p>
   <ul class="queue">
-    <li><span class="k">backgrounds/under_stairs</span><span class="w">inherits entrance hall</span></li>
-    <li><span class="k">items/phone</span><span class="w">prop</span></li>
-    <li><span class="k">items/house_flashlight</span><span class="w">prop</span></li>
+    <li><span class="k">backgrounds/hallway_morning</span><span class="w">waits on batch A</span></li>
+    <li><span class="k">cg/fingernail_marks</span><span class="w">waits on the opened wall</span></li>
+    <li><span class="k">backgrounds/crawlspace_dark</span><span class="w">waits on under_stairs</span></li>
   </ul>
 </section>
 
 <section class="batch">
-  <div class="batch-head"><h2>Batches E–F</h2><span class="chip wait">queued</span></div>
-  <p class="batch-note">Each of these waits on a plate from an earlier batch, so nothing is generated before the thing it has to match.</p>
+  <div class="batch-head"><h2>Batch F</h2><span class="chip wait">queued</span></div>
+  <p class="batch-note">The chapter's one shock, and the last plate in the set. It has to match the crawlspace it appears in, so it goes last.</p>
   <ul class="queue">
-    <li><span class="k">backgrounds/hallway_morning</span><span class="w">E · waits on batch A</span></li>
-    <li><span class="k">cg/fingernail_marks</span><span class="w">E · waits on the opened wall</span></li>
-    <li><span class="k">backgrounds/crawlspace_dark</span><span class="w">E · waits on under_stairs</span></li>
-    <li><span class="k">cg/crawlspace_face</span><span class="w">F · waits on crawlspace_dark</span></li>
+    <li><span class="k">cg/crawlspace_face</span><span class="w">waits on crawlspace_dark</span></li>
+  </ul>
+</section>
+
+<section class="batch">
+  <div class="batch-head"><h2>Outside the set</h2><span class="chip wait">not generated</span></div>
+  <p class="batch-note">Three assets the game asks for that were not in the sixteen you approved. All three were added to the game after the 20 September manifest run, so none of them has an entry in <code>art/manifest.json</code>, a spec in <code>tools/art-manifest.ts</code>, or a catalogue target to generate from.</p>
+  <ul class="queue">
+    <li><span class="k">backgrounds/entrance_hall_night</span><span class="w">used by c2s05_occupied and c2s07_she_comes_back</span></li>
+    <li><span class="k">items/poker</span><span class="w">no brief anywhere</span></li>
+    <li><span class="k">items/reel</span><span class="w">no brief anywhere</span></li>
   </ul>
 </section>
 
