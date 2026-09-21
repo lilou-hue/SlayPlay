@@ -123,12 +123,12 @@
 <header class="top">
   <p class="eyebrow">Don't Knock Back · chapters one &amp; two</p>
   <h1>Knock Back Plates</h1>
-  <p class="standfirst">Every background generated this session, shown against the approved original it had to stay continuous with. Generated through the local Sprites instance on the same model and style pipeline as the existing game art.</p>
+  <p class="standfirst">All sixteen backgrounds and props generated this session, shown against the approved original it had to stay continuous with. Generated through the local Sprites instance on the same model and style pipeline as the existing game art.</p>
   <p class="tally">
-    <span><b>14</b> of 16 drawn</span>
-    <span><b>14</b> installed into the game</span>
+    <span><b>16</b> of 16 drawn</span>
+    <span><b>16</b> installed into the game</span>
     <span><b>3</b> generating now</span>
-    <span><b>2</b> in flight</span>
+    <span><b>3</b> re-rolled</span>
     <span>21 Sep 2026</span>
   </p>
 </header>
@@ -364,8 +364,8 @@
 </section>
 
 <section class="batch">
-  <div class="batch-head"><h2>Batch E</h2><span class="chip done">two installed</span><span class="chip run">one re-rolling</span></div>
-  <p class="batch-note">Each of these waited on a plate from an earlier batch, so nothing was generated before the thing it has to match. One of the three came back wrong and is being re-rolled.</p>
+  <div class="batch-head"><h2>Batch E</h2><span class="chip done">installed</span></div>
+  <p class="batch-note">Each of these waited on a plate from an earlier batch, so nothing was generated before the thing it has to match. One of the three came back wrong and took three rolls to get right.</p>
 
   <article class="plate">
     <div class="plate-head"><h3>Fingernail marks</h3><span class="key">cg/fingernail_marks</span></div>
@@ -410,31 +410,59 @@
 
   <article class="plate">
     <div class="plate-head"><h3>Crawlspace, dark</h3><span class="key">backgrounds/crawlspace_dark</span></div>
-    <div class="meta" style="grid-template-columns:1fr">
+    <div class="shot"><img src="images/crawlspace_dark.webp" alt="Inside a crawlspace at board level, joists low overhead, rubble stone and brick to the left, the run continuing into black."></div>
+    <div class="meta">
       <div>
-        <p class="verdict"><span class="flag">Rejected and re-rolling.</span> The brief asks for the inside of a crawlspace under a staircase <em>seen lying flat on the elbows, joists close overhead</em>. The first attempt came back as a full-height cellar you could walk through.</p>
-        <p class="verdict">That is not a cosmetic miss. Chapter two's one shock is the flashlight beam finding a face <em>much closer than the space can hold</em> — the scare is a geometry violation, and a geometry violation needs a space with known, tight geometry. In a cavern there is nothing to violate.</p>
-        <p class="verdict"><strong>Worth knowing about this pipeline:</strong> two re-rolls launched in the same instant came back byte-identical — same MD5. Rolling the same brief twice at once buys nothing. Rolls separated in time do vary, so a third is running on its own.</p>
+        <p class="verdict"><strong>Third roll.</strong> The first came back as a full-height cellar you could walk through. That is not a cosmetic miss: chapter two's one shock is the beam finding a face <em>much closer than the space can hold</em>, and a geometry violation needs a space with tight, known geometry. In a cavern there is nothing to violate.</p>
+        <p class="verdict">This one puts the camera at board level with the joists low overhead, the rubble stone and old brick along the left, and — the thing that matters — the boards and joists continuing past the distance where the back wall under a staircase should be, into dark. That is the one thing wrong in the picture, and nothing is drawn in the dark to help it.</p>
+        <p class="verdict"><span class="flag">A pipeline finding.</span> Two re-rolls launched in the same instant came back <strong>byte-identical</strong> — same MD5. Rolling the same brief twice at once buys nothing. Rolls separated in time do vary. Re-roll sequentially, never in parallel.</p>
+        <dl class="facts">
+          <dt>Used by</dt><dd>c2s04_crawlspace</dd>
+          <dt>Installed</dt><dd>public/assets/backgrounds/crawlspace_dark.webp</dd>
+        </dl>
       </div>
+      <figure class="ref">
+        <figcaption>Inherits from</figcaption>
+        <img src="images/under_stairs.webp" alt="The under stairs cupboard.">
+        <span class="refname">under_stairs</span>
+      </figure>
     </div>
   </article>
 </section>
 
 <section class="batch">
-  <div class="batch-head"><h2>Batch F</h2><span class="chip run">generating</span></div>
-  <p class="batch-note">The last plate in the set, and the chapter's only shock.</p>
-  <ul class="queue">
-    <li><span class="k">cg/crawlspace_face</span><span class="w">roster: the wall children</span></li>
-  </ul>
+  <div class="batch-head"><h2>Batch F</h2><span class="chip done">installed</span></div>
+  <p class="batch-note">The last plate in the set, and the chapter's only shock. Held back to the end so it could be drawn against the crawlspace it appears in.</p>
+
+  <article class="plate">
+    <div class="plate-head"><h3>The face in the crawlspace</h3><span class="key">cg/crawlspace_face</span></div>
+    <div class="shot"><img src="images/crawlspace_face.webp" alt="A child's face very close in a crawlspace, lit from below, calm, looking straight back."></div>
+    <div class="meta">
+      <div>
+        <p class="verdict"><strong>Second roll, and the difference is the whole shot.</strong> The first was lit from the front with pure black behind the face — which loses the point, because if there is nothing behind the face there is nothing for the face to contradict. Here the light sits low, and the joist bay behind is visible and plainly shallower than the distance the face is sitting at. The violation happens inside the frame.</p>
+        <p class="verdict">The face itself is doing the hard thing the brief asks for: <em>an ordinary calm face, eyes open and looking straight back, shoulders carried high and forward.</em> Nothing about it is monstrous. It is a child, it is not doing anything, and it is in a place that cannot hold it.</p>
+        <p class="verdict"><strong>Continuity is exact.</strong> Same hair, same freckles, same grey-green eyes, same buttoned shirt as the approved wall children sprite — which is what the roster inheritance was for.</p>
+        <dl class="facts">
+          <dt>Used by</dt><dd>c2s04_crawlspace</dd>
+          <dt>Installed</dt><dd>public/assets/cg/crawlspace_face.webp</dd>
+        </dl>
+      </div>
+      <figure class="ref">
+        <figcaption>Inherits from</figcaption>
+        <img src="images/wall_children.webp" alt="The approved wall children sprite.">
+        <span class="refname">characters/wall_children</span>
+      </figure>
+    </div>
+  </article>
 </section>
 
 <section class="batch">
-  <div class="batch-head"><h2>Outside the set</h2><span class="chip wait">not generated</span></div>
-  <p class="batch-note">Three assets the game asks for that were not in the sixteen you approved. All three were added to the game after the 20 September manifest run, so none of them has an entry in <code>art/manifest.json</code>, a spec in <code>tools/art-manifest.ts</code>, or a catalogue target to generate from.</p>
+  <div class="batch-head"><h2>Outside the set</h2><span class="chip run">next</span></div>
+  <p class="batch-note">Three assets the game asks for that were not in the sixteen you approved. They arrived after the 20 September manifest run and had no brief anywhere — so while these sixteen were being drawn they could not go through the pipeline at all. The concurrent session has since briefed all three (<code>885c943</code>), and none of the new briefs conflicts with what is already drawn: the reel spec matches the reel already in the box room, and the night hall is an explicit repaint of the dusk one. They are next.</p>
   <ul class="queue">
-    <li><span class="k">backgrounds/entrance_hall_night</span><span class="w">used by c2s05_occupied and c2s07_she_comes_back</span></li>
-    <li><span class="k">items/poker</span><span class="w">no brief anywhere</span></li>
-    <li><span class="k">items/reel</span><span class="w">no brief anywhere</span></li>
+    <li><span class="k">backgrounds/entrance_hall_night</span><span class="w">now briefed · repaint of entrance_hall_dusk</span></li>
+    <li><span class="k">items/poker</span><span class="w">now briefed · parlour grate</span></li>
+    <li><span class="k">items/reel</span><span class="w">now briefed · matches the box room reel</span></li>
   </ul>
 </section>
 
