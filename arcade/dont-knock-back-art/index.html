@@ -121,10 +121,10 @@
   <h1>Knock Back Plates</h1>
   <p class="standfirst">Every background generated this session, shown against the approved original it had to stay continuous with. Generated through the local Sprites instance on the same model and style pipeline as the existing game art.</p>
   <p class="tally">
-    <span><b>6</b> of 16 drawn</span>
-    <span><b>6</b> installed into the game</span>
+    <span><b>9</b> of 16 drawn</span>
+    <span><b>9</b> installed into the game</span>
     <span><b>3</b> generating now</span>
-    <span><b>7</b> queued</span>
+    <span><b>4</b> queued</span>
     <span>21 Sep 2026</span>
   </p>
 </header>
@@ -256,22 +256,78 @@
 </section>
 
 <section class="batch">
-  <div class="batch-head"><h2>Batch C</h2><span class="chip run">generating</span></div>
-  <p class="batch-note">In flight now. Three at a time is the instance's ceiling.</p>
+  <div class="batch-head"><h2>Batch C</h2><span class="chip done">installed</span></div>
+  <p class="batch-note">Two of these carry style layers the earlier plates did not. The kitchen is a <em>safe room</em> and is briefed warm and charming on purpose; the doorframe is a <em>wrong</em> tier, briefed for bruised purple shadow and exactly one thing off.</p>
+
+  <article class="plate">
+    <div class="plate-head"><h3>Coat closet, dark</h3><span class="key">backgrounds/coat_closet_dark</span></div>
+    <div class="shot"><img src="images/coat_closet_dark.webp" alt="Inside a narrow coat closet, coats crowded on a rail, a cast-iron pipe, boots and a dropped hanger on the floor."></div>
+    <div class="meta">
+      <div>
+        <p class="verdict">Everything the brief asks for is in it: eleven coats crowded on the rail, bare board behind them, the cast-iron pipe running floor to ceiling with a gap beside it, the boots and the dropped wire hanger. The camera sits low, at the height of someone already inside.</p>
+        <p class="verdict"><span class="flag">It over-delivered in one place.</span> The brief wants <em>the coats are shapes rather than garments</em> — one thin line of hall light and nothing else. You can read plaid, herringbone, fur trim and a button. It is more beautiful and slightly less frightening than asked.</p>
+        <dl class="facts">
+          <dt>Used by</dt><dd>c2s05_occupied — the hiding place that is already occupied</dd>
+          <dt>Installed</dt><dd>public/assets/backgrounds/coat_closet_dark.webp</dd>
+        </dl>
+      </div>
+      <div class="noref"><strong style="color:var(--ink-dim)">No continuity original.</strong><br>First design. Inherits the house palette and the ART_BIBLE dread style layer only.</div>
+    </div>
+  </article>
+
+  <article class="plate">
+    <div class="plate-head"><h3>Kitchen, night</h3><span class="key">backgrounds/kitchen_night</span></div>
+    <div class="shot"><img src="images/kitchen_night.webp" alt="A warm kitchen at night, table and two chairs under a pendant lamp, sink under the window, shelves of crockery."></div>
+    <div class="meta">
+      <div>
+        <p class="verdict">This one looks wrong next to the others and is not. The kitchen is a <strong>safe room</strong>, and its brief carries the safe style layer word for word: <em>warm amber light from a findable source, inviting composition, lived-in and gently humorous details, safe, charming, nothing is wrong.</em> The dread layer never applies to it.</p>
+        <p class="verdict">Checked item by item — scrubbed deal table, two mismatched chairs, enamel sink under the window with a cloth over the tap, open shelves of ordinary crockery, a kettle, a calendar on a nail, a door that shuts, one bulb under a plain shade, corners soft rather than black. All present.</p>
+        <p class="verdict"><span class="flag">One quibble.</span> The electric kettle on the right reads modern for this house.</p>
+        <dl class="facts">
+          <dt>Used by</dt><dd>c2s06_what_it_kept · c2s07_she_comes_back</dd>
+          <dt>Installed</dt><dd>public/assets/backgrounds/kitchen_night.webp</dd>
+        </dl>
+      </div>
+      <div class="noref"><strong style="color:var(--ink-dim)">No continuity original.</strong><br>First design. Safe-room style layer, not the dread one.</div>
+    </div>
+  </article>
+
+  <article class="plate">
+    <div class="plate-head"><h3>Doorframe, uncrossed</h3><span class="key">cg/doorframe_uncrossed</span></div>
+    <div class="shot"><img src="images/doorframe_uncrossed.webp" alt="A door frame in torchlight, a column of pencil height marks, every one struck through except one above the middle."></div>
+    <div class="meta">
+      <div>
+        <p class="verdict">It got the thing that carries the scare. Every height mark is struck through with one ruled pencil line <strong>except one, a little above the middle</strong>. That is the brief's <em>exactly ONE thing subtly wrong in the image and nothing else</em>, and it is placed correctly.</p>
+        <p class="verdict">The bruised purple wall is not a palette error — it is in the brief. This is a <em>wrong</em> tier plate: deep blue-black, sickly pale tones, cold light, the warm drawing gone quietly wrong rather than a different darker picture.</p>
+        <p class="verdict"><span class="flag">Two misses, both in the text.</span> There are eight marks, not the nine years the brief asks for, and the dates are all the same illegible glyph rather than nine different years. Handwriting is the one thing this pipeline cannot be made to do reliably, so I would not spend a regenerate on it — illegible pencil in a torch beam is defensible, and the prose says what they are. Your call.</p>
+        <dl class="facts">
+          <dt>Used by</dt><dd>c2s06_what_it_kept</dd>
+          <dt>Installed</dt><dd>public/assets/cg/doorframe_uncrossed.webp</dd>
+        </dl>
+      </div>
+      <figure class="ref">
+        <figcaption>Inherits from</figcaption>
+        <img src="images/doorway_child.webp" alt="The approved doorway child CG.">
+        <span class="refname">cg/doorway_child</span>
+      </figure>
+    </div>
+  </article>
+</section>
+
+<section class="batch">
+  <div class="batch-head"><h2>Batch D</h2><span class="chip run">generating</span></div>
+  <p class="batch-note">The last batch that does not wait on anything. Two props and the corner of the entrance hall under the stairs.</p>
   <ul class="queue">
-    <li><span class="k">backgrounds/coat_closet_dark</span><span class="w">inherits entrance hall</span></li>
-    <li><span class="k">backgrounds/kitchen_night</span><span class="w">first design, palette only</span></li>
-    <li><span class="k">cg/doorframe_uncrossed</span><span class="w">inherits the doorway child CG</span></li>
+    <li><span class="k">backgrounds/under_stairs</span><span class="w">inherits entrance hall</span></li>
+    <li><span class="k">items/phone</span><span class="w">prop</span></li>
+    <li><span class="k">items/house_flashlight</span><span class="w">prop</span></li>
   </ul>
 </section>
 
 <section class="batch">
-  <div class="batch-head"><h2>Batches D–F</h2><span class="chip wait">queued</span></div>
-  <p class="batch-note">Ordered so nothing is generated before the thing it has to match. The last three batches each wait on a plate from an earlier one.</p>
+  <div class="batch-head"><h2>Batches E–F</h2><span class="chip wait">queued</span></div>
+  <p class="batch-note">Each of these waits on a plate from an earlier batch, so nothing is generated before the thing it has to match.</p>
   <ul class="queue">
-    <li><span class="k">items/phone</span><span class="w">D · prop</span></li>
-    <li><span class="k">items/house_flashlight</span><span class="w">D · prop</span></li>
-    <li><span class="k">backgrounds/under_stairs</span><span class="w">D · inherits entrance hall</span></li>
     <li><span class="k">backgrounds/hallway_morning</span><span class="w">E · waits on batch A</span></li>
     <li><span class="k">cg/fingernail_marks</span><span class="w">E · waits on the opened wall</span></li>
     <li><span class="k">backgrounds/crawlspace_dark</span><span class="w">E · waits on under_stairs</span></li>
