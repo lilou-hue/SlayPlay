@@ -118,6 +118,7 @@ body {
 .body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
 .row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .card h3 { font-family: var(--display); font-weight: 800; font-size: 1.25rem; line-height: 1.1; margin: 0; text-wrap: balance; }
+.es { font-family: var(--hand); font-size: 1.05rem; color: var(--tomate); line-height: 1.2; }
 .price { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .desc { margin: 0; color: var(--ink-soft); font-size: .88rem; }
 .sizes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; font-variant-numeric: tabular-nums; }
@@ -143,7 +144,7 @@ footer .made { transform: none; }
 
 <div class="wrap">
   <header class="top">
-    <div class="brand"><span class="brand-dot" aria-hidden="true"></span><div>Boundless Life<small>Trailblazers merch · España</small></div></div>
+    <div class="brand"><span class="brand-dot" aria-hidden="true"></span><div>Boundless Life<small>Trailblazers merch · Estepona</small></div></div>
     <div class="made">made by the Trailblazers ✎</div>
   </header>
 </div>
@@ -152,25 +153,25 @@ footer .made { transform: none; }
 
 <main class="wrap">
   <section class="hero">
-    <h1><span class="hola">¡Hola!</span> Our merch, made in <span class="sol">Spain</span></h1>
+    <h1><span class="hola">¡Hola</span> from <span class="sol">Estepona</span></h1>
     <div>
-      <p>Everything the Trailblazers designed during our Andalusia and Barcelona terms. Check what's in stock, then come find us at the market table.</p>
+      <p>Merch designed by the Trailblazers, right here on the Costa del Sol. See what's in stock, then come find us at the market table.</p>
       <div class="summary" id="summary"></div>
     </div>
   </section>
 
   <div class="filters" role="group" aria-label="Filter products">
-    <button class="chipbtn" id="f-all" data-cat="all" aria-pressed="true">Todo · All</button>
-    <button class="chipbtn" id="f-ropa" data-cat="ropa" aria-pressed="false">Ropa · Clothes</button>
-    <button class="chipbtn" id="f-cosas" data-cat="cosas" aria-pressed="false">Cosas · Stuff</button>
-    <button class="chipbtn" id="f-papel" data-cat="papel" aria-pressed="false">Papel · Paper</button>
+    <button class="chipbtn" id="f-all" data-cat="all" aria-pressed="true">All</button>
+    <button class="chipbtn" id="f-ropa" data-cat="ropa" aria-pressed="false">Clothing</button>
+    <button class="chipbtn" id="f-cosas" data-cat="cosas" aria-pressed="false">Beach &amp; bags</button>
+    <button class="chipbtn" id="f-papel" data-cat="papel" aria-pressed="false">Paper goods</button>
     <label class="toggle" for="instock"><input type="checkbox" id="instock"><span aria-hidden="true"></span>Hide sold out</label>
   </div>
 
   <div class="key">
-    <span><i style="background:var(--ok)"></i>Disponible · in stock</span>
-    <span><i style="background:var(--low)"></i>Quedan pocos · 5 or fewer left</span>
-    <span><i style="background:var(--out)"></i>Agotado · sold out</span>
+    <span><i style="background:var(--ok)"></i>In stock</span>
+    <span><i style="background:var(--low)"></i>Only a few left (5 or fewer)</span>
+    <span><i style="background:var(--out)"></i>Sold out</span>
   </div>
 
   <section class="grid" id="grid" aria-live="polite"></section>
@@ -186,15 +187,15 @@ footer .made { transform: none; }
 <script>
 // ---- Edit this list to update the catalogue. stock: number, or {size: number} for clothes ----
 const PRODUCTS = [
-  { name: "Azulejo Tee", cat: "ropa", shape: "tee", price: 18, where: "Andalusia", bg: "azul", desc: "Blue tile print from the walls of Seville.", stock: { "7-8": 4, "9-11": 6, "12-14": 0, S: 3, M: 5 } },
-  { name: "Sol Hoodie", cat: "ropa", shape: "hoodie", price: 32, where: "Andalusia", bg: "sol", desc: "Sunshine yellow with a stitched BL sun.", stock: { "9-11": 2, "12-14": 3, S: 0, M: 1 } },
-  { name: "Trencadís Bucket Hat", cat: "ropa", shape: "cap", price: 16, where: "Barcelona", bg: "mar", desc: "Broken-tile mosaic, inspired by Park Güell.", stock: { Kids: 7, Adult: 4 } },
-  { name: "Naranja Tote", cat: "cosas", shape: "tote", price: 12, where: "Andalusia", bg: "naranja", desc: "Big enough for a market haul of oranges.", stock: 14 },
-  { name: "Mediterráneo Bottle", cat: "cosas", shape: "bottle", price: 15, where: "Barcelona", bg: "mar", desc: "Steel bottle, keeps water cold on the beach.", stock: 3 },
-  { name: "Flamenco Beach Towel", cat: "cosas", shape: "towel", price: 22, where: "Andalusia", bg: "tomate", desc: "Red and white polka dots, extra long.", stock: 0 },
-  { name: "Sticker Pack", cat: "papel", shape: "sticker", price: 5, where: "Both", bg: "sol", desc: "Ten stickers: tiles, oranges, the Sagrada Família.", stock: 40 },
-  { name: "Trail Journal", cat: "papel", shape: "book", price: 10, where: "Barcelona", bg: "azul", desc: "Dotted pages for sketches and Spanish words.", stock: 9 },
-  { name: "Castell Tee", cat: "ropa", shape: "tee", price: 18, where: "Barcelona", bg: "tomate", desc: "Human tower print, red and yellow like the flag.", stock: { "7-8": 0, "9-11": 0, "12-14": 0, S: 0 } },
+  { name: "Blue Flowerpot Tee", es: "la maceta azul", cat: "ropa", shape: "tee", price: 18, where: "Old Town", bg: "azul", desc: "Inspired by the white streets of the casco antiguo, lined with blue flowerpots.", stock: { "7-8": 4, "9-11": 6, "12-14": 0, S: 3, M: 5 } },
+  { name: "Sunset Hoodie", es: "sol de Estepona", cat: "ropa", shape: "hoodie", price: 32, where: "Paseo Marítimo", bg: "sol", desc: "Sunshine yellow, for cool evenings walking the seafront promenade.", stock: { "9-11": 2, "12-14": 3, S: 0, M: 1 } },
+  { name: "Beach Day Bucket Hat", es: "día de playa", cat: "ropa", shape: "cap", price: 16, where: "Playa La Rada", bg: "mar", desc: "Shade for long, salty afternoons on La Rada beach.", stock: { Kids: 7, Adult: 4 } },
+  { name: "Market Tote", es: "el mercadillo", cat: "cosas", shape: "tote", price: 12, where: "Old Town", bg: "naranja", desc: "Big enough for a market haul of oranges, olives and fresh bread.", stock: 14 },
+  { name: "Mediterranean Bottle", es: "agua fresquita", cat: "cosas", shape: "bottle", price: 15, where: "Playa La Rada", bg: "mar", desc: "Keeps water ice-cold all day. On a clear morning you can see Africa from the beach.", stock: 3 },
+  { name: "Flamenco Beach Towel", es: "lunares", cat: "cosas", shape: "towel", price: 22, where: "Playa La Rada", bg: "tomate", desc: "Red polka dots like a feria dress. Extra long.", stock: 0 },
+  { name: "Postcard Sticker Pack", es: "recuerdos", cat: "papel", shape: "sticker", price: 5, where: "Around town", bg: "sol", desc: "Ten stickers: blue flowerpots, orange trees, the lighthouse and a sardine espeto.", stock: 40 },
+  { name: "Travel Journal", es: "mi cuaderno", cat: "papel", shape: "book", price: 10, where: "Around town", bg: "azul", desc: "Dotted pages for sketches, tapas reviews and new Spanish words.", stock: 9 },
+  { name: "Mural Trail Tee", es: "la ruta de murales", cat: "ropa", shape: "tee", price: 18, where: "Old Town", bg: "tomate", desc: "Inspired by the giant painted murals on buildings all over Estepona.", stock: { "7-8": 0, "9-11": 0, "12-14": 0, S: 0 } },
 ];
 
 const ICONS = {
@@ -213,7 +214,7 @@ const FG = { azul: "#1f5fbf", sol: "#f0a800", mar: "#2a9d92", naranja: "#f06a1a"
 
 const total = p => typeof p.stock === "number" ? p.stock : Object.values(p.stock).reduce((a, b) => a + b, 0);
 const state = p => { const n = total(p); return n === 0 ? "out" : n <= 5 ? "low" : "ok"; };
-const LABEL = { ok: "Disponible", low: "Quedan pocos", out: "Agotado" };
+const LABEL = { ok: "In stock", low: "Only a few left", out: "Sold out" };
 
 let cat = "all";
 const grid = document.getElementById("grid");
@@ -234,7 +235,7 @@ function render() {
         <span class="where">${p.where}</span>
       </div>
       <div class="body">
-        <div class="row"><h3>${p.name}</h3><span class="price">€${p.price}</span></div>
+        <div class="row"><div><h3>${p.name}</h3><span class="es">${p.es}</span></div><span class="price">€${p.price}</span></div>
         <p class="desc">${p.desc}</p>
         ${stock}
       </div>
