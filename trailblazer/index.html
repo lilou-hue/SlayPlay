@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>La Tienda Trailblazer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Poppins:wght@400;500;600&family=Patrick+Hand&display=swap">
+<style>
+/* Layout: whitewashed Andalusian wall, an azulejo tile band as the one bold moment, then a sunny grid of product "tiles" */
+:root {
+  --wall: #f6f9ff;        /* whitewash, slight blue bias */
+  --paper: #ffffff;
+  --ink: #13244a;         /* deep azulejo navy */
+  --ink-soft: #4a5b80;
+  --azul: #1f5fbf;        /* azulejo cobalt */
+  --sol: #ffc62e;         /* flag yellow / sunshine */
+  --tomate: #e2382c;      /* flag red */
+  --naranja: #ff8a3d;     /* Valencia orange */
+  --mar: #3fb8ad;         /* Mediterranean teal, nod to BL teal */
+  --line: #d9e3f5;
+  --chip: #e8effc;
+  --ok: #1e9e6a;
+  --low: #d9780f;
+  --out: #8a93a8;
+
+  --display: "Baloo 2", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+  --body: "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --hand: "Patrick Hand", "Comic Sans MS", "Chalkboard SE", cursive;
+
+  --r: 22px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --wall: #0d1830; --paper: #15244a; --ink: #f2f6ff; --ink-soft: #b3c1e0;
+    --azul: #5b93ff; --sol: #ffd24d; --tomate: #ff6b5e; --naranja: #ffa062; --mar: #5fd3c7;
+    --line: #26386a; --chip: #1d2f5c; --ok: #4fd49c; --low: #ffb14d; --out: #7d88a6;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --wall: #0d1830; --paper: #15244a; --ink: #f2f6ff; --ink-soft: #b3c1e0;
+  --azul: #5b93ff; --sol: #ffd24d; --tomate: #ff6b5e; --naranja: #ffa062; --mar: #5fd3c7;
+  --line: #26386a; --chip: #1d2f5c; --ok: #4fd49c; --low: #ffb14d; --out: #7d88a6;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--wall);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.6;
+}
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 20px; }
+
+/* Top bar */
+.top { padding-block: 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-weight: 800; font-size: 1.15rem; line-height: 1; }
+.brand-dot { width: 34px; height: 34px; border-radius: 50%; background: conic-gradient(var(--tomate) 0 25%, var(--sol) 0 50%, var(--azul) 0 75%, var(--mar) 0); }
+.brand small { display: block; font-family: var(--body); font-weight: 500; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); margin-top: 4px; }
+.made { font-family: var(--hand); font-size: 1.1rem; color: var(--azul); transform: rotate(-2deg); }
+
+/* Azulejo band */
+.tiles {
+  --t: 56px;
+  height: calc(var(--t) * 1.5);
+  background:
+    radial-gradient(circle, var(--sol) 0 13%, transparent 14%),
+    radial-gradient(circle, transparent 0 28%, var(--azul) 29% 33%, transparent 34%),
+    conic-gradient(from 45deg, var(--azul) 0 25%, var(--paper) 0 50%, var(--azul) 0 75%, var(--paper) 0);
+  background-size: var(--t) var(--t);
+  background-position: center;
+  border-block: 6px solid var(--tomate);
+}
+
+/* Hero */
+.hero { padding-block: 40px 28px; display: grid; gap: 18px; grid-template-columns: 1.3fr 1fr; align-items: end; }
+.hero h1 {
+  font-family: var(--display); font-weight: 800; font-size: clamp(2.4rem, 6vw, 4.2rem);
+  line-height: .95; margin: 0; text-wrap: balance; letter-spacing: -.01em;
+}
+.hero h1 .hola { color: var(--tomate); display: inline-block; transform: rotate(-4deg); }
+.hero h1 .sol { background: var(--sol); color: #13244a; padding: 0 .18em; border-radius: 14px; }
+.hero p { margin: 0; max-width: 42ch; color: var(--ink-soft); font-size: 1.02rem; }
+.summary { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.summary span { background: var(--paper); border: 2px solid var(--line); border-radius: 999px; padding: 4px 14px; font-weight: 600; font-size: .85rem; }
+.summary b { color: var(--azul); }
+
+/* Filters */
+.filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding-block: 8px 22px; }
+.chipbtn {
+  font: 600 .9rem var(--body); color: var(--ink); background: var(--chip);
+  border: 2px solid transparent; border-radius: 999px; padding: 7px 16px; cursor: pointer;
+}
+.chipbtn:hover { border-color: var(--azul); }
+.chipbtn[aria-pressed="true"] { background: var(--azul); color: #fff; }
+.chipbtn:focus-visible, .toggle input:focus-visible + span { outline: 3px solid var(--sol); outline-offset: 2px; }
+.toggle { margin-left: auto; display: flex; align-items: center; gap: 8px; font-weight: 500; font-size: .9rem; cursor: pointer; }
+.toggle input { position: absolute; opacity: 0; }
+.toggle span { width: 44px; height: 26px; border-radius: 999px; background: var(--line); position: relative; transition: background .2s; }
+.toggle span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--paper); transition: transform .2s; box-shadow: 0 1px 2px #0003; }
+.toggle input:checked + span { background: var(--mar); }
+.toggle input:checked + span::after { transform: translateX(18px); }
+
+/* Grid */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; padding-bottom: 40px; }
+.card { background: var(--paper); border-radius: var(--r); border: 2px solid var(--line); overflow: hidden; display: flex; flex-direction: column; transition: transform .15s; }
+.card:hover { transform: translateY(-3px) rotate(-.4deg); }
+.card.sold { opacity: .72; }
+.pic { aspect-ratio: 4 / 3; max-width: 100%; display: grid; place-items: center; position: relative; }
+.pic svg { width: 56%; height: auto; }
+.badge { position: absolute; top: 12px; left: 12px; font: 600 .75rem var(--body); letter-spacing: .04em; padding: 4px 11px; border-radius: 999px; color: #fff; }
+.badge.ok { background: var(--ok); } .badge.low { background: var(--low); } .badge.out { background: var(--out); }
+.where { position: absolute; bottom: 10px; right: 12px; font-family: var(--hand); font-size: 1rem; color: #13244a; background: #ffffffcc; padding: 0 10px; border-radius: 10px; }
+.body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.card h3 { font-family: var(--display); font-weight: 800; font-size: 1.25rem; line-height: 1.1; margin: 0; text-wrap: balance; }
+.price { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.desc { margin: 0; color: var(--ink-soft); font-size: .88rem; }
+.sizes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; font-variant-numeric: tabular-nums; }
+.size { font-size: .75rem; font-weight: 600; padding: 3px 9px; border-radius: 8px; background: var(--chip); }
+.size.zero { color: var(--out); text-decoration: line-through; background: transparent; border: 1.5px dashed var(--line); }
+.count { font-size: .8rem; color: var(--ink-soft); margin-top: auto; }
+.empty { grid-column: 1 / -1; text-align: center; font-family: var(--hand); font-size: 1.3rem; padding: 40px 0; color: var(--ink-soft); }
+
+.key { display: flex; flex-wrap: wrap; gap: 16px; font-size: .85rem; color: var(--ink-soft); padding-bottom: 12px; }
+.key i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+
+footer { border-top: 2px dashed var(--line); padding-block: 22px 36px; font-size: .85rem; color: var(--ink-soft); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+footer .made { transform: none; }
+
+@media (max-width: 720px) {
+  .hero { grid-template-columns: 1fr; padding-block: 28px 20px; }
+  .toggle { margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><span class="brand-dot" aria-hidden="true"></span><div>Boundless Life<small>Trailblazers merch · España</small></div></div>
+    <div class="made">made by the Trailblazers ✎</div>
+  </header>
+</div>
+
+<div class="tiles" role="presentation"></div>
+
+<main class="wrap">
+  <section class="hero">
+    <h1><span class="hola">¡Hola!</span> Our merch, made in <span class="sol">Spain</span></h1>
+    <div>
+      <p>Everything the Trailblazers designed during our Andalusia and Barcelona terms. Check what's in stock, then come find us at the market table.</p>
+      <div class="summary" id="summary"></div>
+    </div>
+  </section>
+
+  <div class="filters" role="group" aria-label="Filter products">
+    <button class="chipbtn" id="f-all" data-cat="all" aria-pressed="true">Todo · All</button>
+    <button class="chipbtn" id="f-ropa" data-cat="ropa" aria-pressed="false">Ropa · Clothes</button>
+    <button class="chipbtn" id="f-cosas" data-cat="cosas" aria-pressed="false">Cosas · Stuff</button>
+    <button class="chipbtn" id="f-papel" data-cat="papel" aria-pressed="false">Papel · Paper</button>
+    <label class="toggle" for="instock"><input type="checkbox" id="instock"><span aria-hidden="true"></span>Hide sold out</label>
+  </div>
+
+  <div class="key">
+    <span><i style="background:var(--ok)"></i>Disponible · in stock</span>
+    <span><i style="background:var(--low)"></i>Quedan pocos · 5 or fewer left</span>
+    <span><i style="background:var(--out)"></i>Agotado · sold out</span>
+  </div>
+
+  <section class="grid" id="grid" aria-live="polite"></section>
+</main>
+
+<div class="wrap">
+  <footer>
+    <span>Stock updated 30 Sept 2026 · example items, edit the PRODUCTS list to change them</span>
+    <span class="made">¡Gracias! — the Trailblazers</span>
+  </footer>
+</div>
+
+<script>
+// ---- Edit this list to update the catalogue. stock: number, or {size: number} for clothes ----
+const PRODUCTS = [
+  { name: "Azulejo Tee", cat: "ropa", shape: "tee", price: 18, where: "Andalusia", bg: "azul", desc: "Blue tile print from the walls of Seville.", stock: { "7-8": 4, "9-11": 6, "12-14": 0, S: 3, M: 5 } },
+  { name: "Sol Hoodie", cat: "ropa", shape: "hoodie", price: 32, where: "Andalusia", bg: "sol", desc: "Sunshine yellow with a stitched BL sun.", stock: { "9-11": 2, "12-14": 3, S: 0, M: 1 } },
+  { name: "Trencadís Bucket Hat", cat: "ropa", shape: "cap", price: 16, where: "Barcelona", bg: "mar", desc: "Broken-tile mosaic, inspired by Park Güell.", stock: { Kids: 7, Adult: 4 } },
+  { name: "Naranja Tote", cat: "cosas", shape: "tote", price: 12, where: "Andalusia", bg: "naranja", desc: "Big enough for a market haul of oranges.", stock: 14 },
+  { name: "Mediterráneo Bottle", cat: "cosas", shape: "bottle", price: 15, where: "Barcelona", bg: "mar", desc: "Steel bottle, keeps water cold on the beach.", stock: 3 },
+  { name: "Flamenco Beach Towel", cat: "cosas", shape: "towel", price: 22, where: "Andalusia", bg: "tomate", desc: "Red and white polka dots, extra long.", stock: 0 },
+  { name: "Sticker Pack", cat: "papel", shape: "sticker", price: 5, where: "Both", bg: "sol", desc: "Ten stickers: tiles, oranges, the Sagrada Família.", stock: 40 },
+  { name: "Trail Journal", cat: "papel", shape: "book", price: 10, where: "Barcelona", bg: "azul", desc: "Dotted pages for sketches and Spanish words.", stock: 9 },
+  { name: "Castell Tee", cat: "ropa", shape: "tee", price: 18, where: "Barcelona", bg: "tomate", desc: "Human tower print, red and yellow like the flag.", stock: { "7-8": 0, "9-11": 0, "12-14": 0, S: 0 } },
+];
+
+const ICONS = {
+  tee: '<path d="M30 14l-18 10 8 16 8-4v42h44V36l8 4 8-16-18-10c-2 8-10 12-20 12S32 22 30 14z"/>',
+  hoodie: '<path d="M34 12c4-4 28-4 32 0l20 12-8 18-6-3v43H28V39l-6 3-8-18z"/><path d="M40 12c0 10 20 10 20 0" fill="none" stroke="#13244a" stroke-width="3" opacity=".35"/>',
+  cap: '<path d="M22 58c0-22 12-34 28-34s28 12 28 34z"/><path d="M12 62c10-6 66-6 76 0l-4 8c-12-4-56-4-68 0z"/>',
+  tote: '<path d="M36 34c0-16 28-16 28 0" fill="none" stroke="#fff" stroke-width="6"/><path d="M22 34h56l-4 52H26z"/>',
+  bottle: '<rect x="40" y="10" width="20" height="12" rx="3"/><path d="M36 26h28c4 0 6 4 6 8v50c0 4-3 6-6 6H36c-3 0-6-2-6-6V34c0-4 2-8 6-8z"/>',
+  towel: '<rect x="18" y="16" width="64" height="70" rx="6"/><circle cx="36" cy="36" r="5" fill="#fff"/><circle cx="62" cy="44" r="5" fill="#fff"/><circle cx="42" cy="64" r="5" fill="#fff"/><circle cx="66" cy="72" r="5" fill="#fff"/>',
+  sticker: '<circle cx="50" cy="50" r="34"/><path d="M50 16a34 34 0 0 1 34 34H62a12 12 0 0 0-12-12z" fill="#fff" opacity=".7"/>',
+  book: '<rect x="24" y="14" width="52" height="72" rx="6"/><rect x="24" y="14" width="10" height="72" fill="#13244a" opacity=".25"/><rect x="44" y="30" width="22" height="6" rx="3" fill="#fff"/>',
+};
+
+const BG = { azul: "#dbe7ff", sol: "#fff1c2", mar: "#d3f3ef", naranja: "#ffe2cc", tomate: "#ffdcd8" };
+const FG = { azul: "#1f5fbf", sol: "#f0a800", mar: "#2a9d92", naranja: "#f06a1a", tomate: "#d8291e" };
+
+const total = p => typeof p.stock === "number" ? p.stock : Object.values(p.stock).reduce((a, b) => a + b, 0);
+const state = p => { const n = total(p); return n === 0 ? "out" : n <= 5 ? "low" : "ok"; };
+const LABEL = { ok: "Disponible", low: "Quedan pocos", out: "Agotado" };
+
+let cat = "all";
+const grid = document.getElementById("grid");
+const instock = document.getElementById("instock");
+
+function render() {
+  const list = PRODUCTS.filter(p => (cat === "all" || p.cat === cat) && (!instock.checked || total(p) > 0));
+  grid.innerHTML = list.length ? list.map(p => {
+    const s = state(p);
+    const stock = typeof p.stock === "number"
+      ? `<div class="count">${p.stock === 0 ? "None left" : p.stock + " left"}</div>`
+      : `<div class="sizes">${Object.entries(p.stock).map(([k, v]) =>
+          `<span class="size${v ? "" : " zero"}" title="${v} in size ${k}">${k}${v ? " · " + v : ""}</span>`).join("")}</div>`;
+    return `<article class="card${s === "out" ? " sold" : ""}">
+      <div class="pic" style="background:${BG[p.bg]}">
+        <svg viewBox="0 0 100 100" fill="${FG[p.bg]}" aria-hidden="true">${ICONS[p.shape]}</svg>
+        <span class="badge ${s}">${LABEL[s]}</span>
+        <span class="where">${p.where}</span>
+      </div>
+      <div class="body">
+        <div class="row"><h3>${p.name}</h3><span class="price">€${p.price}</span></div>
+        <p class="desc">${p.desc}</p>
+        ${stock}
+      </div>
+    </article>`;
+  }).join("") : `<p class="empty">Nothing here right now. Try another filter!</p>`;
+}
+
+function summary() {
+  const inStock = PRODUCTS.filter(p => total(p) > 0).length;
+  const units = PRODUCTS.reduce((a, p) => a + total(p), 0);
+  document.getElementById("summary").innerHTML =
+    `<span><b>${inStock}</b> of ${PRODUCTS.length} items in stock</span><span><b>${units}</b> pieces on the table</span>`;
+}
+
+document.querySelectorAll(".chipbtn").forEach(b => b.addEventListener("click", () => {
+  cat = b.dataset.cat;
+  document.querySelectorAll(".chipbtn").forEach(x => x.setAttribute("aria-pressed", x === b));
+  render();
+}));
+instock.addEventListener("change", render);
+summary();
+render();
+</script>
+</body>
+</html>
