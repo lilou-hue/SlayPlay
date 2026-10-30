@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Don't Knock Back QR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,200..600;1,9..144,200..400&family=Inter:wght@400;500&display=swap">
+<style>
+/* Printable A4 sign, after the trailblazer shop's QR sign. Always light, so it prints the same everywhere. */
+:root { --paper: #efe8dc; --ink: #16110f; --soft: #5e554d; --blood: #8a1c14; color-scheme: light; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #1a1614; color: var(--ink); font-family: "Inter", system-ui, sans-serif; }
+.bar { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding: 16px; }
+.bar a, .bar button { font: 500 .8rem "Inter", sans-serif; text-transform: uppercase; letter-spacing: .04em; padding: 10px 16px; background: var(--paper); color: var(--ink); border: 0; cursor: pointer; text-decoration: none; }
+.bar .ghost { background: transparent; color: var(--paper); outline: 1px solid #5e554d; }
+.sheet { width: min(210mm, 100vw - 32px); aspect-ratio: 210 / 297; margin: 0 auto 32px; background: var(--paper); display: flex; flex-direction: column; align-items: center; text-align: center; padding: 7% 8% 6%; container-type: inline-size; }
+.knocks { width: 100%; display: flex; justify-content: center; gap: 2.2cqw; align-items: center; }
+.knocks i { width: 2.6cqw; height: 2.6cqw; border-radius: 50%; background: var(--ink); }
+.knocks i.gap { margin-left: 6cqw; }
+.warn { font: 500 2.1cqw "Inter", sans-serif; text-transform: uppercase; letter-spacing: .12em; color: var(--blood); margin: 6% 0 0; }
+h1 { font: 600 13cqw / .86 "Fraunces", serif; font-variation-settings: "opsz" 144; text-transform: uppercase; letter-spacing: -.03em; margin: 4% 0 0; }
+h1 span { display: block; }
+h1 .small { font-size: 7.4cqw; letter-spacing: .06em; font-weight: 400; }
+.tag { font: italic 300 3.6cqw "Fraunces", serif; color: var(--soft); margin: 4% 0 0; }
+.qr { width: 46%; margin: 6% 0 0; padding: 3.5%; background: #fff; border: 1px solid #d8cfc0; }
+.qr img { width: 100%; display: block; }
+.scan { font: 300 5.2cqw "Fraunces", serif; margin: 5% 0 0; }
+.scan em { color: var(--blood); }
+.do { font: 500 2cqw "Inter", sans-serif; text-transform: uppercase; letter-spacing: .06em; color: var(--soft); margin: 3% 0 auto; line-height: 1.7; }
+@page { size: A4; margin: 0; }
+@media print {
+  body { background: none; }
+  .bar { display: none; }
+  .sheet { width: 210mm; height: 297mm; margin: 0; aspect-ratio: auto; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+<div class="bar">
+  <button type="button" onclick="print()">Print sign</button>
+  <a class="ghost" href="posters.html">Posters</a>
+  <a class="ghost" href="./">Back to the game</a>
+</div>
+<main class="sheet">
+  <div class="knocks" aria-hidden="true"><i></i><i></i><i class="gap"></i></div>
+  <p class="warn">A horror story · play with headphones</p>
+  <h1><span>Don't</span><span class="small">knock</span><span>back</span></h1>
+  <p class="tag">It only knows the voices it has heard.</p>
+  <div class="qr"><img src="qr.svg" alt="QR code linking to the game"></div>
+  <p class="scan">Scan <em>to play</em></p>
+  <p class="do">Free in your browser · Phone held sideways<br>slayplay.io/arcade/dont-knock-back-preview</p>
+  <div class="knocks" aria-hidden="true"><i></i><i></i><i class="gap"></i></div>
+</main>
+</body>
+</html>

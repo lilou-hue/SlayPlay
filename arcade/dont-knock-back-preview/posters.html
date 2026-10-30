@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Don't Knock Back Posters</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,200..600;1,9..144,200..400&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Four printable A4 posters: why, how, the progression, the numbers. Always light, so they print the same everywhere. */
+:root { --paper: #efe8dc; --ink: #16110f; --soft: #5e554d; --blood: #8a1c14; --rule: #cfc5b4; color-scheme: light; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #1a1614; color: var(--ink); font-family: "Inter", system-ui, sans-serif; }
+.bar { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding: 16px; position: sticky; top: 0; z-index: 2; background: #1a1614; }
+.bar a, .bar button { font: 500 .8rem "Inter", sans-serif; text-transform: uppercase; letter-spacing: .04em; padding: 10px 16px; background: var(--paper); color: var(--ink); border: 0; cursor: pointer; text-decoration: none; }
+.bar .ghost { background: transparent; color: var(--paper); outline: 1px solid #5e554d; }
+.sheet { width: min(210mm, 100vw - 32px); aspect-ratio: 210 / 297; margin: 0 auto 32px; background: var(--paper); display: flex; flex-direction: column; container-type: inline-size; overflow: hidden; }
+.hero { position: relative; height: 25%; background: var(--ink) center / cover no-repeat; flex: none; }
+.hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 45%, rgba(22,17,15,.85)); }
+.hero .kicker { position: absolute; left: 7cqw; bottom: 3.4cqw; z-index: 1; margin: 0; font: 500 2.1cqw "Inter", sans-serif; text-transform: uppercase; letter-spacing: .14em; color: var(--paper); }
+.hero .kicker b { color: #e0a49a; font-weight: 600; }
+.body { padding: 4.4cqw 7cqw 0; flex: 1; display: flex; flex-direction: column; }
+h2 { font: 600 8cqw / .9 "Fraunces", serif; font-variation-settings: "opsz" 144; text-transform: uppercase; letter-spacing: -.02em; margin: 0; }
+h2 em { font-style: italic; font-weight: 300; text-transform: none; color: var(--blood); }
+.lede { font: 300 3cqw / 1.35 "Fraunces", serif; margin: 2.4cqw 0 0; }
+.lede b { font-weight: 500; }
+p, li { font-size: 2.15cqw; line-height: 1.45; }
+.foot { margin-top: auto; padding: 2cqw 0 3cqw; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--rule); font: 500 1.7cqw "Inter", sans-serif; text-transform: uppercase; letter-spacing: .1em; color: var(--soft); }
+.knocks { display: flex; gap: 1.2cqw; align-items: center; }
+.knocks i { width: 1.6cqw; height: 1.6cqw; border-radius: 50%; background: var(--ink); }
+.knocks i.gap { margin-left: 3.4cqw; }
+
+/* Why */
+.quote { margin: 3cqw 0 0; padding: 0 0 0 3.4cqw; border-left: .8cqw solid var(--blood); font: italic 300 4cqw / 1.2 "Fraunces", serif; }
+.fears { list-style: none; padding: 0; margin: 2.6cqw 0 0; display: grid; gap: 1.1cqw; counter-reset: f; }
+.fears li { display: grid; grid-template-columns: 7cqw 1fr; align-items: baseline; counter-increment: f; margin: 0; }
+.fears li::before { content: counter(f); font: 600 6cqw "Fraunces", serif; color: var(--blood); }
+.fears b { font: 600 3.1cqw "Fraunces", serif; display: block; }
+.nevers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.4cqw; margin: 2.4cqw 0 0; }
+.nevers div { border-top: .5cqw solid var(--ink); padding-top: 1.4cqw; }
+.nevers b { font: 600 2.2cqw "Inter", sans-serif; text-transform: uppercase; letter-spacing: .06em; display: block; }
+.nevers span { font-size: 2.1cqw; line-height: 1.45; color: var(--soft); display: block; margin-top: .8cqw; }
+
+/* How */
+.steps { list-style: none; padding: 0; margin: 2.8cqw 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 2cqw 4cqw; counter-reset: s; }
+.steps li { counter-increment: s; margin: 0; }
+.steps li::before { content: "0" counter(s); display: block; font: 600 2cqw "Inter", sans-serif; letter-spacing: .1em; color: var(--blood); }
+.steps b { font: 600 3.2cqw / 1.1 "Fraunces", serif; display: block; margin: .6cqw 0 .8cqw; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6cqw; margin: 3cqw 0 0; }
+.pair figure { margin: 0; }
+.pair img { width: 100%; aspect-ratio: 3 / 1; object-fit: cover; display: block; }
+.pair figcaption { font: 500 1.7cqw "Inter", sans-serif; text-transform: uppercase; letter-spacing: .1em; color: var(--soft); margin-top: 1cqw; }
+.tools { margin: 2.4cqw 0 0; font-size: 2.1cqw; color: var(--soft); }
+
+/* Progression */
+.line { list-style: none; margin: 3cqw 0 0; padding: 0 0 0 4.4cqw; border-left: .4cqw solid var(--ink); display: grid; gap: 1.3cqw; }
+.line li { position: relative; margin: 0; }
+.line li::before { content: ""; position: absolute; left: -5.75cqw; top: .9cqw; width: 2.3cqw; height: 2.3cqw; border-radius: 50%; background: var(--paper); border: .45cqw solid var(--ink); }
+.line li.hit::before { background: var(--blood); border-color: var(--blood); }
+.line time { font: 600 1.8cqw "Inter", sans-serif; text-transform: uppercase; letter-spacing: .1em; color: var(--blood); display: block; }
+.line b { font: 600 3cqw / 1.15 "Fraunces", serif; display: block; margin: .3cqw 0 .3cqw; }
+.line q { font-style: italic; font-family: "Fraunces", serif; font-weight: 400; }
+
+/* Numbers */
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.6cqw 3cqw; margin: 3cqw 0 0; }
+.stats div { border-top: .5cqw solid var(--ink); padding-top: 1.2cqw; }
+.stats b { font: 600 7.4cqw / 1 "Fraunces", serif; font-variation-settings: "opsz" 144; display: block; letter-spacing: -.02em; }
+.stats span { font: 500 1.9cqw / 1.35 "Inter", sans-serif; text-transform: uppercase; letter-spacing: .06em; color: var(--soft); display: block; margin-top: .8cqw; }
+.learned { margin: 2.4cqw 0 0; padding: 0; list-style: none; display: grid; gap: 1.8cqw; }
+.learned li { margin: 0; padding-left: 3.4cqw; position: relative; }
+.learned li::before { content: ""; position: absolute; left: 0; top: 1.1cqw; width: 1.4cqw; height: 1.4cqw; border-radius: 50%; background: var(--blood); }
+h3 { font: 500 2cqw "Inter", sans-serif; text-transform: uppercase; letter-spacing: .14em; color: var(--blood); margin: 3.6cqw 0 0; }
+
+@page { size: A4; margin: 0; }
+@media print {
+  body { background: none; }
+  .bar { display: none; }
+  .sheet { width: 210mm; height: 297mm; margin: 0; aspect-ratio: auto; break-after: page; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .sheet:last-of-type { break-after: auto; }
+}
+</style>
+</head>
+<body>
+<div class="bar">
+  <button type="button" onclick="print()">Print all four</button>
+  <a class="ghost" href="qr.html">QR sign</a>
+  <a class="ghost" href="./">Back to the game</a>
+</div>
+
+<!-- 1. Why -->
+<section class="sheet">
+  <div class="hero" style="background-image:url(assets/backgrounds/title.webp)"><p class="kicker"><b>Don't Knock Back</b> · 1 of 4 · Why we made it</p></div>
+  <div class="body">
+    <h2>Scared of <em>nothing</em></h2>
+    <p class="lede">Most horror games scare you when a monster jumps out. We wanted one that scares you <b>when nothing is happening</b>: a quiet hallway you no longer trust.</p>
+    <p class="quote">"The player should feel unsafe when nothing is happening."</p>
+    <ol class="fears">
+      <li><span><b>Speaking</b>Everything said out loud in the house is heard, kept, and used later in someone else's voice.</span></li>
+      <li><span><b>Certainty</b>No way of telling who is real works twice. Your sister might not be your sister.</span></li>
+      <li><span><b>Clicking</b>Late on, even moving to the next line should feel like a decision.</span></li>
+    </ol>
+    <h3>Three things we never do</h3>
+    <div class="nevers">
+      <div><b>No fighting</b><span>You have a dead flashlight. Hide, lie, stay quiet, run.</span></div>
+      <div><b>No numbers</b><span>No health bar, no fear meter. You feel it in the art and the sound instead.</span></div>
+      <div><b>No random scares</b><span>Every scare is written into the story, on purpose, in its place.</span></div>
+    </div>
+    <div class="foot"><span>A psychological horror story</span><span class="knocks" aria-hidden="true"><i></i><i></i><i class="gap"></i></span></div>
+  </div>
+</section>
+
+<!-- 2. How -->
+<section class="sheet">
+  <div class="hero" style="background-image:url(assets/cg/listener_folded.webp)"><p class="kicker"><b>Don't Knock Back</b> · 2 of 4 · How we made it</p></div>
+  <div class="body">
+    <h2>From idea <em>to</em> house</h2>
+    <ol class="steps">
+      <li><b>Write the rules</b>A "horror bible": what the monster can do, and how many scares each chapter gets.</li>
+      <li><b>Write the scene</b>Plain words first, then beats: a line, a sound, a choice, a scare.</li>
+      <li><b>Draw the house</b>One hand-drawn style. Each room has a safe day version and a wrong night one.</li>
+      <li><b>Make the sound</b>Music, creaks, knocks, and a laugh we recorded ourselves, put behind a wall.</li>
+      <li><b>Test it by machine</b>The computer plays the game six ways and fails it if a scare costs nothing or the story contradicts itself.</li>
+      <li><b>Test it on people</b>Friends play it, we fix what they say, and they play again.</li>
+    </ol>
+    <div class="pair">
+      <figure><img src="assets/backgrounds/entrance_hall_morning.webp" alt="The entrance hall in daylight"><figcaption>The hall, first visit</figcaption></figure>
+      <figure><img src="assets/backgrounds/entrance_hall_night.webp" alt="The same entrance hall at night"><figcaption>The same hall, later</figcaption></figure>
+    </div>
+    <p class="tools">Directed in plain English, with Claude Code (AI) writing the code and helping with the story. Art made from written briefs, chosen by eye.</p>
+    <div class="foot"><span>Every scene, round the same loop</span><span class="knocks" aria-hidden="true"><i></i><i></i><i class="gap"></i></span></div>
+  </div>
+</section>
+
+<!-- 3. Progression -->
+<section class="sheet">
+  <div class="hero" style="background-image:url(assets/backgrounds/landing_night.webp)"><p class="kicker"><b>Don't Knock Back</b> · 3 of 4 · The progression</p></div>
+  <div class="body">
+    <h2>Six weeks <em>in the</em> house</h2>
+    <ol class="line">
+      <li><time>15 Sep</time><b>Chapter One, the engine and the rules</b>37 changes on the first day. The house, the knock, and the thing in the walls.</li>
+      <li><time>16–29 Sep</time><b>The house gets drawn</b>Rooms, Lily, Elsie, Rowan, the wall children. Real creaks and knocks for the sound.</li>
+      <li><time>5–9 Oct</time><b>Chapters Three to Six</b>The checking game, the recording, two Lilys, the front door. The whole story, start to end.</li>
+      <li><time>19–23 Oct</time><b>Playtest fixes</b>Who you trust now shapes the ending.</li>
+      <li class="hit"><time>24 Oct</time><b>First verdict: <q>No horror, only funny.</q></b>The quiet scares were too quiet. Scares got louder and the monster got shown.</li>
+      <li class="hit"><time>27 Oct</time><b>Second verdict: <q>More scary, I'm not scared.</q></b>New scary music, real jumpscares, and hold-your-breath with your own finger.</li>
+      <li><time>28–30 Oct</time><b>Scares you do with your hands</b>Don't blink. Pull the bolts. Search under the bed by flashlight. Listen for which side it's on. A first jolt in the first two minutes, and every scare after it bigger.</li>
+    </ol>
+    <div class="foot"><span>Still being made</span><span class="knocks" aria-hidden="true"><i></i><i></i><i class="gap"></i></span></div>
+  </div>
+</section>
+
+<!-- 4. Numbers -->
+<section class="sheet">
+  <div class="hero" style="background-image:url(assets/cg/wall_child_lunge.webp)"><p class="kicker"><b>Don't Knock Back</b> · 4 of 4 · By the numbers</p></div>
+  <div class="body">
+    <h2>What's <em>in</em> the walls</h2>
+    <div class="stats">
+      <div><b>6</b><span>Chapters</span></div>
+      <div><b>40</b><span>Scenes</span></div>
+      <div><b>~30k</b><span>Words of story</span></div>
+      <div><b>36</b><span>Rooms drawn</span></div>
+      <div><b>47</b><span>Full-screen pictures</span></div>
+      <div><b>84</b><span>Character drawings</span></div>
+      <div><b>60</b><span>Music tracks and sounds</span></div>
+      <div><b>112</b><span>Scares, each one counted</span></div>
+      <div><b>270+</b><span>Saved changes in six weeks</span></div>
+    </div>
+    <h3>What playtesting taught us</h3>
+    <ul class="learned">
+      <li>Quiet, clever horror can read as funny. Players need to see it and hear it.</li>
+      <li>Scares land harder when your own hands are in them: holding your breath, not blinking.</li>
+      <li>Start small and climb. The first scare should be the smallest one.</li>
+      <li>A sound that never stops stops being scary and starts being annoying.</li>
+    </ul>
+    <div class="foot"><span>Scan the QR sign to play</span><span class="knocks" aria-hidden="true"><i></i><i></i><i class="gap"></i></span></div>
+  </div>
+</section>
+</body>
+</html>
