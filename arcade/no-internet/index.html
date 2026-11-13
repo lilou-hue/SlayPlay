@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="description" content="The offline dinosaur game mutates into gravity runs, aerial smashes, and a network boss battle.">
+  <meta name="theme-color" content="#f7f7f7">
+  <meta property="og:site_name" content="SlayPlay">
+  <meta property="og:title" content="No Internet — SlayPlay">
+  <meta property="og:description" content="The dinosaur game starts normal. Then the network notices you.">
+  <meta property="og:type" content="website">
+  <title>No Internet — SlayPlay</title>
+  <link rel="stylesheet" href="../arcade.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="wrap">
+    <canvas id="fx"></canvas>
+    <canvas id="game" aria-label="No internet: the dinosaur game"></canvas>
+  </div>
+
+  <div id="offline">
+    <h1>No internet</h1>
+    <p>Try:</p>
+    <ul id="tries">
+      <li>Checking the network cables, modem and router</li>
+      <li>Jumping over the cacti</li>
+      <li>Not looking the dinosaur in the eye</li>
+    </ul>
+    <p class="code">ERR_INTERNET_DISCONNECTED</p>
+  </div>
+
+  <div id="hint">Press space or tap to play</div>
+
+  <nav id="bar">
+    <a id="home" href="/arcade/" title="Back to SlayPlay" aria-label="Back to SlayPlay">&#8592;</a>
+    <button id="again" type="button" title="Again" aria-label="Start again">&#8635;</button>
+    <button id="mute" type="button" title="Sound" aria-label="Sound">&#9834;</button>
+  </nav>
+
+  <script src="../arcade.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

@@ -54,6 +54,7 @@ const GAMES = [
   { id: 'lumina',               bestKey: 'luminaBest',            score: 20 },
   { id: 'methane-drift',        bestKey: 'methaneDriftBest',      score: 3000 },
   { id: 'neon-pong',            bestKey: 'neonPongBest',          score: 500 },
+  { id: 'no-internet',          bestKey: 'a1NoInternetBest',       score: 500 },
   { id: 'phantom-road',         bestKey: 'phantomRoadBest',       score: 1000 },
   { id: 'rivals',               bestKey: 'rivalsBest',            score: 10 },
   { id: 'snake',                bestKey: 'snakeBest',             score: 50 },

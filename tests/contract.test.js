@@ -19,7 +19,7 @@ const assert = require('node:assert');
 const fs   = require('node:fs');
 const path = require('node:path');
 
-const ROOT = path.join(__dirname, '..');
+const ROOT = path.join(__dirname, '..', 'arcade');
 
 // ── Game registry ────────────────────────────────────────────────────────────
 // Each entry mirrors the bestKey registered in arcade.js lines 10-30
@@ -37,6 +37,7 @@ const GAMES = [
   { id: 'lumina',               js: 'game.js',   bestKey: 'luminaBest' },
   { id: 'methane-drift',        js: 'game.js',   bestKey: 'methaneDriftBest' },
   { id: 'neon-pong',            js: 'game.js',   bestKey: 'neonPongBest' },
+  { id: 'no-internet',          js: 'game.js',   bestKey: 'a1NoInternetBest' },
   { id: 'phantom-road',         js: 'game.js',   bestKey: 'phantomRoadBest' },
   { id: 'rivals',               js: 'game.js',   bestKey: 'rivalsBest' },
   { id: 'snake',                js: 'game.js',   bestKey: 'snakeBest' },

@@ -27,6 +27,7 @@
     'last-seen-online': { name: 'Last Seen Online',  bestKey: 'lastSeenOnlineBest', thresholds: [30, 60, 90] },
     'art-of-doing-nothing': { name: 'The Art of Doing Nothing', bestKey: 'artOfDoingNothingBest', thresholds: [100, 300, 500] },
     'heart-serve':          { name: 'HeartServe',              bestKey: 'heartServeBest',         thresholds: [25, 50, 75] },
+    'no-internet':          { name: 'No Internet',             bestKey: 'a1NoInternetBest',       thresholds: [100, 500, 1000] },
   };
 
   const GAME_IDS = Object.keys(GAMES);
