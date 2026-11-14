@@ -61,11 +61,14 @@
       if (!this.context) return;
       this.tone(this.context.currentTime+.008,plain?290:392,.065,plain?.045:.025,plain?'square':'triangle',plain?390:520);
     }
-    clear(plain) {
+    clear(plain,scene,big=false,variant=0) {
       if(!this.context) return;
       const t=this.context.currentTime+.008;
-      this.tone(t,plain?520:587,.10,.04,'triangle');
-      if(!plain) this.tone(t+.09,880,.22,.035,'sine');
+      const note=({track:587,corkscrew:740,dream:659,desktop:880,stampede:440})[scene]||587;
+      this.tone(t,plain?520:note,.10,.04,'triangle');
+      if(!plain) this.tone(t+.09,note*1.5,.22,.035,scene==='desktop'?'triangle':'sine');
+      if(big)for(const [i,ratio] of [1,1.25,1.5,2].entries())
+        this.tone(t+i*.045,note*ratio*(variant===2?.5:1),.32,.035,'sine');
     }
     payoff() {
       const a=this.context;if(!a || this.muted)return;
@@ -96,7 +99,9 @@
       while(this.origin+this.step*BEAT/2<a.currentTime+.12 && scheduled++<4) {
         const n=this.step++,t=Math.max(a.currentTime+.005,this.origin+n*BEAT/2);
         const dream=s.scene==='dream',desk=s.scene==='desktop',pack=s.scene==='stampede';
-        const bass=[73.42,73.42,87.31,65.41][Math.floor(n/8)%4];
+        const variation=s.variant||0;
+        const bass=[73.42,73.42,87.31,65.41][(Math.floor(n/8)+variation)%4];
+        if(variation && n%4===variation)this.tone(t,bass*(variation===1?8:6),BEAT*.6,.022,'sine');
         if(n%(dream?8:2)===0)this.tone(t,132,.18,dream?.15:.27,'sine',43);
         if(n%(dream?16:8)===(dream?8:4)) {
           this.hiss(t,dream?.18:.13,dream?.035:.09,1300);this.tone(t,175,.08,.045,'triangle');

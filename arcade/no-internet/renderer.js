@@ -41,6 +41,10 @@
       const from=this.pose(s.previousScene), to=this.pose(s.scene);
       const pose=to.map((v,i)=>mix(from[i],v,blend));
       if(s.scene==='collapse')pose.splice(0,6,...this.pose('finale'));
+      if(s.reducedMotion) {
+        const stable=this.pose('track');
+        for(let i=0;i<pose.length;i++)pose[i]=mix(stable[i],pose[i],.4);
+      }
       const angle=mix(-Math.PI/2,pose[0],b), distance=mix(24,pose[1],b);
       const target=[0,mix(0,pose[3],b),mix(0,pose[4],b)];
       const eye=[Math.sin(angle)*distance,mix(0,pose[2],b),target[2]-Math.cos(angle)*distance];
@@ -60,7 +64,8 @@
         const xx=x*Math.cos(angle)-y*Math.sin(angle);
         y=(x*Math.sin(angle)+y*Math.cos(angle))*k;x=xx*k;z*=k;
       }
-      const co=Math.cos(s.worldRoll),si=Math.sin(s.worldRoll);
+      const roll=s.reducedMotion?Math.sin(s.worldRoll)*.18:s.worldRoll;
+      const co=Math.cos(roll),si=Math.sin(roll);
       return [x*co-y*si,x*si+y*co,z];
     }
     view(p) {
@@ -72,7 +77,8 @@
       return [c.cx + p[0] * k, c.cy - p[1] * k];
     }
     polygon(vertices, color, shade = 1, edge = null, viewed = false) {
-      if (this.faces.length >= 2600) return;
+      // Reserve 400 faces for the player, active hazards and timing marker.
+      if (this.faces.length >= (this.gameplay?2600:2200)) return;
       let v = viewed ? vertices : vertices.map(p => this.view(p));
       // Clip in camera space before division; geometry can safely pass behind the viewer.
       const clipped = [];
@@ -110,11 +116,12 @@
       const y = options.y ?? s.player.height, run = s.player.grounded ? Math.sin(s.distance * 3.8) * .17 : .10;
       const lean = s.player.stumble > 0 ? -.12 : 0;
       const scale=options.scale || (s.scene==='dream'?1+s.morph*.10:1);
+      const squash=options.lod?1:1-Math.sin(clamp(s.impact/.32)*Math.PI)*.15;
       let index=0;
       const part = (x,py,z,sx,sy,sz,c=color) => {
         const split=options.fragment||0, n=index++;
-        this.box((options.x||0)+x*ext*scale+Math.sin(n*2.4)*split,y+py*scale+Math.cos(n*1.2)*split,
-          (options.z||0)+(z+lean*py)*scale+Math.sin(n*1.8)*split,sx*ext*scale,sy*scale,sz*scale,c,split*.12);
+        this.box((options.x||0)+x*ext*scale+Math.sin(n*2.4)*split,y+py*scale*squash+Math.cos(n*1.2)*split,
+          (options.z||0)+(z+lean*py)*scale+Math.sin(n*1.8)*split,sx*ext*scale/squash,sy*scale*squash,sz*scale,c,split*.12);
       };
       if(options.lod) {
         part(0,.9,0,.65,.85,.85);part(0,1.6,.45,.7,.9,.75);
@@ -213,17 +220,24 @@
           this.polygon([[x,0,zf-3],[x+side*7,h,zf+2],[x+side*9,0,zf-1]],[37,33,77]);
         }
         for (const m of s.monuments) {
-          const grow = smooth(m.age / 1.0), h = m.scale * grow;
+          // Monumental scenery recedes before it can engulf the near camera/corridor.
+          const grow = smooth(m.age / 1.0)*smooth((m.z-2)/10), h = m.scale * grow;
+          if(h<.05)continue;
           const x = m.side*(5.5+h*.4);
           this.cactus(m.z,1,h,x,-.1,m.side < 0 ? [145,105,225] : [72,169,186],m.side*.12*grow);
-          // Each cleared cactus becomes a monumental branching gateway, not particles.
-          this.box(x*.5,h*.95,m.z,Math.abs(x),.16,.45,[174,233,241]);
+          // Later laps unfold paired arches, with the same clear central corridor.
+          const unfold=s.variant?smooth(m.age/1.4):0;
+          this.box(x*.5,h*.95,m.z,Math.abs(x),.16,.45,[174,233,241],m.side*unfold*.25);
+          if(s.variant) {
+            this.cactus(m.z+2,1,h*.72,-x,-.1,[94,189,183],-m.side*.25*unfold);
+            this.box(0,h*1.15,m.z,Math.abs(x)*1.6,.32,.65,[212,191,244],Math.sin(unfold*Math.PI)*.15);
+          }
           this.layer=-1;
           this.box(x,-1.1,m.z,h*1.3,1.8,h*1.1,[38,44,70]);
           this.layer=2;
         }
       }
-      this.layer=1;
+      this.rewards(s);this.gameplay=true;this.layer=3;
       // Ground-space landing/takeoff marker. Its spacing is exactly speed * jump lead time.
       const next = s.obstacles.find(o => !o.resolved && o.z > -.3);
       if (next && b > .1) {
@@ -234,7 +248,7 @@
       }
       // Player shadow uses the same camera and world ground as everything else.
       if (e > .05) this.box(0,.022,-.1,.85+s.player.height*.16,.02,1.6+s.player.height*.12,[14,20,35]);
-      this.layer=2;
+      this.layer=4;
       for (const o of s.obstacles) {
         if (o.resolved && o.clear) continue;
         this.cactus(o.z,e,1,0,o.resolved ? -.5 : 0,o.resolved ? [88,86,105] : null);
@@ -289,7 +303,7 @@
       for(let i=0;i<11;i++) {
         const z=4+i*6-s.sceneDistance%6;
         for(let j=0;j<8;j++) {
-          const a=j*Math.PI/4+i*.065,r=4.8;
+          const a=j*Math.PI/4+i*(s.variant===1?-.32:s.variant===2?.25:.065),r=4.8+Math.sin(clamp(s.burst/1.5)*Math.PI)*1.8;
           this.layer=Math.sin(a)<-.1?-1:2;
           this.box(Math.cos(a)*r,Math.sin(a)*r,z,3.25,.28,.50,[40,44,62],a+Math.PI/2);
           if(j%2===0) {
@@ -297,6 +311,11 @@
             this.polygon([[Math.cos(a-.12)*r,Math.sin(a-.12)*r,z-.25],[Math.cos(a+.12)*r,Math.sin(a+.12)*r,z-.25],[Math.cos(t)*3.65,Math.sin(t)*3.65,z+.4]],[255,239,193]);
           }
         }
+      }
+      if(s.variant)for(let strand=0;strand<2;strand++)for(let i=0;i<24;i++) {
+        const a=i*.36*(s.variant===1?-1:1)+strand*Math.PI;
+        this.layer=Math.sin(a)<-.1?-1:2;
+        this.box(Math.cos(a)*6.2,Math.sin(a)*6.2,5+i*2.7-s.sceneDistance%2.7,1.4,.65,2.4,strand?[255,238,173]:[68,164,171],a);
       }
       this.layer=2;
     }
@@ -306,9 +325,9 @@
       this.layer=-1;
       for(let layer=7;layer>=0;layer--) {
         const radius=3+layer*1.8, z=10, y=-2-layer*.035;
-        const sides=8, verts=[];
+        const sides=s.variant===1?3:s.variant===2?5:8, verts=[];
         for(let j=0;j<sides;j++) {
-          const a=j*Math.PI*2/sides+m*.35;
+          const a=j*Math.PI*2/sides+m*(s.reducedMotion?.08:.35);
           const r=radius*(j%2?1:.78+.15*Math.sin(m));
           verts.push([Math.cos(a)*r*1.4,y+Math.sin(a*2)*m*.1,z+Math.sin(a)*r*(.9+.24*Math.cos(m*.9))]);
         }
@@ -324,8 +343,9 @@
       // Their opening stays wider and taller than the stable near collision corridor.
       for(let gate=0;gate<4;gate++) {
         const z=7+gate*12-(s.sceneDistance*.3)%12;
-        for(let ring=0;ring<3;ring++)for(let j=0;j<12;j++) {
-          const a=j*Math.PI/6,b=(j+1)*Math.PI/6;
+        const sides=s.variant===1?3:s.variant===2?5:12;
+        for(let ring=0;ring<3;ring++)for(let j=0;j<sides;j++) {
+          const a=j*Math.PI*2/sides,b=(j+1)*Math.PI*2/sides;
           const r=7+ring*.85, aperture=1+Math.sin(m*.8+ring)*.12;
           const point=(angle,radius,depth)=>[Math.cos(angle)*radius,4+Math.sin(angle)*radius*.72*aperture,z+depth+Math.sin(angle*3+m)*.45];
           this.layer=Math.sin(a)<-.8?-1:2;
@@ -335,7 +355,7 @@
       this.layer=2;
       // An orbiting family of smaller solids makes the attractor's changed geometry legible.
       for(let i=0;i<12;i++) {
-        const a=i*Math.PI/6+m*.5;
+        const a=i*Math.PI/6+m*(s.reducedMotion?.12:.5);
         this.box(Math.cos(a)*(9+m),9+Math.sin(a)*7,32+Math.sin(a)*6,1.3,1.3,1.3,[102,151,168],a+m);
       }
     }
@@ -347,7 +367,9 @@
       for(const w of s.windows) {
         if(w.age<0)continue;
         const pop=smooth(w.age/.35);
-        this.windowBox(w.x,w.y+(1-pop)*2,w.z,3.3*pop,2.5*pop,w.seed);
+        const fan=s.variant?Math.sin(w.seed*.65)*3:0;
+        this.windowBox(w.x+fan,w.y+(1-pop)*2+(s.variant?(w.seed%3)*1.3:0),w.z,3.3*pop,2.5*pop,w.seed);
+        if(s.variant===2)this.windowBox(w.x+fan,w.y+3,w.z+1,2.1*pop,1.6*pop,w.seed+1);
         this.layer=-1;
         this.box(w.x,-.8+w.y*.3,w.z,3.5,1.5,2.2,[116,145,159]);
         this.layer=2;
@@ -384,10 +406,14 @@
       for(let i=1;i<s.echoes;i++) {
         const row=Math.floor((i-1)/6),col=(i-1)%6;
         const delay=(row+1)*.06, jumpAge=s.simTime-s.lastJumpTime-delay;
-        const jump=jumpAge>=0?Math.max(0,7.7*jumpAge-9*jumpAge*jumpAge):0;
+        const waveAge=s.simTime-s.waveTime-(row+1)*.12;
+        const wave=waveAge>=0?Math.max(0,5.8*waveAge-7*waveAge*waveAge):0;
+        const jump=Math.max(wave,jumpAge>=0?Math.max(0,7.7*jumpAge-9*jumpAge*jumpAge):0);
         const scale=(.88+(i%3)*.045)*(1-gather*.94);
-        this.dino(s,{x:positions[col]*(1-gather),y:jump*(1-gather)+gather*(i%6)*2.5,
-          z:mix(3+row*2.5,24,gather),scale,lod:true,color:i%3?[61,115,133]:[235,242,210]});
+        const fan=s.variant===1?1+row*.22:1;
+        const spiral=s.variant===2?Math.sin(i*.8)*1.1:0;
+        this.dino(s,{x:(positions[col]*fan+spiral)*(1-gather),y:jump*(1-gather)+gather*(i%6)*2.5,
+          z:mix(3+row*2.5+(s.variant?Math.abs(positions[col])*.7:0),24,gather),scale,lod:true,color:i%3?[61,115,133]:[235,242,210]});
       }
     }
     ending(s) {
@@ -405,9 +431,10 @@
         }
       }
       if(s.scene==='finale') {
+        this.gameplay=true;this.layer=4;
         const fly=s.finalInput?clamp((s.sceneTime-s.finalJumpTime)/.84):0;
         this.cactus(mix(3.6,-2.7,fly),1,.75,0,0,[225,233,212]);
-        this.layer=1;this.box(0,.03,.25,2.5,.03,.14,[220,244,194]);this.layer=2;
+        this.layer=3;this.box(0,.03,.25,2.5,.03,.14,[220,244,194]);this.gameplay=false;this.layer=2;
       }
     }
     showWorld(s) {
@@ -418,7 +445,7 @@
       else if(s.scene==='desktop'||s.scene==='crash')this.desktop(s);
       else if(s.scene==='stampede') {this.stampede(s);this.pack(s);}
       else this.ending(s);
-      this.layer=1;
+      this.rewards(s);this.gameplay=true;this.layer=3;
       const next=s.obstacles.find(o=>!o.resolved && o.z>-.3);
       if(next) {
         const z=next.z-s.speed*.42,c=next.z/s.speed<.60?[252,237,112]:s.scene==='dream'?[124,85,138]:[47,87,99];
@@ -426,7 +453,7 @@
         for(const side of [-1,1])this.box(side*1.45,.035,z+.36,.09,.035,.72,c);
       }
       this.box(0,.025,-.1,.95+s.player.height*.16,.025,1.6+s.player.height*.12,[42,48,69]);
-      this.layer=2;
+      this.layer=4;
       for(const o of s.obstacles) {
         if(o.resolved && o.clear)continue;
         if(s.scene==='desktop')this.windowBox(0,o.resolved?-.5:0,o.z,1.8,1.25,o.id);
@@ -436,6 +463,43 @@
       if(s.scene==='desktop'||s.scene==='crash')this.windowBox(0,s.player.height,0,1.6,2.05,0,true);
       else this.dino(s);
       this.hero=false;
+    }
+    rewards(s) {
+      // Brief, bounded world-space rings; no screen-space flashes or particle pool.
+      this.layer=1;
+      for(const effect of s.effects) {
+        const t=effect.age/1.5, radius=.6+t*(effect.big?12:3.5);
+        const color=s.scene==='offline'?[135,145,148]:s.scene==='dream'?[151,98,174]:[109,210,196];
+        if(t<.75)for(let i=0;i<16;i++) {
+          const a=i*Math.PI/8,b=(i+1)*Math.PI/8;
+          const p=(angle,r)=>[Math.cos(angle)*r,.055,effect.z+Math.sin(angle)*r];
+          this.polygon([p(a,radius),p(b,radius),p(b,radius+.12*(1-t)),p(a,radius+.12*(1-t))],color);
+        }
+        if(!effect.big)continue;
+        this.layer=2;
+        const lift=Math.sin(t*Math.PI)*(s.reducedMotion?2:4);
+        if(s.scene==='desktop') {
+          for(let side of [-1,1])for(let i=0;i<4;i++)
+            this.windowBox(side*(5+i*1.8),2+i*.9+lift,9+i*3,3.8,2.8,i);
+        } else if(s.scene==='dream') {
+          for(let i=0;i<8;i++) {
+            const a=i*Math.PI/4;
+            this.dino(s,{x:Math.cos(a)*(11+t*4),y:5+Math.sin(a)*4+lift,z:22+Math.sin(a)*8,scale:1.8,lod:true,color:[181,123,167]});
+          }
+        } else if(s.scene==='track') {
+          for(const side of [-1,1])for(let i=0;i<3;i++)
+            this.cactus(14+i*8,1,2.8+lift*.5,side*(5.8+i*2),0,[137,211,184],side*(s.reducedMotion?.12:t*.5));
+        } else if(s.scene==='corkscrew') {
+          for(let i=0;i<12;i++) {
+            const a=i*Math.PI/6,r=6+t*7;
+            this.box(Math.cos(a)*r,Math.sin(a)*r,15,2,.7,2,[246,232,159],a);
+          }
+        } else if(s.scene==='stampede') {
+          for(const side of [-1,1])for(let i=0;i<8;i++)
+            this.box(side*(5+i*.3),.1+Math.sin(clamp(t*2-i*.09)*Math.PI)*2,4+i*4,1,.4,2,[246,239,196]);
+        }
+        this.layer=1;
+      }
     }
     draw(s) {
       const start = performance.now();
@@ -451,7 +515,7 @@
         gradient.addColorStop(0,`rgba(104,49,121,${e*.5})`); gradient.addColorStop(1,'rgba(9,11,29,0)');
         c.fillStyle=gradient; c.fillRect(0,0,w,h);
       }
-      this.faces.length = 0;
+      this.faces.length = 0;this.gameplay=false;
       this.camera(s); this.world(s);
       // Ground/decal passes avoid average-depth floor polygons cutting through feet.
       // Above-ground meshes retain stable camera-space painter ordering.
@@ -468,7 +532,12 @@
       c.fillStyle=['dream','desktop','stampede'].includes(s.scene)?'#34465c':e>.5?'#c6d1e3':'#777';
       c.fillText(String(s.score).padStart(4,'0'),w-22,34);
       if (s.scene === 'offline' && s.mode !== 'idle') {
-        for(let i=0;i<3;i++) { c.fillStyle=i<s.success?'#535353':'#d4d4d4'; c.fillRect(w-61+i*14,47,7,3); }
+        for(let i=0;i<s.target;i++) { c.fillStyle=i<s.success?'#535353':'#d4d4d4'; c.fillRect(w-61+i*14,47,7,3); }
+      }
+      if(s.mode!=='idle') {
+        c.font='10px ui-monospace, monospace';
+        c.fillText('LAP '+s.lap,w-22,s.scene==='desktop'?100:64);
+        if(s.combo>1)c.fillText(s.combo+' clears · ×'+s.multiplier,w-22,s.scene==='desktop'?116:80);
       }
       if(s.scene==='desktop') {
         c.fillStyle='#253d72';c.fillRect(0,58,w,27);

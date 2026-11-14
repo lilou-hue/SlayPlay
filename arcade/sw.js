@@ -1,4 +1,4 @@
-const CACHE_NAME = 'slayplay-arcade-v35';
+const CACHE_NAME = 'slayplay-arcade-v36';
 
 const PRECACHE_URLS = [
   '/arcade/',
@@ -114,10 +114,10 @@ const PRECACHE_URLS = [
   '/arcade/no-internet/audio.js',
   '/arcade/no-internet/styles.css',
   // Versioned HTML references bypass static assets held by an older worker.
-  '/arcade/no-internet/game.js?v=34',
-  '/arcade/no-internet/renderer.js?v=34',
-  '/arcade/no-internet/audio.js?v=34',
-  '/arcade/no-internet/styles.css?v=34',
+  '/arcade/no-internet/game.js?v=36',
+  '/arcade/no-internet/renderer.js?v=36',
+  '/arcade/no-internet/audio.js?v=36',
+  '/arcade/no-internet/styles.css?v=36',
 ];
 
 const NETWORK_FIRST_HOSTS = [

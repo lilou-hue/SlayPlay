@@ -9,6 +9,8 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #f7f7f7; col
 #bar { position: fixed; top: max(12px, env(safe-area-inset-top)); left: max(12px, env(safe-area-inset-left)); display: flex; gap: 6px; z-index: 5; }
 #bar a, #bar button { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid #8884; border-radius: 8px; color: #666; background: #ffffff18; font: 20px system-ui, sans-serif; text-decoration: none; cursor: pointer; }
 html[data-spatial="true"] #bar a, html[data-spatial="true"] #bar button { color: #e8eeff; background: #080b2080; }
+#bar #bank { width: auto; padding: 0 10px; font-size: 12px; }
+#bar #bank:disabled { opacity: .38; cursor: default; }
 #bar button.off { opacity: .5; text-decoration: line-through; }
 button:focus-visible, a:focus-visible { outline: 2px solid #2bb9c9; outline-offset: 3px; }
 #chapter { position: fixed; left: 20px; bottom: max(22px, env(safe-area-inset-bottom)); color: #c6d5ec; pointer-events: none; font: 10px ui-monospace, monospace; letter-spacing: .24em; }
