@@ -59,7 +59,8 @@
   }
   function bankState() {
     // Explicit banking is also available while paused; it never resumes audio.
-    bank.disabled=s.mode!=='running' || s.score<=0 || s.banked || s.debugAssisted;
+    const disabled=s.mode!=='running' || s.score<=0 || s.banked || s.debugAssisted;
+    if(bank.disabled!==disabled)bank.disabled=disabled;
   }
   function healthState() {
     const cue=s.completion==='death'?'RUN ENDED':s.recovery>0?'RECOVERING':'';
@@ -309,7 +310,8 @@
     }
     if(!document.hidden) {
       renderer.draw(s);bankState();healthState();
-      offline.style.opacity=['offline','breath'].includes(s.scene)?'1':s.scene==='rupture'?String(1-smooth(s.sceneTime/1.1)):s.scene==='collapse'?String(smooth((s.sceneTime-1.8)/.6)):'0';
+      const opacity=['offline','breath'].includes(s.scene)?'1':s.scene==='rupture'?String(1-smooth(s.sceneTime/1.1)):s.scene==='collapse'?String(smooth((s.sceneTime-1.8)/.6)):'0';
+      if(offline.style.opacity!==opacity)offline.style.opacity=opacity;
       frameCount++;frameSum+=Math.min(elapsed,1)*1000;renderSum+=renderer.stats.renderMs;
       if(elapsed>.025)slowFrames++;
     }

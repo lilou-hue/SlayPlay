@@ -4,14 +4,34 @@
   const clamp = (n, a = 0, b = 1) => Math.max(a, Math.min(b, n));
   const mix = (a, b, t) => a + (b - a) * t;
   const smooth = n => (n = clamp(n), n * n * (3 - 2 * n));
-  const sub = (a, b) => a.map((v, i) => v - b[i]);
-  const dot = (a, b) => a.reduce((n, v, i) => n + v * b[i], 0);
+  const sub = (a, b) => [a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+  const dot = (a, b) => a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
   const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
   const norm = a => { const d = Math.hypot(...a) || 1; return a.map(v => v / d); };
   const CUBE = [[-.5,-.5,-.5],[.5,-.5,-.5],[.5,.5,-.5],[-.5,.5,-.5],[-.5,-.5,.5],[.5,-.5,.5],[.5,.5,.5],[-.5,.5,.5]];
   const FACES = [[0,3,2,1],[4,5,6,7],[0,4,7,3],[1,2,6,5],[3,7,6,2],[0,1,5,4]];
   const SHADE = [.60,.86,.75,.94,1.12,.45];
   const GRAY = [83,83,83], CHROME = [174,218,233], GREEN = [193,255,105];
+
+  // The existing four size/LOD tiers, not screen-space geometry. Preserve even
+  // the tiny floating-point pole rings; perspective and bend are applied afresh.
+  const SOLIDS=new Map();
+  for(const [n,rows] of [[12,6],[6,3],[4,3],[8,4]]) {
+    const vertices=[],facets=[];
+    for(let j=0;j<=rows;j++)for(let i=0;i<n;i++) {
+      const a=Math.PI*j/rows,b=i*Math.PI*2/n;
+      vertices.push([Math.sin(a)*Math.cos(b),Math.cos(a),Math.sin(a)*Math.sin(b)]);
+    }
+    for(let j=0;j<rows;j++)for(let i=0;i<n;i++)facets.push([j*n+i,j*n+(i+1)%n,(j+1)*n+(i+1)%n,(j+1)*n+i]);
+    SOLIDS.set(n+':'+rows,{vertices,facets});
+  }
+  // Only scenery primitives are remembered; no key enumeration or gameplay copy.
+  const SCENERY_FIELDS=['mode','scene','previousScene','sceneTime','simTime','beat','speed','distance',
+    'score','combo','multiplier','success','target','health','maxHealth','recovery','lap','variant',
+    'lapEarned','lapScore','banked','impact','burst','waveTime','earned','fallback','projectionBlend',
+    'extrusion','pending','nextSpawn','serial','sceneDistance','worldRoll','rollFrom','rollTarget',
+    'rollTime','morph','morphTarget','lastJumpTime','finalInput','finalJumpTime','finalJumpSerial',
+    'dropAt','cascadeCount','echoes','completion','reported','debugAssisted','reducedMotion','run','previousBest'];
 
   class DinoRenderer {
     constructor(canvas) {
@@ -21,12 +41,14 @@
       this.art=new DinoArt();this.medium='pixel-8';
       this.pixelCanvas=document.createElement('canvas');this.pixelContext=this.pixelCanvas.getContext('2d',{alpha:false});
       this.patterns={};
-      // One reusable outgoing world target, plus the small shared pixel raster.
+      // One reusable outgoing world target, plus the shared nearest-pixel raster.
       this.blendCanvas=document.createElement('canvas');
       this.blendContext=this.blendCanvas.getContext('2d',{alpha:false});
       this.lastScenery={};this.handoff=null;this.lastRun=null;
       this.visual={bend:0,lift:0};
-      this.stats = { polygons: 0, renderMs: 0, maxPolygons: 0 };
+      this.stats = { polygons: 0, renderMs: 0, maxPolygons: 0, assets:{}, budgets:{scenery:2000,gameplay:2600,used:0,reservedGameplay:600,packCap:40}, transition:{} };
+      this.solidView=Array.from({length:84},()=>[0,0,0]);
+      this.skyCanvas=null;this.skyImage=null;
       this.resize();
     }
     resize() {
@@ -35,10 +57,30 @@
       this.canvas.width = Math.max(1,Math.floor(this.w * this.dpr));
       this.canvas.height = Math.max(1,Math.floor(this.h * this.dpr));
       this.ctx.setTransform(this.canvas.width/this.w, 0, 0, this.canvas.height/this.h, 0, 0);
-      // Exactly one full world buffer (<=4M pixels), shared small raster (<=~231K).
+      // Auxiliary targets: live blend <=4M + exact static sky <=4M + pixel raster
+      // <=~231K pixels (aggregate <=~8.231M / 32.924MB RGBA, excluding the main).
       // Matching backing dimensions avoids reallocating the pixel raster between passes.
       this.blendCanvas.width=this.canvas.width;this.blendCanvas.height=this.canvas.height;
       this.blendContext.setTransform(this.blendCanvas.width/this.w,0,0,this.blendCanvas.height/this.h,0,0);
+      if(this.skyCanvas){this.skyCanvas.width=0;this.skyCanvas.height=0;}
+      this.skyImage=null;
+    }
+    prepareSky() {
+      const image=this.art.images.valley;
+      if(this.skyImage!==image) {
+        if(!this.skyCanvas)this.skyCanvas=document.createElement('canvas');
+        const sky=this.skyCanvas;sky.width=this.canvas.width;sky.height=this.canvas.height;
+        const context=sky.getContext('2d'),w=this.w,h=this.h,k=Math.max(w/image.width,h/image.height);
+        context.setTransform(sky.width/w,0,0,sky.height/h,0,0);
+        context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';
+        context.drawImage(image,(w-image.width*k)/2,(h-image.height*k)/2,image.width*k,image.height*k);
+        this.skyImage=image;
+      }
+    }
+    paintedSky(c) {
+      this.prepareSky();
+      // Only the already-static sky is cached, at the exact backing resolution.
+      c.save();c.setTransform(1,0,0,1,0,0);c.drawImage(this.skyCanvas,0,0);c.restore();
     }
     pose(scene) {
       const base=[-.36,this.w<600?15:13,5.2,.9,6,.43];
@@ -62,6 +104,12 @@
       const eye=[Math.sin(angle)*distance,mix(0,pose[2],b),target[2]-Math.cos(angle)*distance];
       const forward=norm(sub(target,eye)),right=norm(cross(forward,[0,1,0])),up=cross(right,forward);
       const scale=mix(this.w<600?23:28,Math.min(this.w*1.2,this.h*.94)/24,b);
+      const roll=s.reducedMotion?Math.sin(s.worldRoll)*.18:s.worldRoll;
+      this.rollCos=Math.cos(roll);this.rollSin=Math.sin(roll);
+      const fold=smooth(s.sceneTime/2.0);
+      this.collapseScale=1-fold;
+      const foldAngle=s.reducedMotion?0:fold*2.1;
+      this.foldCos=Math.cos(foldAngle);this.foldSin=Math.sin(foldAngle);
       this.cam={eye,forward,right,up,b,focal:scale*24,
         cx:mix(this.w*(this.w<600?.19:.22),this.w*.5,b),cy:mix(this.h*.70,this.h*pose[5],b)};
     }
@@ -71,13 +119,11 @@
       y+=this.visual.lift;
       if(s.scene==='crash') {y-=s.sceneTime*s.sceneTime*7;x+=Math.sin(z)*s.sceneTime;}
       if(s.scene==='collapse' && !this.gameplay) {
-        const f=smooth(s.sceneTime/2.0), k=1-f;
-        const angle=s.reducedMotion?0:f*2.1;
-        const xx=x*Math.cos(angle)-y*Math.sin(angle);
-        y=(x*Math.sin(angle)+y*Math.cos(angle))*k;x=xx*k;z*=k;
+        const k=this.collapseScale,co=this.foldCos,si=this.foldSin;
+        const xx=x*co-y*si;
+        y=(x*si+y*co)*k;x=xx*k;z*=k;
       }
-      const roll=s.reducedMotion?Math.sin(s.worldRoll)*.18:s.worldRoll;
-      const co=Math.cos(roll),si=Math.sin(roll);
+      const co=this.rollCos,si=this.rollSin;
       return [x*co-y*si,x*si+y*co,z];
     }
     view(p) {
@@ -191,23 +237,20 @@
       const depth=this.view([x,y,z])[2],size=Math.max(sx,sy,sz)*this.cam.focal/mix(24,Math.max(.35,depth),this.cam.b);
       // Three projected-size tiers. Big heads get a round contour, distant pack members stay cheap.
       const n=size>100?12:lod?(size>20?6:4):size<18?6:8,rows=size>100?6:lod||size<18?3:4;
-      const rings=[];
-      for(let j=0;j<=rows;j++) {
-        const a=Math.PI*j/rows;
-        rings.push(Array.from({length:n},(_,i)=>{
-          const b=i*Math.PI*2/n;
-          return this.view([x+Math.sin(a)*Math.cos(b)*sx*.5,y+Math.cos(a)*sy*.5,z+Math.sin(a)*Math.sin(b)*sz*.5]);
-        }));
+      const topology=SOLIDS.get(n+':'+rows),viewed=this.solidView,all=[];
+      for(let i=0;i<topology.vertices.length;i++) {
+        const p=topology.vertices[i],v=this.view([x+p[0]*sx*.5,y+p[1]*sy*.5,z+p[2]*sz*.5]);
+        if(v[2]<.35)return;
+        viewed[i][0]=v[0];viewed[i][1]=v[1];viewed[i][2]=v[2];
+        all.push(this.project(v));
       }
-      if(rings.some(r=>r.some(p=>p[2]<.35)))return;
-      const facets=[],all=[],centerDepth=this.view([x,y,z])[2];
-      for(let j=0;j<rows;j++)for(let i=0;i<n;i++) {
-        const v=[rings[j][i],rings[j][(i+1)%n],rings[j+1][(i+1)%n],rings[j+1][i]];
-        const points=v.map(p=>this.project(p));all.push(...points);
-        const depth=v.reduce((sum,p)=>sum+p[2],0)/4;
+      const facets=[],centerDepth=depth;
+      for(let f=0;f<topology.facets.length;f++) {
+        const indices=topology.facets[f],i=f%n,j=Math.floor(f/n);
+        const depth=(viewed[indices[0]][2]+viewed[indices[1]][2]+viewed[indices[2]][2]+viewed[indices[3]][2])/4;
         if(depth>centerDepth+.015)continue;
         const shade=ink?(i%3===0?.82:1):j===0?1.13:i<n/2?.83:1;
-        facets.push({points,depth,color:'rgb('+color.map(v=>Math.round(clamp(v*shade,0,255))).join(',')+')'});
+        facets.push({points:indices.map(i=>all[i]),depth,color:'rgb('+color.map(v=>Math.round(clamp(v*shade,0,255))).join(',')+')'});
       }
       const points=all.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
       const turn=(a,b,c)=>(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);
@@ -216,7 +259,7 @@
       if(hull.length<3||hull.every(p=>p[0]<0)||hull.every(p=>p[0]>this.w)||hull.every(p=>p[1]<0)||hull.every(p=>p[1]>this.h))return;
       if(this.cost+facets.length+1>(this.gameplay?2600:this.sceneryLimit))return;
       this.cost+=facets.length+1;
-      this.faces.push({points:hull,facets:facets.sort((a,b)=>b.depth-a.depth),color:facets[0].color,depth:this.view([x,y,z])[2],layer:this.layer,order:this.faces.length,organic:true,outline,opacity:this.opacity??1,material:color.join(',')});
+      this.faces.push({points:hull,facets:facets.sort((a,b)=>b.depth-a.depth),color:facets[0].color,depth:centerDepth,layer:this.layer,order:this.faces.length,organic:true,outline,opacity:this.opacity??1,material:color.join(',')});
     }
     drawnDino(s,o={}) {
       if(this.cost>=(this.gameplay?2600:this.sceneryLimit))return;
@@ -676,7 +719,7 @@
     remember(s) {
       // Two bounded scenery records, never old gameplay or a frozen screenshot.
       const out=this.lastScenery;
-      for(const key of Object.keys(s))if(!Array.isArray(s[key]) && key!=='player')out[key]=s[key];
+      for(const key of SCENERY_FIELDS)out[key]=s[key];
       for(const key of ['monuments','windows','city','effects']) {
         const items=out[key]||(out[key]=[]),source=s[key];
         for(let i=0;i<source.length;i++)Object.assign(items[i]||(items[i]={}),source[i]);
@@ -707,10 +750,7 @@
         gradient.addColorStop(0,`rgba(104,49,121,${e*.5})`); gradient.addColorStop(1,'rgba(9,11,29,0)');
         c.fillStyle=gradient; c.fillRect(0,0,w,h);
       }
-      if(this.medium==='ai-gouache') {
-        const image=this.art.images.valley,k=Math.max(w/image.width,h/image.height);
-        c.drawImage(image,(w-image.width*k)/2,(h-image.height*k)/2,image.width*k,image.height*k);
-      }
+      if(this.medium==='ai-gouache')this.paintedSky(c);
       this.faces.length = 0;this.cost=0;this.gameplay=false;
       this.world(s); this.gameplayWorld(live);
       // Ground/decal passes avoid average-depth floor polygons cutting through feet.
@@ -728,10 +768,13 @@
         // equally translucent hull or edge strokes (which compound the alpha).
         if(!f.facets || !fading){path(f.points);c.fillStyle=f.color;c.fill();}
         if(f.facets)for(const part of f.facets){path(part.points);c.fillStyle=part.color;c.fill();if(!fading){c.strokeStyle=part.color;c.lineWidth=.65;c.stroke();}}
-        path(f.points);
+        // Plain faces still have their fill path; only facets changed it.
+        if(f.facets)path(f.points);
         c.strokeStyle=f.edge?(Array.isArray(f.edge)?'rgb('+f.edge.join(',')+')':f.edge):ink?'#211c24':cel?'#23324b':f.color;
         // Ground is a continuous material, never a wireframe. Internal joints are quiet.
-        const span=Math.max(...f.points.map(p=>p[0]))-Math.min(...f.points.map(p=>p[0]));
+        let left=Infinity,right=-Infinity;
+        for(const p of f.points){if(p[0]<left)left=p[0];if(p[0]>right)right=p[0];}
+        const span=right-left;
         c.lineWidth=f.organic?clamp(span*.018,.45,1.25):ink?1.1:cel?.8:.65;
         if(f.layer===0 || (f.organic&&!f.outline) || span<6)c.strokeStyle=f.color;
         if(!fading)c.stroke();
@@ -753,6 +796,8 @@
     }
     draw(s) {
       const start=performance.now(),w=this.w,h=this.h,c=this.ctx;
+      // Warm on readiness/resize, not at the first painted handoff.
+      if(this.art.status==='ready')this.prepareSky();
       let desired=this.art.medium(s);
       // Readiness is reported immediately; an airborne fallback hero is not replaced mid-jump.
       if(desired==='ai-gouache' && this.currentMedium==='gouache-fallback' && !s.player.grounded)desired=this.currentMedium;
@@ -791,13 +836,15 @@
         c.imageSmoothingEnabled=false;c.drawImage(this.blendCanvas,0,0);c.restore();
         outgoingCommands=outgoing.commands;commands+=outgoingCommands;images+=outgoing.images+1;passes=2;
       }
-      this.medium=desired;document.documentElement.dataset.medium=desired;
+      this.medium=desired;
+      if(document.documentElement.dataset.medium!==desired)document.documentElement.dataset.medium=desired;
       this.remember(s);
-      const bufferPixels=this.blendCanvas.width*this.blendCanvas.height+this.pixelCanvas.width*this.pixelCanvas.height;
-      this.stats.style=desired;this.stats.assets=this.art.snapshot();this.stats.images=images;
+      if(this.art.status!=='ready'&&this.skyImage){this.skyCanvas.width=0;this.skyCanvas.height=0;this.skyImage=null;}
+      const bufferPixels=this.blendCanvas.width*this.blendCanvas.height+this.pixelCanvas.width*this.pixelCanvas.height+(this.skyCanvas?this.skyCanvas.width*this.skyCanvas.height:0);
+      this.stats.style=desired;this.art.snapshot(this.stats.assets);this.stats.images=images;
       this.stats.worldResolution=incoming.resolution;
-      this.stats.budgets={scenery:2000,gameplay:2600,used:incoming.commands,reservedGameplay:600,packCap:40};
-      this.stats.transition={active:!!this.handoff,blend,passes,commands,incomingCommands:incoming.commands,outgoingCommands,images,bufferPixels,bufferBytes:bufferPixels*4};
+      this.stats.budgets.used=incoming.commands;
+      Object.assign(this.stats.transition,{active:!!this.handoff,blend,passes,commands,incomingCommands:incoming.commands,outgoingCommands,images,bufferPixels,bufferBytes:bufferPixels*4});
       this.stats.peakImages=Math.max(this.stats.peakImages||0,images);
       this.stats.maxCombinedCommands=Math.max(this.stats.maxCombinedCommands||0,commands);
       const e=smooth(s.extrusion);
