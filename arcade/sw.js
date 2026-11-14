@@ -1,4 +1,4 @@
-const CACHE_NAME = 'slayplay-arcade-v32';
+const CACHE_NAME = 'slayplay-arcade-v34';
 
 const PRECACHE_URLS = [
   '/arcade/',
@@ -110,6 +110,8 @@ const PRECACHE_URLS = [
   '/arcade/heart-serve/styles.css',
   '/arcade/no-internet/',
   '/arcade/no-internet/game.js',
+  '/arcade/no-internet/renderer.js',
+  '/arcade/no-internet/audio.js',
   '/arcade/no-internet/styles.css',
 ];
 
