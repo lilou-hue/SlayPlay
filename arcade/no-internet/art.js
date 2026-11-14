@@ -41,7 +41,7 @@
     async load() {
       const timeout=setTimeout(()=>{if(this.status==='loading'){this.status='fallback';this.fallbackReason='painted assets delayed';}},10000);
       try {
-        const manifestURL=new URL('assets/painted/manifest.json?v=38',location.href);
+        const manifestURL=new URL('assets/painted/manifest.json?v=39',location.href);
         const response=await fetch(manifestURL);
         if(!response.ok)throw new Error('manifest HTTP '+response.status);
         const manifest=await response.json();
@@ -51,7 +51,7 @@
           if(typeof file!=='string'||!/^[-\w.]+\.webp$/.test(file)){reject(new Error('invalid image path'));return;}
           const image=new Image();image.onload=()=>{if(!image.naturalWidth)reject(new Error('empty '+file));else {this.loaded++;resolve(image);}};
           image.onerror=()=>reject(new Error('image unavailable: '+file));
-          const imageURL=new URL(file,manifestURL);imageURL.search='?v=38';image.src=imageURL.href;
+          const imageURL=new URL(file,manifestURL);imageURL.search='?v=39';image.src=imageURL.href;
         });
         const entries=Object.entries(manifest.atlases);
         const loaded=await Promise.all([...entries.map(async([key,atlas])=>{
@@ -59,7 +59,9 @@
           for(const [name,frame] of Object.entries(atlas.frames)) {
             const r=frame.rect,a=frame.anchor;
             if(!Array.isArray(r)||r.length!==4||!r.every(Number.isFinite)||r[0]<0||r[1]<0||r[2]<=0||r[3]<=0||r[0]+r[2]>image.naturalWidth||r[1]+r[3]>image.naturalHeight||!Array.isArray(a)||a.length!==2||!a.every(n=>Number.isFinite(n)&&n>=0&&n<=1))throw new Error('invalid atlas frame '+name);
-            frames[name]={image,rect:r.slice(),anchor:a.slice(),billboard:true};
+            // Extract once; transparent padding isolates atlas neighbours during filtering.
+            const isolated=canvas(r[2]+4,r[3]+4,c=>c.drawImage(image,...r,2,2,r[2],r[3]));
+            frames[name]={image:isolated,rect:[2,2,r[2],r[3]],anchor:a.slice(),billboard:true};
           }
           return {key,image,frames};
         }),load(manifest.images.valley).then(image=>({key:'valley',image}))]);
@@ -74,7 +76,7 @@
     }
     snapshot() {return {status:this.status,imageCount:this.loaded,fallbackReason:this.fallbackReason};}
     medium(s) {
-      if(s.scene==='offline'||s.scene==='breath'||(s.scene==='rupture'&&s.extrusion<.025)||(s.scene==='collapse'&&s.projectionBlend<.4))return 'pixel-8';
+      if(s.scene==='offline'||s.scene==='breath'||s.scene==='rupture'||(s.scene==='extrusion'&&s.extrusion<.025)||(s.scene==='collapse'&&s.projectionBlend<.4))return 'pixel-8';
       if(s.scene==='desktop'||s.scene==='crash')return 'pixel-16';
       if(s.scene==='corkscrew')return 'ink-comic';
       if(s.scene==='dream')return this.status==='ready'?'ai-gouache':'gouache-fallback';

@@ -48,3 +48,10 @@ html:is([data-medium="ink-comic"], [data-medium="cel-cartoon"], [data-medium="ai
 html:is([data-medium="ink-comic"], [data-medium="cel-cartoon"], [data-medium="ai-gouache"], [data-medium="gouache-fallback"], [data-medium="pixel-16"]) #bar button { color: #302b3a; background: #fff8e8e8; border-color: #302b3a55; }
 html:is([data-medium="ink-comic"], [data-medium="cel-cartoon"], [data-medium="ai-gouache"], [data-medium="gouache-fallback"], [data-medium="pixel-8"]) #chapter { color: #302b3a; background: #fff8e8d9; padding: 2px 5px; border-radius: 2px; }
 html[data-medium="pixel-16"] #chapter { color: #fff3d0; background: #253d72; padding: 2px 5px; }
+
+/* Medium changes tint the existing controls, never duplicate their text. */
+#bar a, #bar button, #chapter, #health { transition: color .55s ease, background-color .55s ease, border-color .55s ease; }
+#health { transition: top .55s ease, color .55s ease, background-color .55s ease, border-color .55s ease; }
+@media (prefers-reduced-motion: reduce) {
+  #bar a, #bar button, #chapter, #health { transition-duration: .2s; }
+}

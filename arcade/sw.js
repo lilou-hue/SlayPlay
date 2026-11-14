@@ -1,4 +1,4 @@
-const CACHE_NAME = 'slayplay-arcade-v38';
+const CACHE_NAME = 'slayplay-arcade-v39';
 
 const PRECACHE_URLS = [
   '/arcade/',
@@ -115,23 +115,23 @@ const PRECACHE_URLS = [
   '/arcade/no-internet/audio.js',
   '/arcade/no-internet/styles.css',
   // Versioned HTML references bypass static assets held by an older worker.
-  '/arcade/no-internet/game.js?v=38',
-  '/arcade/no-internet/renderer.js?v=38',
-  '/arcade/no-internet/art.js?v=38',
-  '/arcade/no-internet/audio.js?v=38',
-  '/arcade/no-internet/styles.css?v=38',
+  '/arcade/no-internet/game.js?v=39',
+  '/arcade/no-internet/renderer.js?v=39',
+  '/arcade/no-internet/art.js?v=39',
+  '/arcade/no-internet/audio.js?v=39',
+  '/arcade/no-internet/styles.css?v=39',
 ];
 
 // This optional pack has a procedural runtime fallback. Never block arcade updates on it.
 const OPTIONAL_PAINTED_URLS = [
   '/arcade/no-internet/assets/painted/manifest.json',
-  '/arcade/no-internet/assets/painted/manifest.json?v=38',
+  '/arcade/no-internet/assets/painted/manifest.json?v=39',
   '/arcade/no-internet/assets/painted/dino-atlas.webp',
-  '/arcade/no-internet/assets/painted/dino-atlas.webp?v=38',
+  '/arcade/no-internet/assets/painted/dino-atlas.webp?v=39',
   '/arcade/no-internet/assets/painted/props-atlas.webp',
-  '/arcade/no-internet/assets/painted/props-atlas.webp?v=38',
+  '/arcade/no-internet/assets/painted/props-atlas.webp?v=39',
   '/arcade/no-internet/assets/painted/valley.webp',
-  '/arcade/no-internet/assets/painted/valley.webp?v=38',
+  '/arcade/no-internet/assets/painted/valley.webp?v=39',
 ];
 
 const NETWORK_FIRST_HOSTS = [

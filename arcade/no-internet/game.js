@@ -359,6 +359,7 @@
       debugAssisted:s.debugAssisted,reducedMotion,paused,run:s.run,previousBest:s.previousBest,
       audio:audio.snapshot,
       art:{style:renderer.stats.style,assets:{...renderer.stats.assets},images:renderer.stats.images,
+        transition:{...renderer.stats.transition},
         worldResolution:renderer.stats.worldResolution?renderer.stats.worldResolution.slice():[],budgets:{...renderer.stats.budgets}},
       timing:{frames:frameCount,meanFrameMs:frameCount?frameSum/frameCount:0,meanRenderMs:frameCount?renderSum/frameCount:0,slowFrames,maxPolygons:renderer.stats.maxPolygons}
     });
