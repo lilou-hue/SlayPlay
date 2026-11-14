@@ -21,6 +21,8 @@ html[data-scene="dream"] #bar a, html[data-scene="dream"] #bar button, html[data
 html[data-scene="dream"] #chapter, html[data-scene="desktop"] #chapter, html[data-scene="stampede"] #chapter { color: #33445e; }
 /* This show's earned spectacle already happened in the world; keep the epilogue quiet. */
 .arc-holy-moment { display: none !important; }
+/* A delayed rank notification must not swallow jumps after a quick restart. */
+.arc-quest-toast, .arc-quest-toast * { pointer-events: none !important; }
 .arc-scorecard { left: 50%; right: auto; bottom: max(14px, env(safe-area-inset-bottom)); width: min(680px, calc(100% - 24px)); transform: translate(-50%, calc(100% + 40px)); transition: transform .25s ease; }
 .arc-scorecard--show { transform: translate(-50%, 0); }
 .arc-scorecard__bar { padding: 14px 16px; gap: 12px; border: 1px solid #d9dfe2; border-radius: 8px; background: #fffffff5; color: #39414a; box-shadow: 0 4px 25px #0001; }
@@ -33,3 +35,10 @@ html[data-scene="dream"] #chapter, html[data-scene="desktop"] #chapter, html[dat
 .arc-scorecard__btn--again { width: auto; color: #fff; background: #355d62; animation: none; box-shadow: none; }
 .arc-scorecard__close { color: #56626b; border-color: #bbc5ca; }
 @media (max-width: 600px) { .arc-scorecard__bar { flex-direction: column; align-items: stretch; gap: 10px; } .arc-scorecard__actions { justify-content: flex-end; } }
+
+/* A steady, high-contrast recovery cue, separate from the timing corridor. */
+#health { position: fixed; top: calc(max(12px, env(safe-area-inset-top)) + 44px); left: max(12px, env(safe-area-inset-left)); display: flex; align-items: center; gap: 9px; padding: 2px 8px; border: 1px solid #8884; border-radius: 6px; background: #fffffff0; color: #75424a; pointer-events: none; }
+#health .hearts { font: 22px/1.3 system-ui, sans-serif; letter-spacing: 3px; }
+#health .health-cue { font: 9px ui-monospace, monospace; letter-spacing: .04em; }
+#health[data-recovering="true"] { border-color: #a76135; color: #85451e; background: #fff1db; }
+html[data-scene="desktop"] #health { top: calc(max(12px, env(safe-area-inset-top)) + 80px); }

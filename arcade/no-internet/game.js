@@ -6,10 +6,13 @@
   const chapter = document.getElementById('chapter');
   const mute = document.getElementById('mute');
   const bank = document.getElementById('bank');
+  const health = document.getElementById('health');
+  const hearts = health.querySelector('.hearts');
+  const healthCue = health.querySelector('.health-cue');
   const bestKey = 'a1NoInternetBest';
   const debugMode = new URLSearchParams(location.search).has('debug');
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const STEP = 1 / 120, BEAT = 60 / 136;
+  const STEP = 1 / 120, BEAT = 60 / 136, MAX_HEALTH = 3, RECOVERY = .8;
   const PHRASES = {
     track:{target:4,deadline:14,minimum:10,interval:2.45,next:'corkscrew'},
     corkscrew:{target:4,deadline:11,minimum:9.5,interval:2.05,next:'dream'},
@@ -35,6 +38,7 @@
     s = {
       mode:startNow?'running':'idle', scene:'offline', previousScene:'offline', sceneTime:0, simTime:0, beat:0,
       speed:8, distance:0, score:0, combo:0, multiplier:1, success:0, target:3,
+      health:MAX_HEALTH, maxHealth:MAX_HEALTH, recovery:0,
       lap:1, variant:0, lapEarned:0, lapScore:0, banked:false, effects:[], impact:0, burst:0, waveTime:-100,
       earned:0, fallback:0, transitions:[], projectionBlend:0, extrusion:0,
       obstacles:[], monuments:[], windows:[], city:[], pending:0, nextSpawn:2.7, serial:0,
@@ -45,7 +49,7 @@
       echoes:1, completion:null, reported:false, debugAssisted:false, reducedMotion,
       run:++runSerial, previousBest:Number(stored(bestKey))||0
     };
-    accumulator=0; last=performance.now();bankState();
+    accumulator=0; last=performance.now();bankState();healthState();
     hint.hidden=startNow; offline.style.opacity='1';
     chapter.textContent=''; document.documentElement.dataset.spatial='false';document.documentElement.dataset.scene='offline';
     if(startNow) {
@@ -57,7 +61,18 @@
     // Explicit banking is also available while paused; it never resumes audio.
     bank.disabled=s.mode!=='running' || s.score<=0 || s.banked || s.debugAssisted;
   }
+  function healthState() {
+    const cue=s.completion==='death'?'RUN ENDED':s.recovery>0?'RECOVERING':'';
+    const label=`${s.health} of ${s.maxHealth} hearts${cue?', '+cue.toLowerCase():''}`;
+    if(health.getAttribute('aria-label')===label)return;
+    health.setAttribute('aria-label',label);
+    health.dataset.recovering=String(s.recovery>0);
+    hearts.textContent='♥'.repeat(s.health)+'♡'.repeat(s.maxHealth-s.health);
+    healthCue.textContent=cue;
+  }
   function nextLap() {
+    if(s.mode!=='running' || s.health<=0 || s.scene!=='breath' || !s.finalInput) return;
+    s.health=Math.min(s.maxHealth,s.health+1);
     // Session identity, time, score, earned totals and captured best survive the breath.
     s.lap++;s.variant=(s.lap-1)%3;
     Object.assign(s,{success:0,target:2,lapEarned:0,lapScore:0,nextSpawn:.65,
@@ -150,6 +165,7 @@
     s.monuments.push({z:17+s.success*1.5,side,scale:6+Math.min(s.success,4)*1.5,age:0});
   }
   function landed() {
+    if(s.mode!=='running') return;
     if(s.scene==='finale' && s.finalInput && s.player.jumps===s.finalJumpSerial) {enter('collapse','input-landing');return;}
     if(!s.pending) return;
     const count=s.pending;s.pending=0;
@@ -177,7 +193,14 @@
     }
     for(const o of s.obstacles) {
       o.z-=s.speed*dt;
-      if(!o.resolved && Math.abs(o.z)<.40 && s.player.height<.58) o.hit=true;
+      if(!o.resolved && !o.hit && Math.abs(o.z)<.40 && s.player.height<.58) {
+        // Even protected contacts are misses, never a later clear from this hazard.
+        o.hit=true;
+        if(s.recovery<=0) {
+          s.health=Math.max(0,s.health-1);s.recovery=RECOVERY;s.player.stumble=.42;
+          if(s.health===0) {finishRun('death');return;}
+        }
+      }
       if(!o.resolved && o.z<-.42) {
         o.resolved=true;
         o.clear=!o.hit && !s.player.grounded && s.player.jumps>0;
@@ -193,6 +216,7 @@
     const waiting=s.scene==='finale' && !s.finalInput && s.player.grounded;
     if(!waiting) {s.simTime+=dt;s.sceneTime+=dt;}
     s.beat=s.simTime/BEAT;
+    s.recovery=Math.max(0,s.recovery-dt);
     s.impact=Math.max(0,s.impact-dt);s.burst=Math.max(0,s.burst-dt);
     for(const effect of s.effects) {effect.age+=dt;effect.z-=s.speed*dt*.35;}
     s.effects=s.effects.filter(effect=>effect.age<1.5);
@@ -220,6 +244,7 @@
     s.monuments=s.monuments.filter(m=>m.z>-14);
     if(s.scene==='offline') {
       obstacles(dt);
+      if(s.mode!=='running') return;
       if(s.sceneTime>=(s.lap===1?12.5:8) && (p.grounded || justLanded)) enter('rupture','deadline');
     } else if(s.scene==='rupture') {
       if(s.simTime>=s.dropAt) enter('extrusion');
@@ -233,14 +258,16 @@
     } else if(PHRASES[s.scene]) {
       const phrase=PHRASES[s.scene];
       obstacles(dt);
+      if(s.mode!=='running') return;
       const earned=s.success>=phrase.target && s.sceneTime>=phrase.minimum;
       if((earned || s.sceneTime>=phrase.deadline) && (p.grounded || justLanded)) enter(phrase.next,earned?'earned':'deadline');
     } else if(s.scene==='crash') {
       if(s.sceneTime>=2.2) enter('stampede');
     } else if(s.scene==='stampede') {
-      // A fixed musical build, never lengthened by misses and never ended by a hit.
+      // A fixed musical build, never lengthened by misses.
       // Close the spawner, not collision resolution: the last presented cactus is earned too.
       obstacles(dt,s.sceneTime<13.5);
+      if(s.mode!=='running') return;
       if(s.sceneTime>=16 && (p.grounded || justLanded)) enter('coalesce',s.success>=5?'earned':'deadline');
     } else if(s.scene==='coalesce') {
       if(s.sceneTime>=2.2) enter('finale');
@@ -252,11 +279,16 @@
       if(s.sceneTime>=1.15 && s.finalInput) nextLap();
     }
   }
-  function publishResult() {
-    if(s.mode!=='running' || s.score<=0 || s.reported || s.banked || s.debugAssisted) return;
-    // Latch before shared callbacks: double clicks cannot hit Arcade's one-second throttle.
-    s.banked=true;s.reported=true;s.completion='banked';s.mode='complete';s.player.buffer=0;
-    audio.pause();bankState();
+  function finishRun(reason) {
+    if(s.mode!=='running' || s.reported) return;
+    if(reason==='banked' && (s.score<=0 || s.debugAssisted)) return;
+    // Latch the terminal state before any shared callbacks, including zero-score deaths.
+    s.banked=reason==='banked';s.completion=reason;s.mode='complete';
+    s.player.buffer=0;s.player.velocity=0;s.pending=0;s.recovery=0;
+    if(reason==='death') {s.combo=0;s.multiplier=1;}
+    audio.pause();bankState();healthState();
+    if(s.debugAssisted) return;
+    s.reported=true;
     const score=s.score, previousBest=s.previousBest;
     if(typeof Arcade!=='undefined') {
       Arcade.onGameOver('no-internet',score);
@@ -276,7 +308,7 @@
       audio.sync(s);
     }
     if(!document.hidden) {
-      renderer.draw(s);bankState();
+      renderer.draw(s);bankState();healthState();
       offline.style.opacity=['offline','breath'].includes(s.scene)?'1':s.scene==='rupture'?String(1-smooth(s.sceneTime/1.1)):s.scene==='collapse'?String(smooth((s.sceneTime-1.8)/.6)):'0';
       frameCount++;frameSum+=Math.min(elapsed,1)*1000;renderSum+=renderer.stats.renderMs;
       if(elapsed>.025)slowFrames++;
@@ -302,7 +334,7 @@
   addEventListener('focus',()=>setPause(document.hidden));
   document.addEventListener('visibilitychange',()=>setPause(document.hidden));
   addEventListener('resize',()=>renderer.resize());
-  bank.addEventListener('click',publishResult);
+  bank.addEventListener('click',()=>finishRun('banked'));
   document.getElementById('again').addEventListener('click',restart);
   document.addEventListener('arcade-restart',restart);
   function muteLabel() {
@@ -316,7 +348,7 @@
   function snapshot() {
     const next=s.obstacles.find(o=>!o.resolved);
     return freeze({
-      version:2,lap:s.lap,variant:s.variant,multiplier:s.multiplier,lapEarned:s.lapEarned,sessionEarned:s.earned,lapScore:s.lapScore,banked:s.banked,impact:s.impact,burst:s.burst,
+      version:3,health:s.health,maxHealth:s.maxHealth,recovery:s.recovery,lap:s.lap,variant:s.variant,multiplier:s.multiplier,lapEarned:s.lapEarned,sessionEarned:s.earned,lapScore:s.lapScore,banked:s.banked,impact:s.impact,burst:s.burst,
       effectCounts:{impacts:s.effects.length,bursts:s.effects.filter(e=>e.big).length,transitions:s.transitions.length},mode:s.mode,scene:s.scene,sceneTime:s.sceneTime,success:s.success,target:s.target,
       earned:s.earned,fallback:s.fallback,transitions:s.transitions.map(t=>({...t})),
       simTime:s.simTime,beat:s.beat,playerHeight:s.player.height,player:{...s.player},
@@ -335,7 +367,7 @@
     debug.advance=seconds=>{
       s.debugAssisted=true;bankState();
       for(let i=0;i<Math.min(30,Math.max(0,Number(seconds)||0))/STEP;i++)update(STEP);
-      renderer.draw(s);bankState();return snapshot();
+      renderer.draw(s);bankState();healthState();return snapshot();
     };
   }
   Object.defineProperty(window,'DINO_DEBUG',{value:Object.freeze(debug),writable:false,configurable:false});

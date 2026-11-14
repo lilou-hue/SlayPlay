@@ -112,7 +112,7 @@
     }
     dino(s, options={}) {
       const ext = mix(.035, 1, smooth(s.extrusion));
-      const color = options.color || GRAY.map((n, i) => mix(n, s.scene==='dream'?[64,78,133][i]:CHROME[i], s.extrusion));
+      const color = options.color || (this.hero && s.recovery>0 ? [202,116,65] : null) || GRAY.map((n, i) => mix(n, s.scene==='dream'?[64,78,133][i]:CHROME[i], s.extrusion));
       const y = options.y ?? s.player.height, run = s.player.grounded ? Math.sin(s.distance * 3.8) * .17 : .10;
       const lean = s.player.stumble > 0 ? -.12 : 0;
       const scale=options.scale || (s.scene==='dream'?1+s.morph*.10:1);
@@ -281,7 +281,7 @@
     }
     windowBox(x,y,z,w,h,seed=0,player=false) {
       this.box(x,y+h*.5,z,w,h,.20,[229,235,241]);
-      this.box(x,y+h*.86,z-.115,w*.96,h*.20,.035,player?[41,94,108]:[57,83,155]);
+      this.box(x,y+h*.86,z-.115,w*.96,h*.20,.035,player?(this.s.recovery>0?[157,83,42]:[41,94,108]):[57,83,155]);
       this.box(x+w*.39,y+h*.86,z-.145,w*.085,h*.10,.03,[248,206,167]);
       if(player) {
         // The player itself is a dimensional window, with a tiny voxel dinosaur inside.

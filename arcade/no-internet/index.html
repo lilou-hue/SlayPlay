@@ -11,7 +11,7 @@
   <meta property="og:type" content="website">
   <title>No Internet — SlayPlay</title>
   <link rel="stylesheet" href="../arcade.css">
-  <link rel="stylesheet" href="styles.css?v=36">
+  <link rel="stylesheet" href="styles.css?v=37">
 </head>
 <body>
   <canvas id="game" aria-label="Dinosaur transformation game. Space or tap to jump."></canvas>
@@ -21,8 +21,9 @@
     <p>The dinosaur is still here.</p>
     <p class="code">ERR_INTERNET_DISCONNECTED</p>
   </section>
-  <div id="hint">Space or tap to jump</div>
+  <div id="hint">Space or tap to jump<br>3 hearts · +1 heart per completed lap</div>
   <div id="chapter" aria-live="polite"></div>
+  <div id="health" role="img" aria-live="polite" aria-label="3 of 3 hearts"><span class="hearts" aria-hidden="true">♥♥♥</span><span class="health-cue" aria-hidden="true"></span></div>
   <nav id="bar" aria-label="Game controls">
     <a id="home" href="/arcade/" title="Back to SlayPlay" aria-label="Back to SlayPlay">←</a>
     <button id="again" type="button" title="Start again" aria-label="Start again">↻</button>
@@ -30,8 +31,8 @@
     <button id="mute" type="button" title="Sound" aria-label="Sound">♪</button>
   </nav>
   <script src="../arcade.js"></script>
-  <script src="renderer.js?v=36"></script>
-  <script src="audio.js?v=36"></script>
-  <script src="game.js?v=36"></script>
+  <script src="renderer.js?v=37"></script>
+  <script src="audio.js?v=37"></script>
+  <script src="game.js?v=37"></script>
 </body>
 </html>
