@@ -1,0 +1,158 @@
+{
+  "version": 1,
+  "style": "AI-generated gouache storybook garden",
+  "generator": "Sprites workspace / ChatGPT image generation",
+  "view": "Elevated rear three-quarter dinosaur facing away toward upper right. Rear-view anatomy, not a side-view sprite.",
+  "images": {
+    "dino": "dino-atlas.webp",
+    "props": "props-atlas.webp",
+    "valley": "valley.webp"
+  },
+  "atlases": {
+    "dino": {
+      "width": 768,
+      "height": 768,
+      "frames": {
+        "runA": {
+          "rect": [
+            0,
+            0,
+            384,
+            384
+          ],
+          "anchor": [
+            0.66,
+            0.92
+          ]
+        },
+        "runB": {
+          "rect": [
+            384,
+            0,
+            384,
+            384
+          ],
+          "anchor": [
+            0.66,
+            0.92
+          ]
+        },
+        "jump": {
+          "rect": [
+            0,
+            384,
+            384,
+            384
+          ],
+          "anchor": [
+            0.66,
+            0.92
+          ]
+        },
+        "idle": {
+          "rect": [
+            384,
+            384,
+            384,
+            384
+          ],
+          "anchor": [
+            0.66,
+            0.92
+          ]
+        }
+      }
+    },
+    "props": {
+      "width": 1024,
+      "height": 1024,
+      "frames": {
+        "mushroom": {
+          "rect": [
+            0,
+            0,
+            512,
+            512
+          ],
+          "anchor": [
+            0.5,
+            0.92
+          ]
+        },
+        "cactus": {
+          "rect": [
+            512,
+            0,
+            512,
+            512
+          ],
+          "anchor": [
+            0.5,
+            0.92
+          ]
+        },
+        "arch": {
+          "rect": [
+            0,
+            512,
+            512,
+            512
+          ],
+          "anchor": [
+            0.5,
+            0.92
+          ]
+        },
+        "boulder": {
+          "rect": [
+            512,
+            512,
+            512,
+            512
+          ],
+          "anchor": [
+            0.5,
+            0.92
+          ]
+        }
+      }
+    }
+  },
+  "background": {
+    "image": "valley",
+    "width": 1280,
+    "height": 720,
+    "groundSample": [
+      360,
+      490,
+      560,
+      200
+    ]
+  },
+  "provenance": [
+    {
+      "subject": "dino",
+      "jobId": "40fa3c91-4111-4751-bada-8bb35b3d49c9",
+      "outputId": "2d2337f9-8497-4cbc-919d-6eb47d31bca0.png",
+      "sourceSha256": "9b3b1cee02ab990ac1a4f3dad27c7d28df97dce3d3d45173e25d74e2bfaf1698",
+      "prompt": "Generate an image for a video game using the following art brief.\n\nPROJECT ART DIRECTION\nWorld: No Internet \u2014 Painted Dream\nStyle: Original luminous gouache and colored-pencil storybook illustration, visible velvety brush texture and torn-paper edges, rounded organic silhouettes, NOT pixel art, NOT blocky voxel or low polygon. Lighthearted surreal Mesozoic garden. All subjects have coherent cool turquoise shadows, coral peach highlights and rich cream sunlit rims. Soft painted dimensional forms, crisp isolated silhouettes readable at small game scale.\nPalette: Jade/teal dinosaur, apricot/coral mushrooms, pale warm peach sky, deep aubergine-violet shadows, cream edges, small golden-yellow dorsal plates.\nConstraints: Original designs only; no franchise imitation, no trademarks, no text, no watermarks, no drop shadows on isolated sprites. Deliver actual image using image-generation tool, not an SVG, code, or instructions. True transparent alpha when requested; never draw checkerboard. All objects fully in frame with generous padding.\n\nOUTPUT PRESET\nFull-body game character sprite. Entire body visible, consistent viewpoint, centered with padding.\n\nCOMPOSITION OPTIONS\nAspect: square\nView: three-quarter\nBackground: transparent\nRendering detail: painted\nAdditional notes: Game sprite animation atlas, exactly 2 columns by 2 rows, four equal square cells, no grid lines. Consistent elevated REAR three-quarter view: camera follows dinosaur from behind and slightly its left; dinosaur runs away toward upper-right of canvas, see its back, left cheek/eye, tail points down-left. Same size, angle, baseline and identity in all cells. Transparent space around each figure. Feet baseline at 85% of each cell. No ground/no shadows/no scene.\n\nCANONICAL ASSET DEFINITIONS\nCHARACTER: Painted dream runner dinosaur\nOne original friendly small Tyrannosaurus: jade teal body, cream belly and chin, exactly three golden-yellow dorsal plates along its back, short rounded snout, bright small eye, two tiny arms, sturdy hind legs, thick curved balancing tail. Preserve shape and proportions. Illustrated gouache with organic curves and visible painterly texture.\n\nREFERENCE ROLES\nNo images attached.\n\nPRESERVE\nPreserve approved character identity, proportions, signature details and selected outfit/prop designs. Identity references control character identity. Style references control rendering, not character identity. Environment references control setting, not character anatomy.\n\nREQUESTED CHANGE / COMPOSITION\nGenerate ONE square PNG sprite atlas with four consistent full-body poses of the same dinosaur. Top-left: run pose A, left hind foot forward. Top-right: run pose B, right hind foot forward. Bottom-left: airborne jumping pose, legs tucked slightly, whole dinosaur raised a little without cropping tail. Bottom-right: neutral standing pose. Every cell shows same full dinosaur facing AWAY toward upper right in elevated rear three-quarter view, suitable for a behind-runner camera. Smooth readable silhouette, round organic anatomy, painterly shading, jade body/cream belly/3gold dorsal plates. Exactly four characters, one in each quadrant. Large transparent gutters. Do not include labels. Actual generated image.\n\nOUTPUT\nGenerate the image, not just a description. No captions, labels, watermarks or extra objects unless requested. Transparency, exact dimensions and game readiness will be validated separately.\n\nFINAL CONTINUITY CONTRACT (highest priority for visual continuity)\nThis is a general continuity generation. The brief may change angle, pose, expression, clothing, or lighting, but must not redesign the pinned identity or location.\nPRESERVE: character identity, apparent age, hair, facial structure, and body proportions; reviewed definitions and approved world style.\nALLOWED CHANGES: Changes explicitly requested by the composition brief, where compatible with continuity..\nThe pinned original is the visual authority for face, hair, body proportions, silhouette, floor plan, materials, and landmarks. Reviewed text fills in nonvisual details and world rules; it must not quietly redesign visible identity or layout.\nIf a manual original appears to disagree with reviewed text, preserve its visible continuity and flag the result for human review rather than claiming automated visual verification.\nNever invent a new face. Do not claim pixel identity: generative output can drift, so human visual review is still required.",
+      "review": "Reviewed original full image and actual alpha. Normalized cropped cells, preserved painterly transparency, resized and encoded WebP; no copied game artwork."
+    },
+    {
+      "subject": "props",
+      "jobId": "3b6d8e26-fbab-4577-8095-5432a03ace4e",
+      "outputId": "08949a07-0fd6-4fe1-8a8c-42853ebba36a.png",
+      "sourceSha256": "019da50a82c398ac1ffe8ced9ba007c3d3d480fb482c2a5364c8e57e8a2c0e01",
+      "prompt": "Generate an image for a video game using the following art brief.\n\nPROJECT ART DIRECTION\nWorld: No Internet \u2014 Painted Dream\nStyle: Original luminous gouache and colored-pencil storybook illustration, visible velvety brush texture and torn-paper edges, rounded organic silhouettes, NOT pixel art, NOT blocky voxel or low polygon. Lighthearted surreal Mesozoic garden. All subjects have coherent cool turquoise shadows, coral peach highlights and rich cream sunlit rims. Soft painted dimensional forms, crisp isolated silhouettes readable at small game scale.\nPalette: Jade/teal dinosaur, apricot/coral mushrooms, pale warm peach sky, deep aubergine-violet shadows, cream edges, small golden-yellow dorsal plates.\nConstraints: Original designs only; no franchise imitation, no trademarks, no text, no watermarks, no drop shadows on isolated sprites. Deliver actual image using image-generation tool, not an SVG, code, or instructions. True transparent alpha when requested; never draw checkerboard. All objects fully in frame with generous padding.\n\nOUTPUT PRESET\nIsolated game prop icon. Clear silhouette, centered with padding.\n\nCOMPOSITION OPTIONS\nAspect: square\nView: three-quarter\nBackground: transparent\nRendering detail: painted\nAdditional notes: Exactly 2 columns by 2 rows, four equal-square cells; one isolated prop per cell. Elevated frontal three-quarter camera. Baselines at85% of each cell, objects fully visible, consistent light from upper-left. True transparent PNG, wide gutters, no labels or gridlines.\n\nCANONICAL ASSET DEFINITIONS\nPROP: Painted dream garden objects\nA coordinated set of whimsical hand-painted Mesozoic garden props. Organic red-coral trumpet mushrooms, jade cactus with rounded arms and golden buds, a cream sandstone arch with jade vines, and an aubergine rounded boulder with luminous tiny yellow flowers. Gouache painted texture, cool turquoise shaded sides, sunlit cream rims. No characters.\n\nREFERENCE ROLES\nNo images attached.\n\nPRESERVE\nPreserve approved character identity, proportions, signature details and selected outfit/prop designs. Identity references control character identity. Style references control rendering, not character identity. Environment references control setting, not character anatomy.\n\nREQUESTED CHANGE / COMPOSITION\nGenerate ONE square PNG game-prop atlas. Top-left: a cluster of three giant coral/peach trumpet mushrooms on a tiny shared base. Top-right: one jade cactus with two rounded arms and three gold buds, clear single obstacle silhouette. Bottom-left: a tall open cream sandstone arch wrapped by jade curling plants, its center is transparent. Bottom-right: one rounded plum-violet boulder with a few gold flowers. These are FOUR separate hand-painted storybook props, generous transparent gaps, no shared ground or landscape, no baked shadows. Every object isolated completely in its own quadrant and no object crosses cell boundaries. Actual generated image.\n\nOUTPUT\nGenerate the image, not just a description. No captions, labels, watermarks or extra objects unless requested. Transparency, exact dimensions and game readiness will be validated separately.\n\nFINAL CONTINUITY CONTRACT (highest priority for visual continuity)\nThis is a general continuity generation. The brief may change angle, pose, expression, clothing, or lighting, but must not redesign the pinned identity or location.\nPRESERVE: reviewed definitions and approved world style.\nALLOWED CHANGES: Changes explicitly requested by the composition brief, where compatible with continuity..\nThe pinned original is the visual authority for face, hair, body proportions, silhouette, floor plan, materials, and landmarks. Reviewed text fills in nonvisual details and world rules; it must not quietly redesign visible identity or layout.\nIf a manual original appears to disagree with reviewed text, preserve its visible continuity and flag the result for human review rather than claiming automated visual verification.\nNever invent a new face. Do not claim pixel identity: generative output can drift, so human visual review is still required.",
+      "review": "Reviewed original full image and actual alpha. Normalized cropped cells, preserved painterly transparency, resized and encoded WebP; no copied game artwork."
+    },
+    {
+      "subject": "world",
+      "jobId": "48091938-8f8e-406d-8141-ae5436cb1344",
+      "outputId": "195d0e68-9fca-4f79-b7c2-0fbf534b241d.png",
+      "sourceSha256": "b8fd58cb8543a58294f820cc2cbc2c70bb9abf6ec8cf751117abb0e29f9f3781",
+      "prompt": "Generate an image for a video game using the following art brief.\n\nPROJECT ART DIRECTION\nWorld: No Internet \u2014 Painted Dream\nStyle: Original luminous gouache and colored-pencil storybook illustration, visible velvety brush texture and torn-paper edges, rounded organic silhouettes, NOT pixel art, NOT blocky voxel or low polygon. Lighthearted surreal Mesozoic garden. All subjects have coherent cool turquoise shadows, coral peach highlights and rich cream sunlit rims. Soft painted dimensional forms, crisp isolated silhouettes readable at small game scale.\nPalette: Jade/teal dinosaur, apricot/coral mushrooms, pale warm peach sky, deep aubergine-violet shadows, cream edges, small golden-yellow dorsal plates.\nConstraints: Original designs only; no franchise imitation, no trademarks, no text, no watermarks, no drop shadows on isolated sprites. Deliver actual image using image-generation tool, not an SVG, code, or instructions. True transparent alpha when requested; never draw checkerboard. All objects fully in frame with generous padding.\n\nOUTPUT PRESET\nGame environment background. No unsolicited characters. Specify usable gameplay space and a coherent camera perspective.\n\nCOMPOSITION OPTIONS\nAspect: wide\nView: three-quarter\nBackground: scene\nRendering detail: painted\nAdditional notes: Wide landscape 16:9 composition, background plate for a behind-runner game. Horizon upper third, distant valley centered. Large organic plants frame left and right edges; center and lower-middle are open softly painted pale-peach terrain so a separately rendered winding track and player will be readable. No close foreground obstacle or character. No hard border.\n\nCANONICAL ASSET DEFINITIONS\nENVIRONMENT: Painted dream sky valley\nAn original surreal garden valley: luminous apricot and peach sky, cream clouds like flowing brushstrokes, towering jade and coral fern trees and distant purple mesas, flowing gold-cream river toward vanishing point. Painterly gouache, lively textured handmade appearance, NOT polygons. No characters or typography.\n\nREFERENCE ROLES\nNo images attached.\n\nPRESERVE\nPreserve approved character identity, proportions, signature details and selected outfit/prop designs. Identity references control character identity. Style references control rendering, not character identity. Environment references control setting, not character anatomy.\n\nREQUESTED CHANGE / COMPOSITION\nGenerate ONE hand-painted storybook background image for a surreal dinosaur garden level. Vast pale peach sky, curling cream clouds, fantastical rounded jade fern trees and coral trumpet mushrooms at sides, distant layered violet hills and floating garden islands, warm golden light. The central corridor is spacious, clear and subtly suggests depth toward the horizon. Sophisticated visible gouache brush texture and gentle paper grain, luminous color, playful impossible scale. Objects are painted with flowing organic forms, not toy blocks or pixel shapes. Avoid busy marks in bottom-center gameplay area. No dinosaur, no text, no UI. Actual generated image.\n\nOUTPUT\nGenerate the image, not just a description. No captions, labels, watermarks or extra objects unless requested. Transparency, exact dimensions and game readiness will be validated separately.\n\nFINAL CONTINUITY CONTRACT (highest priority for visual continuity)\nThis is a general continuity generation. The brief may change angle, pose, expression, clothing, or lighting, but must not redesign the pinned identity or location.\nPRESERVE: location floor plan, materials, landmarks, and spatial relationships; reviewed definitions and approved world style.\nALLOWED CHANGES: Changes explicitly requested by the composition brief, where compatible with continuity..\nThe pinned original is the visual authority for face, hair, body proportions, silhouette, floor plan, materials, and landmarks. Reviewed text fills in nonvisual details and world rules; it must not quietly redesign visible identity or layout.\nIf a manual original appears to disagree with reviewed text, preserve its visible continuity and flag the result for human review rather than claiming automated visual verification.\nNever invent a new face. Do not claim pixel identity: generative output can drift, so human visual review is still required.",
+      "review": "Reviewed original full image and actual alpha. Normalized cropped cells, preserved painterly transparency, resized and encoded WebP; no copied game artwork."
+    }
+  ]
+}

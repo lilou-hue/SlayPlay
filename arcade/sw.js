@@ -1,4 +1,4 @@
-const CACHE_NAME = 'slayplay-arcade-v37';
+const CACHE_NAME = 'slayplay-arcade-v38';
 
 const PRECACHE_URLS = [
   '/arcade/',
@@ -111,13 +111,27 @@ const PRECACHE_URLS = [
   '/arcade/no-internet/',
   '/arcade/no-internet/game.js',
   '/arcade/no-internet/renderer.js',
+  '/arcade/no-internet/art.js',
   '/arcade/no-internet/audio.js',
   '/arcade/no-internet/styles.css',
   // Versioned HTML references bypass static assets held by an older worker.
-  '/arcade/no-internet/game.js?v=37',
-  '/arcade/no-internet/renderer.js?v=37',
-  '/arcade/no-internet/audio.js?v=37',
-  '/arcade/no-internet/styles.css?v=37',
+  '/arcade/no-internet/game.js?v=38',
+  '/arcade/no-internet/renderer.js?v=38',
+  '/arcade/no-internet/art.js?v=38',
+  '/arcade/no-internet/audio.js?v=38',
+  '/arcade/no-internet/styles.css?v=38',
+];
+
+// This optional pack has a procedural runtime fallback. Never block arcade updates on it.
+const OPTIONAL_PAINTED_URLS = [
+  '/arcade/no-internet/assets/painted/manifest.json',
+  '/arcade/no-internet/assets/painted/manifest.json?v=38',
+  '/arcade/no-internet/assets/painted/dino-atlas.webp',
+  '/arcade/no-internet/assets/painted/dino-atlas.webp?v=38',
+  '/arcade/no-internet/assets/painted/props-atlas.webp',
+  '/arcade/no-internet/assets/painted/props-atlas.webp?v=38',
+  '/arcade/no-internet/assets/painted/valley.webp',
+  '/arcade/no-internet/assets/painted/valley.webp?v=38',
 ];
 
 const NETWORK_FIRST_HOSTS = [
@@ -126,10 +140,26 @@ const NETWORK_FIRST_HOSTS = [
   'gstatic.com',
 ];
 
+function cachePaintedAsset(cache, url) {
+  const controller = new AbortController();
+  let timeout;
+  return Promise.race([
+    fetch(url, { signal: controller.signal })
+      .then((response) => response.ok ? cache.put(url, response) : undefined)
+      .catch(() => {}),
+    new Promise((resolve) => {
+      timeout = setTimeout(() => { controller.abort(); resolve(); }, 6000);
+    }),
+  ]).finally(() => clearTimeout(timeout));
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(PRECACHE_URLS))
+      .then((cache) => Promise.all([
+        cache.addAll(PRECACHE_URLS),
+        Promise.all(OPTIONAL_PAINTED_URLS.map((url) => cachePaintedAsset(cache, url))),
+      ]))
       .then(() => self.skipWaiting())
   );
 });

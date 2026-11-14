@@ -42,3 +42,9 @@ html[data-scene="dream"] #chapter, html[data-scene="desktop"] #chapter, html[dat
 #health .health-cue { font: 9px ui-monospace, monospace; letter-spacing: .04em; }
 #health[data-recovering="true"] { border-color: #a76135; color: #85451e; background: #fff1db; }
 html[data-scene="desktop"] #health { top: calc(max(12px, env(safe-area-inset-top)) + 80px); }
+
+/* Art-medium contrast is independent of camera/spatial state and lap variants. */
+html:is([data-medium="ink-comic"], [data-medium="cel-cartoon"], [data-medium="ai-gouache"], [data-medium="gouache-fallback"], [data-medium="pixel-16"]) #bar a,
+html:is([data-medium="ink-comic"], [data-medium="cel-cartoon"], [data-medium="ai-gouache"], [data-medium="gouache-fallback"], [data-medium="pixel-16"]) #bar button { color: #302b3a; background: #fff8e8e8; border-color: #302b3a55; }
+html:is([data-medium="ink-comic"], [data-medium="cel-cartoon"], [data-medium="ai-gouache"], [data-medium="gouache-fallback"], [data-medium="pixel-8"]) #chapter { color: #302b3a; background: #fff8e8d9; padding: 2px 5px; border-radius: 2px; }
+html[data-medium="pixel-16"] #chapter { color: #fff3d0; background: #253d72; padding: 2px 5px; }
